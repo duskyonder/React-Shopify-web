@@ -1,0 +1,285 @@
+/* ============================================================
+   APPLY PAGE REDESIGN — Clean minimal style
+   ============================================================ */
+/* Override hero to light background */
+.inf-apply-page-hero--light {
+  background: #FAF9F7 !important;
+  padding: 100px 40px 56px;
+}
+.inf-apply-page-hero--light .inf-apply-page-breadcrumb {
+  color: #aaa;
+}
+.inf-apply-page-hero--light .inf-apply-page-breadcrumb a {
+  color: #888;
+}
+.inf-apply-page-hero--light .inf-apply-page-title {
+  color: #111 !important;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+}
+.inf-apply-page-hero--light .inf-apply-page-subtitle {
+  color: #666 !important;
+  font-size: 17px;
+}
+
+/* Benefits: remove card background, go borderless */
+.inf-benefits-section--minimal {
+  background: #FAF9F7;
+  padding: 64px 40px;
+}
+.inf-benefits-section--minimal .inf-section-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.inf-benefits-section--minimal .inf-benefits-grid {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px 32px;
+  margin-top: 40px;
+}
+.inf-benefits-section--minimal .inf-benefit-card {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  text-align: left;
+}
+.inf-benefits-section--minimal .inf-benefit-card:hover {
+  transform: none;
+  box-shadow: none;
+}
+.inf-benefits-section--minimal .inf-benefit-icon {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+.inf-benefits-section--minimal .inf-benefit-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #111;
+  margin-bottom: 10px;
+}
+.inf-benefits-section--minimal .inf-benefit-desc {
+  font-size: 13px;
+  color: #777;
+  line-height: 1.7;
+}
+
+/* Requirements: white bg, 2-col text */
+.inf-req-section--minimal {
+  background: #fff;
+  padding: 80px 40px;
+}
+.inf-req-section--minimal .inf-section-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+.inf-req-section--minimal .inf-req-grid {
+  gap: 60px;
+  margin-top: 48px;
+}
+.inf-req-section--minimal .inf-req-col-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 24px;
+}
+.inf-req-section--minimal .inf-req-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #333;
+}
+.inf-req-section--minimal .inf-req-check {
+  color: #175C40;
+  font-weight: 700;
+}
+
+/* Form: underline-only inputs */
+.inf-form-section--minimal {
+  background: #FAF9F7;
+  padding: 80px 40px;
+}
+.inf-form-section--minimal .inf-section-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.inf-form-section--minimal .inf-form-input,
+.inf-form-section--minimal .inf-form-select,
+.inf-form-section--minimal .inf-form-textarea {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
+  padding: 10px 0;
+  font-size: 15px;
+  color: #111;
+}
+.inf-form-section--minimal .inf-form-input:focus,
+.inf-form-section--minimal .inf-form-select:focus,
+.inf-form-section--minimal .inf-form-textarea:focus {
+  border-bottom-color: #0D3D2B;
+  outline: none;
+}
+.inf-form-section--minimal .inf-form-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #999;
+}
+.inf-form-section--minimal .inf-form-submit {
+  max-width: 100%;
+  border-radius: 2px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+/* FAQ: clean accordion */
+.inf-faq-section--minimal {
+  background: #fff;
+  padding: 80px 40px;
+}
+.inf-faq-section--minimal .inf-section-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.inf-faq-section--minimal .inf-faq-question {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #222;
+  padding: 22px 0;
+}
+.inf-faq-section--minimal .inf-faq-answer {
+  font-size: 14px;
+  color: #666;
+  padding-bottom: 22px;
+  line-height: 1.75;
+}
+
+/* Section title override for apply page */
+.inf-apply-section-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: #111;
+  text-align: left;
+  margin: 0;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .inf-cd-profile { padding: 60px 20px 40px; }
+  .inf-cd-profile-inner { flex-direction: column; gap: 28px; }
+  .inf-cd-profile-avatar, .inf-cd-profile-avatar-placeholder { width: 100px; height: 100px; }
+  .inf-cd-profile-name { font-size: 1.5rem; }
+  .inf-cd-profile-stats { gap: 24px; }
+  .inf-cd-tab-bar-inner { padding: 0 20px; }
+  .inf-cd-tab-section { padding: 32px 20px 60px; }
+  .inf-cd-products-grid { grid-template-columns: repeat(2, 1fr); gap: 20px 16px; }
+  .inf-cd-qv-panel { flex-direction: column; max-height: 95vh; }
+  .inf-cd-qv-left { width: 100%; min-height: 240px; flex: 0 0 auto; }
+  .inf-cd-qv-right { padding: 24px 20px 20px; }
+  .inf-benefits-section--minimal .inf-benefits-grid { grid-template-columns: 1fr; gap: 36px; }
+  .inf-req-section--minimal .inf-req-grid { grid-template-columns: 1fr; gap: 40px; }
+}
+@media (max-width: 480px) {
+  .inf-cd-products-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   INLINE NEWSLETTER STRIP — PDP & Blog Article
+   ============================================================ */
+.sf-inline-newsletter {
+  background: #FAF9F7;
+  border-top: 1px solid #ede9e4;
+  padding: 56px 40px;
+}
+.sf-inline-newsletter-inner {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+.sf-inline-newsletter-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #175C40;
+  margin-bottom: 12px;
+}
+.sf-inline-newsletter-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+.sf-inline-newsletter-subtitle {
+  font-size: 0.875rem;
+  color: #888;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+.sf-inline-newsletter-form {
+  display: flex;
+  gap: 0;
+  max-width: 420px;
+  margin: 0 auto;
+  border: 1.5px solid #d0ccc7;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #fff;
+}
+.sf-inline-newsletter-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  color: #1a1a1a;
+  background: transparent;
+  font-family: var(--font-sans);
+}
+.sf-inline-newsletter-input::placeholder { color: #aaa; }
+.sf-inline-newsletter-btn {
+  padding: 12px 20px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.sf-inline-newsletter-btn:hover { background: #175C40; }
+.sf-inline-newsletter-success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #175C40;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+@media (max-width: 768px) {
+  .sf-inline-newsletter { padding: 40px 20px; }
+  .sf-inline-newsletter-title { font-size: 1.25rem; }
+  .sf-inline-newsletter-form { flex-direction: column; border: none; gap: 8px; }
+  .sf-inline-newsletter-input {
+    border: 1.5px solid #d0ccc7;
+    border-radius: 2px;
+    padding: 12px 16px;
+  }
+  .sf-inline-newsletter-btn {
+    border-radius: 2px;
+    padding: 12px 20px;
+  }
+}

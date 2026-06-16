@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* =============================================
+   DUSKYONDER STOREFRONT — Split CSS Architecture
+   Each file covers one domain; edit the relevant
+   file instead of this entry point.
+   ============================================= */
+
+@import "./styles/base.css";
+@import "./styles/storefront.css";
+@import "./styles/product-detail.css";
+@import "./styles/about-us.css";
+@import "./styles/blog.css";
+@import "./styles/influencer.css";
+@import "./styles/policy.css";
+@import "./styles/apply-minimal.css";

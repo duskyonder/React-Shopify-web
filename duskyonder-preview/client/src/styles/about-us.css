@@ -1,0 +1,589 @@
+/* ============================================================
+   ABOUT US PAGE — Warm Editorial Style
+   奶白底 + 图文错位布局，去 B 端化
+   ============================================================ */
+
+/* ---- Shared animation ---- */
+@keyframes au2FadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.au2-visible { animation: au2FadeUp 0.7s cubic-bezier(0.23, 1, 0.32, 1) both; }
+
+/* ---- Page wrapper ---- */
+.au2-page { background: #FAF9F6; min-height: 100vh; }
+
+/* ---- Shared eyebrow ---- */
+.au2-eyebrow {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #175C40;
+  margin-bottom: 16px;
+}
+.au2-eyebrow-light {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 16px;
+}
+
+/* ---- Shared headings ---- */
+.au2-section-h2 {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: #1a1a1a;
+  margin: 0 0 28px;
+}
+.au2-section-h2-light {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: #fff;
+  margin: 0 0 40px;
+}
+
+/* ---- Shared body text ---- */
+.au2-body {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: #555;
+  margin-bottom: 16px;
+}
+
+/* ---- Image placeholder ---- */
+.au2-img-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  background: #EAF2EE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #175C40;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+/* ============================================================
+   HERO — full-screen warm background
+   ============================================================ */
+.au2-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: var(--hero-align-items, center);
+  justify-content: var(--hero-justify, center);
+  text-align: var(--hero-text-align, center);
+  padding: 120px 24px 80px;
+  overflow: hidden;
+}
+@media (max-width: 767px) {
+  .au2-hero {
+    align-items: var(--hero-m-align-items, var(--hero-align-items, center));
+    justify-content: var(--hero-m-justify, var(--hero-justify, center));
+    text-align: var(--hero-m-text-align, var(--hero-text-align, center));
+  }
+}
+.au2-hero-inner {
+  opacity: 0;
+  max-width: 900px;
+  width: 100%;
+}
+.au2-hero-inner.au2-visible {
+  animation: au2FadeUp 0.9s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.au2-hero-eyebrow {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 24px;
+}
+.au2-hero-headline {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(3.5rem, 10vw, 9rem);
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-transform: uppercase;
+  margin: 0 0 32px;
+}
+.au2-hero-subtitle {
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  font-weight: 400;
+  color: rgba(255,255,255,0.72);
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+.au2-scroll-hint {
+  position: absolute;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: au2ScrollBounce 2s ease-in-out infinite;
+}
+@keyframes au2ScrollBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(8px); }
+}
+
+/* ============================================================
+   BRAND STORY — asymmetric: text left, image right (offset up)
+   奶白底，图片偏移营造错位感
+   ============================================================ */
+.au2-story {
+  padding: 120px 0 100px;
+  background: #FAF9F6;
+  overflow: hidden;
+}
+.au2-story-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 60px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: stretch; /* 两列等高，图片自适应文字高度 */
+  opacity: 0;
+}
+.au2-story-grid.au2-visible {
+  animation: au2FadeUp 0.7s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.au2-story-text {
+  padding-top: 60px;
+}
+.au2-story-img-wrap {
+  position: relative;
+  margin-top: -80px; /* 错位偏移 */
+  display: flex;
+  flex-direction: column;
+  /* 最小高度：保证图片在文字较短时也有足够展示面积 */
+  min-height: 400px;
+}
+.au2-story-img {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+.au2-story-img-wrap .au2-img-placeholder {
+  flex: 1;
+  min-height: 400px;
+  aspect-ratio: var(--story-img-aspect, 3/4);
+}
+
+/* ============================================================
+   PRINCIPLES — warm cream background, numbered rows
+   ============================================================ */
+.au2-principles {
+  background: #0D3D2B;
+  padding: 100px 0;
+}
+.au2-principles-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 60px;
+  opacity: 0;
+}
+.au2-principles-inner.au2-visible {
+  animation: au2FadeUp 0.7s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.au2-principles-header {
+  margin-bottom: 56px;
+}
+.au2-principles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.au2-principle-row {
+  display: grid;
+  grid-template-columns: 72px 1px 1fr;
+  gap: 0 32px;
+  padding: 40px 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  opacity: 0;
+  animation: none;
+}
+.au2-principles-inner.au2-visible .au2-principle-row {
+  animation: au2FadeUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.au2-principle-row:last-child { border-bottom: 1px solid rgba(255,255,255,0.1); }
+.au2-principle-num {
+  font-size: 2.4rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.15);
+  line-height: 1;
+  padding-top: 4px;
+  letter-spacing: -0.03em;
+  font-family: var(--font-display, Georgia, serif);
+}
+.au2-principle-sep {
+  width: 1px;
+  background: rgba(255,255,255,0.12);
+  align-self: stretch;
+}
+.au2-principle-content { padding-left: 8px; }
+.au2-principle-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.au2-principle-en {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+.au2-principle-zh {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.4);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+}
+.au2-principle-body {
+  font-size: 0.93rem;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.6);
+  margin: 0;
+}
+
+/* ============================================================
+   PRODUCT PHILOSOPHY — image right, text left (反向错位)
+   奶白底，图片偏移
+   ============================================================ */
+.au2-philosophy {
+  padding: 120px 0 100px;
+  background: #F5F3EF;  /* 略深一点的奶白，区分层次 */
+  overflow: hidden;
+}
+.au2-philosophy-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 60px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: stretch; /* 两列等高，图片自适应文字高度 */
+  opacity: 0;
+}
+.au2-philosophy-grid.au2-visible {
+  animation: au2FadeUp 0.7s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.au2-philosophy-img-wrap {
+  position: relative;
+  margin-top: -60px; /* 错位偏移 */
+  order: 2; /* 图片在右 */
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+.au2-philosophy-text {
+  order: 1; /* 文字在左 */
+  padding-top: 40px;
+}
+.au2-philosophy-img {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+.au2-philosophy-img-wrap .au2-img-placeholder {
+  flex: 1;
+  min-height: 400px;
+  aspect-ratio: var(--philosophy-img-aspect, 4/5);
+}
+.au2-philosophy-list {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.au2-philosophy-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.95rem;
+  color: #444;
+  line-height: 1.65;
+}
+.au2-philosophy-li-num {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #175C40;
+  letter-spacing: 0.05em;
+  padding-top: 3px;
+  min-width: 24px;
+}
+.au2-text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #175C40;
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #175C40;
+  padding-bottom: 2px;
+  transition: opacity 0.18s;
+}
+.au2-text-link:hover { opacity: 0.65; }
+.au2-arrow { transition: transform 0.18s; }
+.au2-text-link:hover .au2-arrow { transform: translateX(4px); }
+
+/* ============================================================
+   STATS — thin rule + large numbers, warm background
+   ============================================================ */
+.au2-stats {
+  padding: 80px 0;
+  background: #FAF9F6;
+  border-top: 1px solid #e8e4de;
+  border-bottom: 1px solid #e8e4de;
+}
+.au2-stats-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 60px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  opacity: 0;
+}
+.au2-stats-inner.au2-visible {
+  animation: au2FadeUp 0.7s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.au2-stat-item {
+  text-align: center;
+  padding: 24px 16px;
+  border-right: 1px solid #e8e4de;
+  opacity: 0;
+}
+.au2-stats-inner.au2-visible .au2-stat-item {
+  animation: au2FadeUp 0.55s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.au2-stat-item:last-child { border-right: none; }
+.au2-stat-value {
+  display: block;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 400;
+  color: #0D3D2B;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+.au2-stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #999;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ============================================================
+   UNIVERSE — 2×2 grid, warm cream cards (无卡片阴影感)
+   ============================================================ */
+.au2-universe {
+  padding: 100px 0;
+  background: #F5F3EF;
+}
+.au2-universe-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 60px;
+  opacity: 0;
+}
+.au2-universe-inner.au2-visible {
+  animation: au2FadeUp 0.7s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.au2-universe-header {
+  margin-bottom: 56px;
+}
+.au2-universe-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+}
+.au2-universe-card {
+  padding: 52px 44px;
+  border: 1px solid #e0dbd4;
+  background: #FAF9F6;
+  opacity: 0;
+  transition: background 0.25s;
+}
+.au2-universe-inner.au2-visible .au2-universe-card {
+  animation: au2FadeUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.au2-universe-card:hover { background: #F0EDE7; }
+.au2-universe-card-top {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.au2-universe-num {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #175C40;
+  letter-spacing: 0.14em;
+}
+.au2-universe-module {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #bbb;
+}
+.au2-universe-sep {
+  height: 1px;
+  background: #e0dbd4;
+  margin-bottom: 20px;
+}
+.au2-universe-title {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: #1a1a1a;
+  margin: 0 0 14px;
+  letter-spacing: 0.01em;
+}
+.au2-universe-body {
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: #777;
+  margin: 0;
+}
+
+/* ============================================================
+   CTA — dark green, centered
+   ============================================================ */
+.au2-cta {
+  background: #0D3D2B;
+  padding: 120px 24px;
+  text-align: center;
+}
+.au2-cta-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  opacity: 0;
+}
+.au2-cta-inner.au2-visible {
+  animation: au2FadeUp 0.7s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.au2-cta-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.38);
+  margin-bottom: 20px;
+}
+.au2-cta-headline {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(2rem, 5vw, 3.8rem);
+  font-weight: 400;
+  color: #fff;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  margin: 0 0 20px;
+}
+.au2-cta-sub {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.75;
+  margin: 0 0 40px;
+}
+.au2-cta-btns {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.au2-btn {
+  display: inline-block;
+  padding: 14px 36px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 1px;
+  transition: opacity 0.18s, transform 0.12s;
+  cursor: pointer;
+}
+.au2-btn:active { transform: scale(0.97); }
+.au2-btn-white {
+  background: #FAF9F6;
+  color: #0D3D2B;
+  border: 1.5px solid #FAF9F6;
+}
+.au2-btn-white:hover { opacity: 0.85; }
+.au2-btn-outline {
+  background: transparent;
+  color: rgba(255,255,255,0.85);
+  border: 1.5px solid rgba(255,255,255,0.38);
+}
+.au2-btn-outline:hover { border-color: rgba(255,255,255,0.75); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  .au2-story-grid,
+  .au2-philosophy-grid {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    padding: 0 24px;
+  }
+  .au2-story-img-wrap { margin-top: 0; }
+  .au2-philosophy-img-wrap { margin-top: 0; order: 1; }
+  .au2-philosophy-text { order: 2; padding-top: 0; }
+  .au2-principles-inner { padding: 0 24px; }
+  .au2-universe-inner { padding: 0 24px; }
+  .au2-stats-inner {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 24px;
+  }
+  .au2-stat-item:nth-child(2) { border-right: none; }
+  .au2-stat-item:nth-child(3) { border-top: 1px solid #e8e4de; }
+  .au2-stat-item:nth-child(4) { border-top: 1px solid #e8e4de; border-right: none; }
+  .au2-universe-grid { grid-template-columns: 1fr; }
+  .au2-principle-row { grid-template-columns: 48px 1px 1fr; gap: 0 20px; }
+  .au2-hero-headline { font-size: clamp(3rem, 14vw, 6rem); }
+}
+@media (max-width: 600px) {
+  .au2-story { padding: 72px 0 60px; }
+  .au2-principles { padding: 64px 0; }
+  .au2-philosophy { padding: 72px 0 60px; }
+  .au2-universe { padding: 64px 0; }
+  .au2-cta { padding: 80px 24px; }
+  .au2-stats-inner { grid-template-columns: repeat(2, 1fr); }
+  .au2-universe-card { padding: 32px 24px; }
+}
