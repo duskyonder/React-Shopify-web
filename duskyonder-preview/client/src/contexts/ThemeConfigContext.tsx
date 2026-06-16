@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
+import { fetchHomepageBanners } from "@/lib/shopify";
 
 export interface SlideTextBlock {
   id: string;
@@ -1489,6 +1490,29 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
 
   const setConfigMutation = trpc.theme.setConfig.useMutation();
   const { data: serverData } = trpc.theme.getAll.useQuery();
+
+  // 从 Shopify Metaobject 获取首页 Banner 数据
+  useEffect(() => {
+    fetchHomepageBanners().then((banners) => {
+      if (banners.length > 0) {
+        setConfig((prev) => ({
+          ...prev,
+          slides: banners.map((b, i) => ({
+            id: `shopify_slide_${i}`,
+            title: b.title ?? "",
+            subtitle: b.subtitle ?? "",
+            buttonLabel: b.buttonLabel ?? "",
+            buttonLink: b.buttonLink ?? "/",
+            imageUrl: b.imageUrl ?? "",
+            mobileImageUrl: b.mobileImageUrl ?? b.imageUrl ?? "",
+            contentPosition: b.contentPosition ?? "middle-center",
+          })),
+        }));
+      }
+    }).catch((err) => {
+      console.warn("Shopify banner fetch failed, using default slides:", err);
+    });
+  }, []);
 
   useEffect(() => {
     if (serverData?.configs?.themeConfig) {
