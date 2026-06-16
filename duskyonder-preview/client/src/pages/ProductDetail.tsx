@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/useMobile";
 import { Link, useLocation } from "wouter";
 import { useThemeConfig, CollectionProduct, ProductDetailConfig } from "@/contexts/ThemeConfigContext";
@@ -6,19 +6,41 @@ import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
 import { ChevronLeftIcon } from "@/components/ProductDetailIcons";
 import { ProductGallery } from "@/components/ProductDetailGallery";
 import { ProductInfoPanel, ProductVideo, RecommendedProducts, BackToTop, MobileStickyCart, InlineNewsletterStrip } from "@/components/ProductDetailInfo";
+import { fetchProductByHandle, type ShopifyProduct } from "@/lib/shopify";
+import { useCart } from "@/contexts/CartContext";
 
 export default function ProductDetail() {
   const { config } = useThemeConfig();
   const [location] = useLocation();
+  const { addItem, openCart } = useCart();
 
   // Extract handle from URL: /products/:handle
   const handle = location.replace(/^\/products\//, "");
 
-  // Find product across all collections
-  let foundProduct: CollectionProduct | null = null;
-  let foundCollection = config.collections[0];
-  let foundDetail: Partial<ProductDetailConfig> = {};
+  // Shopify product state
+  const [shopifyProduct, setShopifyProduct] = useState<ShopifyProduct | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Fetch product from Shopify by handle
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    fetchProductByHandle(handle).then((product) => {
+      setShopifyProduct(product);
+      if (!product) {
+        setError("Product not found");
+      }
+      setLoading(false);
+    }).catch((err) => {
+      console.error("Failed to fetch product:", err);
+      setError("Failed to load product");
+      setLoading(false);
+    });
+  }, [handle]);
+
+  // Also try to find product in local config (fallback for collection context)
+  let foundCollection = config.collections[0];
   for (const col of config.collections) {
     const prod = col.products.find(p => {
       const prodHandle = p.detailUrl?.replace("/products/", "") ||
@@ -26,59 +48,25 @@ export default function ProductDetail() {
       return prodHandle === handle;
     });
     if (prod) {
-      foundProduct = prod;
       foundCollection = col;
-      foundDetail = col.productDetails?.[prod.id] || {};
       break;
     }
   }
+  const foundDetail: Partial<ProductDetailConfig> = foundCollection?.productDetails?.[shopifyProduct?.id ?? ""] || {};
 
-  // Fallback: also search home page products
-  if (!foundProduct) {
-    const homeProd = config.products.find(p => {
-      const prodHandle = p.detailUrl?.replace("/products/", "") ||
-        p.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-      return prodHandle === handle;
-    });
-    if (homeProd) {
-      // Convert Product to CollectionProduct shape
-      foundProduct = { ...homeProd, colors: homeProd.colors || [], colorImages: homeProd.colorImages || {} };
-    }
-  }
+  // Build a CollectionProduct-compatible object from Shopify data
+  const product: CollectionProduct | null = shopifyProduct ? buildProductFromShopify(shopifyProduct) : null;
 
-  // PREVIEW FALLBACK: if still no product found, use a mock product so the detail page layout can be previewed
-  if (!foundProduct) {
-    foundProduct = {
-      id: "preview_mock",
-      name: "Sculpt Bra",
-      price: "$68",
-      comparePrice: "$88",
-      badge: "Best Seller",
-      colors: ["#175C40", "#2D2D2D", "#8B7355", "#C8C8C8"],
-      colorImages: {},
-      detailUrl: "/products/" + handle,
-    };
-  }
-
-  // Color selection state (lifted to sync gallery)
+  // Color selection state
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);
 
-  // Build gallery images (include colorImages for all colors)
-  const galleryImages: string[] = [];
-  if (foundProduct?.imageUrl) galleryImages.push(foundProduct.imageUrl);
-  if (foundProduct?.hoverImageUrl) galleryImages.push(foundProduct.hoverImageUrl);
-  // Add color-specific images
-  if (foundProduct?.colorImages) {
-    Object.values(foundProduct.colorImages).forEach(url => {
-      if (url && !galleryImages.includes(url)) galleryImages.push(url);
-    });
-  }
-  if (foundDetail.galleryImages) galleryImages.push(...foundDetail.galleryImages.filter(u => u && !galleryImages.includes(u)));
+  // Build gallery images from Shopify product
+  const galleryImages: string[] = shopifyProduct?.images?.map(img => img.url) ?? [];
 
   // Determine active color image for gallery sync
-  const activeColorHex = foundProduct?.colors?.[selectedColorIdx];
-  const activeColorImage = activeColorHex && foundProduct?.colorImages?.[activeColorHex]
-    ? foundProduct.colorImages[activeColorHex]
+  const activeColorHex = product?.colors?.[selectedColorIdx];
+  const activeColorImage = activeColorHex && product?.colorImages?.[activeColorHex]
+    ? product.colorImages[activeColorHex]
     : undefined;
 
   const showVideo = foundDetail.showVideo && foundDetail.videoUrl;
@@ -89,6 +77,24 @@ export default function ProductDetail() {
   const recommendedTitleColor = config.pdpRecommendedTitleColor || "";
   const recommendedTitleSize = config.pdpRecommendedTitleSize || 22;
   const recommendedTitleMobileSize = config.pdpRecommendedTitleMobileSize || 18;
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="storefront">
+        <SFPromoBar />
+        <SFHeader darkMode />
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ width: 40, height: 40, border: "3px solid #e0e0e0", borderTopColor: "#175C40", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+            <p style={{ color: "#666", fontSize: 14 }}>Loading product...</p>
+          </div>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <SFFooter />
+      </div>
+    );
+  }
 
   return (
     <div className="storefront">
@@ -109,18 +115,19 @@ export default function ProductDetail() {
           </Link>
         </div>
 
-        {foundProduct ? (
+        {product && shopifyProduct ? (
           <>
             {/* Main content: gallery + info */}
             <div className="pdp-main-layout">
-              <ProductGallery images={galleryImages} productName={foundProduct.name} activeColorImage={activeColorImage} />
+              <ProductGallery images={galleryImages} productName={product.name} activeColorImage={activeColorImage} />
               <ProductInfoPanel
-                product={foundProduct}
+                product={product}
                 detail={foundDetail}
                 collectionHandle={foundCollection.handle}
                 collectionTitle={foundCollection.title}
                 selectedColorIdx={selectedColorIdx}
                 onColorChange={setSelectedColorIdx}
+                shopifyProduct={shopifyProduct}
               />
             </div>
 
@@ -132,7 +139,7 @@ export default function ProductDetail() {
             {/* Recommended products */}
             {showRecommended && foundCollection.products.length > 1 && (
               <RecommendedProducts
-                currentProductId={foundProduct.id}
+                currentProductId={product.id}
                 collectionProducts={foundCollection.products}
                 manualIds={foundDetail.manualRecommendedIds || []}
                 count={recommendedCount}
@@ -149,7 +156,7 @@ export default function ProductDetail() {
           <div className="pdp-not-found">
             <h2>Product Not Found</h2>
             <p>The product you're looking for doesn't exist or has been removed.</p>
-            <Link href="/collections/leggings" className="pdp-not-found-link">Browse Collections</Link>
+            <Link href="/collections" className="pdp-not-found-link">Browse Collections</Link>
           </div>
         )}
       </div>
@@ -157,7 +164,46 @@ export default function ProductDetail() {
       <InlineNewsletterStrip />
       <SFFooter />
       <BackToTop />
-      {foundProduct && <MobileStickyCart productName={foundProduct.name} price={foundProduct.price} />}
+      {product && <MobileStickyCart productName={product.name} price={product.price} shopifyProduct={shopifyProduct} />}
     </div>
   );
+}
+
+// =====================================================
+// Helper: Convert Shopify product to CollectionProduct format
+// =====================================================
+function buildProductFromShopify(sp: ShopifyProduct): CollectionProduct {
+  // Extract unique colors from options
+  const colorOption = sp.options.find(o => o.name.toLowerCase() === "color");
+  const colors = colorOption?.values ?? [];
+
+  // Build color-to-image mapping from variants
+  const colorImages: Record<string, string> = {};
+  if (colorOption) {
+    for (const variant of sp.variants) {
+      const colorOpt = variant.selectedOptions.find(o => o.name.toLowerCase() === "color");
+      if (colorOpt && variant.image?.url && !colorImages[colorOpt.value]) {
+        colorImages[colorOpt.value] = variant.image.url;
+      }
+    }
+  }
+
+  // Price from first variant
+  const firstVariant = sp.variants[0];
+  const price = firstVariant ? `$${parseFloat(firstVariant.price.amount).toFixed(0)}` : "$0";
+  const comparePrice = firstVariant?.compareAtPrice
+    ? `$${parseFloat(firstVariant.compareAtPrice.amount).toFixed(0)}`
+    : undefined;
+
+  return {
+    id: sp.id,
+    name: sp.title,
+    price,
+    comparePrice,
+    imageUrl: sp.images[0]?.url,
+    hoverImageUrl: sp.images[1]?.url,
+    colors,
+    colorImages,
+    detailUrl: `/products/${sp.handle}`,
+  };
 }

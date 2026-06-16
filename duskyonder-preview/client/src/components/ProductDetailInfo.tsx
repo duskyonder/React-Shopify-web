@@ -7,6 +7,8 @@ import { ColorSwatch } from "@/components/StorefrontShell";
 import { HeartIcon, ChevronDownIcon, ShareIcon, InstagramIcon, PinterestIcon, LinkIcon, ArrowUpIcon, ImagePlaceholderIcon, PlayIcon, CareIconSvg, colorLabel } from "@/components/ProductDetailIcons";
 import { SizeGuideModal } from "@/components/ProductDetailModals";
 import { CollapsibleSection } from "@/components/ProductDetailGallery";
+import { useCart } from "@/contexts/CartContext";
+import type { ShopifyProduct } from "@/lib/shopify";
 
 // ==================== PRODUCT INFO PANEL ====================
 export function ProductInfoPanel({
@@ -16,6 +18,7 @@ export function ProductInfoPanel({
   collectionTitle,
   selectedColorIdx,
   onColorChange,
+  shopifyProduct,
 }: {
   product: CollectionProduct;
   detail: Partial<ProductDetailConfig>;
@@ -23,16 +26,32 @@ export function ProductInfoPanel({
   collectionTitle: string;
   selectedColorIdx: number;
   onColorChange: (idx: number) => void;
+  shopifyProduct?: ShopifyProduct | null;
 }) {
   const { config } = useThemeConfig();
+  const { addItem, openCart } = useCart();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [wishlist, setWishlist] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const sizes = detail.sizes || config.pdpDefaultSizes;
+  // Use Shopify product sizes if available, otherwise fall back to config
+  const shopifySizeOption = shopifyProduct?.options?.find(o => o.name.toLowerCase() === "size");
+  const sizes = shopifySizeOption
+    ? shopifySizeOption.values.map(s => {
+        // Check if this size has any available variant
+        const selectedColor = product.colors?.[selectedColorIdx];
+        const available = shopifyProduct!.variants.some(v => {
+          const sizeMatch = v.selectedOptions.some(o => o.name.toLowerCase() === "size" && o.value === s);
+          const colorMatch = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === "color" && o.value === selectedColor);
+          return sizeMatch && colorMatch && v.availableForSale;
+        });
+        return { label: s, available };
+      })
+    : (detail.sizes || config.pdpDefaultSizes);
   const sizeGuide = detail.sizeGuide || config.pdpSizeGuide;
   const shippingBlocks: string[] = detail.shippingBlocks ?? config.pdpShippingBlocks ?? (detail.shippingText || config.pdpShippingText ? [detail.shippingText || config.pdpShippingText || ""] : []);
   const showShare = config.pdpShowShare !== false;
@@ -53,12 +72,15 @@ export function ProductInfoPanel({
         { icon: "hang-dry", label: "Hang to Dry" },
         { icon: "do-not-bleach", label: "Do Not Bleach" },
       ]);
-  // Description blocks: product-level override > global default (Shopify placeholder)
-  const descriptionBlocks = (detail.descriptionBlocks && detail.descriptionBlocks.length > 0)
-    ? detail.descriptionBlocks
-    : (config.pdpDefaultDescriptionBlocks && config.pdpDefaultDescriptionBlocks.length > 0
-        ? config.pdpDefaultDescriptionBlocks
-        : (detail.description ? [{ id: "desc", title: "PRODUCT DETAILS", content: detail.description }] : []));
+  // Description blocks: Shopify product HTML > product-level override > global default
+  const shopifyDescriptionHtml = shopifyProduct?.descriptionHtml;
+  const descriptionBlocks = shopifyDescriptionHtml
+    ? [{ id: "shopify_desc", title: "PRODUCT DETAILS", content: shopifyDescriptionHtml, isHtml: true }]
+    : (detail.descriptionBlocks && detail.descriptionBlocks.length > 0)
+      ? detail.descriptionBlocks
+      : (config.pdpDefaultDescriptionBlocks && config.pdpDefaultDescriptionBlocks.length > 0
+          ? config.pdpDefaultDescriptionBlocks
+          : (detail.description ? [{ id: "desc", title: "PRODUCT DETAILS", content: detail.description }] : []));
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -147,7 +169,45 @@ export function ProductInfoPanel({
 
       {/* Add to cart + wishlist */}
       <div className="pdp-cta-row">
-        <button className="pdp-add-to-cart" style={{ flex: 1 }}>ADD TO CART</button>
+        <button
+          className="pdp-add-to-cart"
+          style={{ flex: 1 }}
+          disabled={addingToCart}
+          onClick={() => {
+            // Find the matching variant based on selected color + size
+            const selectedColor = product.colors?.[selectedColorIdx];
+            let variantId: string | undefined;
+            if (shopifyProduct) {
+              const variant = shopifyProduct.variants.find(v => {
+                const colorMatch = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === "color" && o.value === selectedColor);
+                const sizeMatch = !selectedSize || v.selectedOptions.some(o => o.name.toLowerCase() === "size" && o.value === selectedSize);
+                return colorMatch && sizeMatch && v.availableForSale;
+              }) || shopifyProduct.variants.find(v => v.availableForSale);
+              variantId = variant?.id;
+            }
+            if (!variantId && !selectedSize && shopifyProduct?.variants?.length) {
+              // If no size selected, prompt user
+              alert("Please select a size");
+              return;
+            }
+            setAddingToCart(true);
+            addItem({
+              id: variantId || product.id,
+              name: product.name,
+              price: product.price,
+              comparePrice: product.comparePrice,
+              imageUrl: product.imageUrl,
+              productUrl: `/products/${shopifyProduct?.handle || ""}`,
+              variantId: variantId || undefined,
+              selectedColor: selectedColor || undefined,
+              selectedSize: selectedSize || undefined,
+            });
+            openCart();
+            setTimeout(() => setAddingToCart(false), 500);
+          }}
+        >
+          {addingToCart ? "ADDING..." : "ADD TO CART"}
+        </button>
         {showWishlist && (
           <button className={`pdp-wishlist-btn${wishlist ? " active" : ""}`} onClick={() => setWishlist(w => !w)}>
             <HeartIcon filled={wishlist} />
@@ -206,7 +266,15 @@ export function ProductInfoPanel({
       {/* Product description - rich text blocks (above SHIPPING) */}
       {descriptionBlocks.map((block, i) => (
         <CollapsibleSection key={block.id || i} title={block.title || "PRODUCT DETAILS"} defaultOpen={i === 0}>
-          <div style={{ fontSize: "var(--pdp-body-font-size-desktop, 14px)", color: "#555", lineHeight: 1.8, whiteSpace: "pre-line" }}>{block.content}</div>
+          {(block as any).isHtml ? (
+            <div
+              className="pdp-shopify-description"
+              style={{ fontSize: "var(--pdp-body-font-size-desktop, 14px)", color: "#555", lineHeight: 1.8 }}
+              dangerouslySetInnerHTML={{ __html: block.content }}
+            />
+          ) : (
+            <div style={{ fontSize: "var(--pdp-body-font-size-desktop, 14px)", color: "#555", lineHeight: 1.8, whiteSpace: "pre-line" }}>{block.content}</div>
+          )}
         </CollapsibleSection>
       ))}
 
@@ -504,20 +572,35 @@ export function BackToTop() {
 }
 
 // ==================== MOBILE STICKY CTA ====================
-export function MobileStickyCart({ productName, price }: { productName: string; price: string }) {
+export function MobileStickyCart({ productName, price, shopifyProduct }: { productName: string; price: string; shopifyProduct?: ShopifyProduct | null }) {
   const [visible, setVisible] = useState(false);
+  const { addItem, openCart } = useCart();
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 300);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleMobileAdd = () => {
+    const firstAvailable = shopifyProduct?.variants?.find(v => v.availableForSale);
+    addItem({
+      id: firstAvailable?.id || shopifyProduct?.id || "unknown",
+      name: productName,
+      price: price,
+      imageUrl: shopifyProduct?.images?.[0]?.url,
+      productUrl: `/products/${shopifyProduct?.handle || ""}`,
+      variantId: firstAvailable?.id || undefined,
+    });
+    openCart();
+  };
+
   return (
     <div className={`pdp-mobile-sticky${visible ? " visible" : ""}`}>
       <div className="pdp-mobile-sticky-info">
         <span className="pdp-mobile-sticky-name">{productName}</span>
         <span className="pdp-mobile-sticky-price">{price}</span>
       </div>
-      <button className="pdp-mobile-sticky-btn">ADD TO CART</button>
+      <button className="pdp-mobile-sticky-btn" onClick={handleMobileAdd}>ADD TO CART</button>
     </div>
   );
 }

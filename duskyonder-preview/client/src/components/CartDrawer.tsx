@@ -133,7 +133,7 @@ function RecommendedCard({ product, onAdd }: {
 }
 
 export function CartDrawer() {
-  const { items, isOpen, closeCart, removeItem, updateQuantity, totalCount, addItem } = useCart();
+  const { items, isOpen, closeCart, removeItem, updateQuantity, totalCount, addItem, checkoutUrl, subtotal: shopifySubtotal, isLoading: cartLoading } = useCart();
   const { config } = useThemeConfig();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -150,10 +150,10 @@ export function CartDrawer() {
   const freeShippingText = config.freeShippingText ?? "Spend {{amount}} more for free shipping";
   const freeShippingAchievedText = config.freeShippingAchievedText ?? "You've unlocked free shipping! 🎉";
 
-  const subtotal = useMemo(() => items.reduce((sum, item) => {
+  const subtotal = shopifySubtotal ? parseFloat(shopifySubtotal) : items.reduce((sum, item) => {
     const price = parseFloat(item.price.replace(/[^0-9.]/g, "")) || 0;
     return sum + price * item.quantity;
-  }, 0), [items]);
+  }, 0);
 
   const currencySymbol = items[0]?.price?.replace(/[\d.,\s]/g, "").trim() || "$";
 
@@ -187,13 +187,14 @@ export function CartDrawer() {
 
   const handleCheckout = () => {
     setCheckoutLoading(true);
-    if (typeof window !== "undefined" && (window as any).Shopify?.routes?.root) {
-      window.location.href = (window as any).Shopify.routes.root + "checkout";
+    if (checkoutUrl) {
+      window.location.href = checkoutUrl;
       return;
     }
+    // Fallback: if no checkout URL available
     setTimeout(() => {
       setCheckoutLoading(false);
-      alert("Checkout: In Shopify deployment, this will redirect to the Shopify checkout page.");
+      alert("Unable to proceed to checkout. Please try again.");
     }, 600);
   };
 
@@ -342,9 +343,9 @@ export function CartDrawer() {
                       </div>
 
                       {/* Variant info */}
-                      {(item.selectedColor || item.selectedSize) && (
+                      {(item.variantTitle || item.selectedColor || item.selectedSize) && (
                         <p style={{ fontSize: 12, color: TEXT_SECONDARY, margin: 0, letterSpacing: "0.01em" }}>
-                          {[item.selectedColor, item.selectedSize].filter(Boolean).join(" · ")}
+                          {item.variantTitle || [item.selectedColor, item.selectedSize].filter(Boolean).join(" · ")}
                         </p>
                       )}
 

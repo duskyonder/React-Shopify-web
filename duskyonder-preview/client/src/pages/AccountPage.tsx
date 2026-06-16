@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
+import { getCustomerLoginUrl, getCustomerLogoutUrl } from "@/lib/shopify";
 
 // ==================== ACCOUNT PAGE ====================
-// Shopify equivalent: /account (Liquid template: customers/account.liquid)
-// This is a high-fidelity UI preview with mock data.
-// In Shopify deployment, replace mock data with {{ customer }} Liquid objects.
+// Shopify Customer Account API integration
+// Uses OAuth2 flow for login/register via Shopify's hosted login page
 
 // ---- Mock Data ----
 const MOCK_CUSTOMER = {
@@ -891,7 +892,100 @@ function PreferencesTab() {
 }
 
 // ==================== MAIN COMPONENT ====================
+// ==================== LOGIN / REGISTER PAGE ====================
+function LoginPage() {
+  const handleLogin = () => {
+    const redirectUri = `${window.location.origin}/account`;
+    const loginUrl = getCustomerLoginUrl(redirectUri);
+    window.location.href = loginUrl;
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#FAF9F7" }}>
+      <SFPromoBar />
+      <SFHeader darkMode />
+
+      <div style={{
+        maxWidth: 440,
+        margin: "0 auto",
+        padding: "120px 24px 80px",
+        textAlign: "center",
+      }}>
+        <h1 style={{
+          fontFamily: "'Tenor Sans', sans-serif",
+          fontSize: "2rem",
+          fontWeight: 400,
+          marginBottom: 12,
+          color: "#1a1a1a",
+        }}>Welcome Back</h1>
+        <p style={{ color: "#666", fontSize: 14, marginBottom: 40 }}>
+          Sign in to your account to view orders, manage addresses, and more.
+        </p>
+
+        <button
+          onClick={handleLogin}
+          style={{
+            width: "100%",
+            padding: "16px 24px",
+            background: "#0D3D2B",
+            color: "#fff",
+            border: "none",
+            borderRadius: 2,
+            fontSize: 13,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase" as const,
+            cursor: "pointer",
+            marginBottom: 16,
+            transition: "background 0.2s",
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = "#2d5c42")}
+          onMouseLeave={e => (e.currentTarget.style.background = "#0D3D2B")}
+        >
+          Sign In with Shopify
+        </button>
+
+        <p style={{ fontSize: 13, color: "#888" }}>
+          Don't have an account?{" "}
+          <button
+            onClick={handleLogin}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#0D3D2B",
+              fontWeight: 600,
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontSize: 13,
+            }}
+          >
+            Create Account
+          </button>
+        </p>
+      </div>
+
+      <SFFooter />
+    </div>
+  );
+}
+
 export default function AccountPage() {
+  const [location] = useLocation();
+  const isLoginRoute = location === "/account/login" || location === "/account/register";
+
+  // For login/register routes, show the login page
+  // For /account, show the dashboard (in production this would check auth state)
+  // Since Shopify Customer Account API uses OAuth, after login the user is redirected back
+  // For now, show login page if on /account/login or /account/register
+  // Show dashboard for /account (assuming user is authenticated after OAuth redirect)
+  if (isLoginRoute) {
+    return <LoginPage />;
+  }
+
+  return <AccountDashboard />;
+}
+
+function AccountDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
 
   const TABS: Array<{ id: Tab; label: string }> = [
@@ -959,6 +1053,10 @@ export default function AccountPage() {
               <div style={{ fontSize: "0.82rem", color: "#888" }}>{MOCK_CUSTOMER.email}</div>
             </div>
             <button
+              onClick={() => {
+                const logoutUrl = getCustomerLogoutUrl(window.location.origin);
+                window.location.href = logoutUrl;
+              }}
               style={{
                 marginLeft: "auto",
                 padding: "8px 16px",
