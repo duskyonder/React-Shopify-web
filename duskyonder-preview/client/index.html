@@ -7,18 +7,57 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>{{project_title}}</title>
+
+    <!-- =====================================================
+         Google Site Verification (Google Search Console)
+         Replace REPLACE_WITH_GSC_VERIFICATION_CODE with your actual code from:
+         Google Search Console > Settings > Ownership verification > HTML tag
+         Example: <meta name="google-site-verification" content="abc123xyz" />
+    ====================================================== -->
+    <!-- <meta name="google-site-verification" content="REPLACE_WITH_GSC_VERIFICATION_CODE" /> -->
+
+    <!-- =====================================================
+         Google Merchant Center (GMC) Verification
+         Replace REPLACE_WITH_GMC_VERIFICATION_CODE with your actual code from:
+         Google Merchant Center > Settings > Business info > Website > Verify
+         Example: <meta name="google-site-verification" content="def456uvw" />
+         Note: GMC uses the same meta tag format as GSC, but with a different code.
+         You can have multiple google-site-verification meta tags on the same page.
+    ====================================================== -->
+    <!-- <meta name="google-site-verification" content="REPLACE_WITH_GMC_VERIFICATION_CODE" /> -->
+
+    <!-- =====================================================
+         Google Tag Manager (GTM) - Head Snippet
+         Replace GTM-XXXXXXX with your actual GTM Container ID from:
+         tagmanager.google.com > Your Container > Admin > Install Google Tag Manager
+         GTM manages: GA4, Google Ads Conversion, Facebook Pixel, TikTok Pixel
+    ====================================================== -->
+    <!-- Google Tag Manager -->
+    <!-- <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-XXXXXXX');</script> -->
+    <!-- End Google Tag Manager -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800;900&family=Tenor+Sans&display=swap" rel="stylesheet" />
   </head>
 
   <body>
+    <!-- =====================================================
+         Google Tag Manager (GTM) - Body Snippet (noscript fallback)
+         Must be placed immediately after the opening <body> tag.
+         Replace GTM-XXXXXXX with your actual GTM Container ID.
+    ====================================================== -->
+    <!-- Google Tag Manager (noscript) -->
+    <!-- <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> -->
+    <!-- End Google Tag Manager (noscript) -->
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
   </body>
 
 </html>
