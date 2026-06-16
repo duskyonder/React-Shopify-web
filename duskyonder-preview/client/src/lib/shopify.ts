@@ -512,32 +512,89 @@ export async function getCart(cartId: string): Promise<ShopifyCart | null> {
 
 const CUSTOMER_ACCOUNT_API_CLIENT_ID = import.meta.env.VITE_SHOPIFY_CUSTOMER_ACCOUNT_API_CLIENT_ID as string;
 
+// Shopify Customer Account API endpoints (from OpenID discovery)
+// Discovery: https://{store}.myshopify.com/.well-known/openid-configuration
+// Shop ID: 90159776010 (from issuer URL)
+const SHOPIFY_CUSTOMER_AUTH_DOMAIN = "https://account.duskyonder.com";
+const SHOPIFY_AUTH_AUTHORIZE_URL = `${SHOPIFY_CUSTOMER_AUTH_DOMAIN}/authentication/oauth/authorize`;
+const SHOPIFY_AUTH_LOGOUT_URL = `${SHOPIFY_CUSTOMER_AUTH_DOMAIN}/authentication/logout`;
+
+/**
+ * Generate PKCE code verifier and challenge (required for public clients)
+ */
+async function generatePKCE(): Promise<{ codeVerifier: string; codeChallenge: string }> {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  const codeVerifier = base64UrlEncode(array);
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(codeVerifier);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  const codeChallenge = base64UrlEncode(new Uint8Array(digest));
+
+  return { codeVerifier, codeChallenge };
+}
+
+function base64UrlEncode(buffer: Uint8Array): string {
+  let str = "";
+  buffer.forEach((b) => (str += String.fromCharCode(b)));
+  return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
 /**
  * 生成 Shopify Customer Account 登录 URL
- * 使用 Shopify 的 OAuth2 授权码流程
+ * 使用 Shopify 的 OAuth2 PKCE 授权码流程（适用于 public client / SPA）
  */
-export function getCustomerLoginUrl(redirectUri: string): string {
-  const shopId = SHOPIFY_STORE_DOMAIN.replace(".myshopify.com", "");
-  const authUrl = `https://shopify.com/${shopId}/auth/oauth/authorize`;
+export async function getCustomerLoginUrlAsync(redirectUri: string): Promise<string> {
+  const { codeVerifier, codeChallenge } = await generatePKCE();
+  const state = generateRandomState();
+  const nonce = generateRandomNonce();
+
+  // Store PKCE verifier and state in sessionStorage for callback verification
+  sessionStorage.setItem("shopify_code_verifier", codeVerifier);
+  sessionStorage.setItem("shopify_auth_state", state);
+  sessionStorage.setItem("shopify_auth_nonce", nonce);
 
   const params = new URLSearchParams({
     client_id: CUSTOMER_ACCOUNT_API_CLIENT_ID,
     response_type: "code",
     redirect_uri: redirectUri,
     scope: "openid email customer-account-api:full",
-    state: generateRandomState(),
-    nonce: generateRandomNonce(),
+    state,
+    nonce,
+    code_challenge: codeChallenge,
+    code_challenge_method: "S256",
   });
 
-  return `${authUrl}?${params.toString()}`;
+  return `${SHOPIFY_AUTH_AUTHORIZE_URL}?${params.toString()}`;
+}
+
+/**
+ * 同步版本（向后兼容）- 不含 PKCE，仅用于简单重定向
+ */
+export function getCustomerLoginUrl(redirectUri: string): string {
+  const state = generateRandomState();
+  const nonce = generateRandomNonce();
+
+  sessionStorage.setItem("shopify_auth_state", state);
+  sessionStorage.setItem("shopify_auth_nonce", nonce);
+
+  const params = new URLSearchParams({
+    client_id: CUSTOMER_ACCOUNT_API_CLIENT_ID,
+    response_type: "code",
+    redirect_uri: redirectUri,
+    scope: "openid email customer-account-api:full",
+    state,
+    nonce,
+  });
+
+  return `${SHOPIFY_AUTH_AUTHORIZE_URL}?${params.toString()}`;
 }
 
 /**
  * 生成 Shopify Customer Account 注册 URL（同一个 OAuth 流程，Shopify 会显示注册选项）
  */
 export function getCustomerRegisterUrl(redirectUri: string): string {
-  // Shopify Customer Account API 的注册和登录使用同一个 OAuth 端点
-  // 用户在 Shopify 的登录页面可以选择注册
   return getCustomerLoginUrl(redirectUri);
 }
 
@@ -545,8 +602,7 @@ export function getCustomerRegisterUrl(redirectUri: string): string {
  * 生成 Shopify Customer Account 登出 URL
  */
 export function getCustomerLogoutUrl(redirectUri: string): string {
-  const shopId = SHOPIFY_STORE_DOMAIN.replace(".myshopify.com", "");
-  return `https://shopify.com/${shopId}/auth/logout?return_to=${encodeURIComponent(redirectUri)}`;
+  return `${SHOPIFY_AUTH_LOGOUT_URL}?return_to=${encodeURIComponent(redirectUri)}`;
 }
 
 // Utility: generate random state for OAuth
