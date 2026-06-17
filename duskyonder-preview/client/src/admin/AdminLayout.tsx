@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { useLocation } from "wouter";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
@@ -32,52 +30,58 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "duskyonder2024";
+
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [location, setLocation] = useLocation();
-  const { user, loading, isAuthenticated, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [authed, setAuthed] = useState(() => {
+    return sessionStorage.getItem("admin_authed") === "1";
+  });
+  const [pwd, setPwd] = useState("");
+  const [error, setError] = useState("");
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
+  if (!authed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-2">管理后台</h1>
-          <p className="text-muted-foreground text-sm mb-6">请登录以继续</p>
-          <a
-            href={getLoginUrl()}
-            className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-6 py-2.5 text-sm font-medium hover:bg-primary/90 transition-colors"
+        <div className="w-full max-w-sm p-8 rounded-xl border border-border bg-card shadow-sm">
+          <h1 className="text-xl font-semibold mb-1 text-center">管理后台</h1>
+          <p className="text-muted-foreground text-sm mb-6 text-center">请输入管理员密码</p>
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              if (pwd === ADMIN_PASSWORD) {
+                sessionStorage.setItem("admin_authed", "1");
+                setAuthed(true);
+                setError("");
+              } else {
+                setError("密码错误，请重试");
+              }
+            }}
+            className="flex flex-col gap-3"
           >
-            登录
-          </a>
+            <input
+              type="password"
+              value={pwd}
+              onChange={e => setPwd(e.target.value)}
+              placeholder="管理员密码"
+              autoFocus
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            {error && <p className="text-destructive text-xs">{error}</p>}
+            <button
+              type="submit"
+              className="w-full rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              进入
+            </button>
+          </form>
         </div>
       </div>
     );
   }
 
-  if (user?.role !== "admin") {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-2">无权限访问</h1>
-          <p className="text-muted-foreground text-sm mb-6">此页面仅管理员可访问</p>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-border px-6 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
-          >
-            返回首页
-          </a>
-        </div>
-      </div>
-    );
-  }
+  const user = { name: "Admin", email: "influencer@duskyonder.com" };
 
   return (
     <SidebarProvider defaultOpen={!collapsed}>
@@ -135,7 +139,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem
-                  onClick={() => { logout(); setLocation("/"); }}
+                  onClick={() => { sessionStorage.removeItem("admin_authed"); setLocation("/"); }}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
