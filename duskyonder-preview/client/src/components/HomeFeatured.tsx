@@ -162,7 +162,7 @@ function DesktopProductPager({ products, productsPerRow, renderCard, gap = 0, ca
 
   return (
     <>
-    <div className="sf-scroll-section-wrapper" style={{ width: "95%", maxWidth: `${maxWidth}px`, ['--product-card-height' as string]: `${cardHeight}px` } as React.CSSProperties}>
+    <div className="sf-scroll-section-wrapper" style={{ width: "95%", maxWidth: `${maxWidth}px`, ['--product-card-height' as string]: cardHeight > 0 ? `${cardHeight}px` : 'auto' } as React.CSSProperties}>
       <button
         className="sf-cat-arrow prev"
         onClick={() => setPage(p => Math.max(0, p - 1))}
@@ -227,16 +227,22 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
   // Determine data source
   const dataSource = isDefault ? (config.productsDataSource ?? 'manual') : (instanceData?.dataSource ?? 'manual');
   const collectionHandle = isDefault ? (config.productsCollectionHandle ?? '') : (instanceData?.collectionHandle ?? '');
+  const productTag = instanceData?.tag ?? '';
 
   // Auto-fetch products from Shopify when dataSource is 'auto'
   useEffect(() => {
     if (dataSource !== 'auto') return;
     let cancelled = false;
     (async () => {
-      const { fetchBestSellingProducts, fetchCollectionProducts } = await import('@/lib/shopify');
-      const results = collectionHandle
-        ? await fetchCollectionProducts(collectionHandle, 12)
-        : await fetchBestSellingProducts(12);
+      const { fetchBestSellingProducts, fetchCollectionProducts, fetchProductsByTag } = await import('@/lib/shopify');
+      let results;
+      if (productTag) {
+        results = await fetchProductsByTag(productTag, 12);
+      } else if (collectionHandle) {
+        results = await fetchCollectionProducts(collectionHandle, 12);
+      } else {
+        results = await fetchBestSellingProducts(12);
+      }
       if (!cancelled) {
         setAutoProducts(results.map(p => ({
           id: p.id,
@@ -251,7 +257,7 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
       }
     })();
     return () => { cancelled = true; };
-  }, [dataSource, collectionHandle]);
+  }, [dataSource, collectionHandle, productTag]);
 
   const manualProducts = isDefault ? config.products : (instanceData?.products ?? []);
   const products = dataSource === 'auto' ? autoProducts : manualProducts;

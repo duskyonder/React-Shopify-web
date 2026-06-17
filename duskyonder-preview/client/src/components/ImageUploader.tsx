@@ -15,6 +15,7 @@ interface ImageUploaderProps {
   slot: string;
   currentUrl?: string;
   onUploaded: (url: string) => void;
+  onClear?: () => void;
   aspectRatio?: string; // e.g. "16/9", "3/4"
   label?: string;
 }
@@ -24,6 +25,7 @@ export default function ImageUploader({
   slot,
   currentUrl,
   onUploaded,
+  onClear,
   aspectRatio = "16/9",
   label = "Upload Image",
 }: ImageUploaderProps) {
@@ -120,7 +122,7 @@ export default function ImageUploader({
             Uploading to Shopify...
           </div>
         ) : currentUrl ? (
-          <div>
+          <div style={{ position: "relative" }}>
             <img
               src={currentUrl}
               alt="Uploaded"
@@ -130,6 +132,23 @@ export default function ImageUploader({
             <p style={{ fontSize: "0.75rem", color: "#888", margin: 0 }}>
               Click to change
             </p>
+            {onClear && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onClear(); }}
+                style={{
+                  position: "absolute", top: 6, right: 6,
+                  width: 24, height: 24, borderRadius: "50%",
+                  background: "rgba(220,38,38,0.85)", border: "none",
+                  color: "#fff", cursor: "pointer", display: "flex",
+                  alignItems: "center", justifyContent: "center", fontSize: 14,
+                  lineHeight: 1, padding: 0,
+                }}
+                title="Remove image"
+              >
+                ×
+              </button>
+            )}
           </div>
         ) : (
           <div className="editor-image-placeholder">

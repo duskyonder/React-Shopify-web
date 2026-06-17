@@ -177,7 +177,7 @@ function FeaturedInstanceEditor({ instance }: { instance: FeaturedInstance }) {
               </SelectContent>
             </Select>
           </div>
-          {(instance.dataSource === 'auto') && (
+          {(instance.dataSource === 'auto') && (<>
             <div className="space-y-1.5 flex-1">
               <Label className="text-xs">Collection Handle (optional)</Label>
               <Input
@@ -187,7 +187,16 @@ function FeaturedInstanceEditor({ instance }: { instance: FeaturedInstance }) {
                 className="h-8"
               />
             </div>
-          )}
+            <div className="space-y-1.5 flex-1">
+              <Label className="text-xs">Product Tag Filter (optional)</Label>
+              <Input
+                value={instance.tag ?? ''}
+                onChange={e => updateFeaturedInstance(instance.id, { tag: e.target.value })}
+                placeholder="e.g. new, sale, featured"
+                className="h-8"
+              />
+            </div>
+          </>)}
         </div>
 
         <div className="flex gap-4 items-end">

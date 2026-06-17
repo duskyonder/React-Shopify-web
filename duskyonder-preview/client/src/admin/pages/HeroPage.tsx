@@ -133,6 +133,7 @@ export default function HeroPage() {
                     slot={`slide_${slide.id}_desktop`}
                     currentUrl={slide.imageUrl}
                     onUploaded={(url) => updateSlide(slide.id, { imageUrl: url })}
+                    onClear={() => updateSlide(slide.id, { imageUrl: "" })}
                     aspectRatio="16/5"
                     label="上传桌面端图片"
                   />
@@ -144,6 +145,7 @@ export default function HeroPage() {
                     slot={`slide_${slide.id}_mobile`}
                     currentUrl={slide.mobileImageUrl}
                     onUploaded={(url) => updateSlide(slide.id, { mobileImageUrl: url })}
+                    onClear={() => updateSlide(slide.id, { mobileImageUrl: "" })}
                     aspectRatio="3/4"
                     label="上传移动端图片"
                   />

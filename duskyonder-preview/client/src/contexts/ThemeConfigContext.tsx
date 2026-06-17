@@ -242,6 +242,7 @@ export interface FeaturedInstance {
   productAspectRatio: string;
   dataSource?: 'auto' | 'manual'; // auto=fetch Best Sellers from Shopify, manual=use manually selected products
   collectionHandle?: string; // Shopify collection handle for auto mode (default: best-selling)
+  tag?: string; // Shopify product tag filter (e.g. "new", "sale") - filters products by tag
 }
 
 export interface ThemeConfig {
@@ -1838,7 +1839,7 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
 
   const removeFeaturedSection = useCallback((uid: string) => {
     setConfig(prev => {
-      if (uid === "featured_default") return prev; // can't remove default
+      // Allow deleting any featured section including default
       const next = {
         ...prev,
         sectionOrder: prev.sectionOrder.filter(s => (s.instanceId || s.key) !== uid),

@@ -740,3 +740,46 @@ export async function fetchCollectionProducts(handle: string, count: number = 12
     return [];
   }
 }
+
+const GET_PRODUCTS_BY_TAG = `
+  query GetProductsByTag($query: String!, $first: Int!) {
+    products(first: $first, query: $query, sortKey: BEST_SELLING) {
+      nodes {
+        id
+        title
+        handle
+        images(first: 2) {
+          nodes {
+            url
+            altText
+          }
+        }
+        variants(first: 1) {
+          nodes {
+            price {
+              amount
+              currencyCode
+            }
+          }
+        }
+        options {
+          name
+          values
+        }
+      }
+    }
+  }
+`;
+
+export async function fetchProductsByTag(tag: string, count: number = 12): Promise<StorefrontProductSimple[]> {
+  try {
+    const { data } = await shopifyFetch<{ products: { nodes: any[] } }>({
+      query: GET_PRODUCTS_BY_TAG,
+      variables: { query: `tag:${tag}`, first: count },
+    });
+    return mapStorefrontProducts(data.products?.nodes || []);
+  } catch (e) {
+    console.error(`Failed to fetch products by tag "${tag}":`, e);
+    return [];
+  }
+}
