@@ -655,10 +655,10 @@
 /* --- Shared scroll section wrapper (used by videos, products) --- */
 .sf-scroll-section-wrapper {
   position: relative;
-  width: 100%;
-  max-width: var(--products-max-width, 1680px);
+  width: 95%;
+  max-width: var(--products-max-width, 1600px);
   margin: 0 auto;
-  padding: 0 52px;
+  padding: 0 24px;
   box-sizing: border-box;
 }
 .sf-scroll-track-outer {

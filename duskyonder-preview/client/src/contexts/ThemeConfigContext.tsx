@@ -22,6 +22,7 @@ export interface Slide {
   mobileImageUrl?: string;           // 移动端专用横幅图片（可选，未设置则使用 imageUrl）
   contentPosition?: string; // "top-left"|"top-center"|"top-right"|"middle-left"|"middle-center"|"middle-right"|"bottom-left"|"bottom-center"|"bottom-right"
   contentPositionMobile?: string; // 移动端独立内容位置
+  textColorMode?: 'light' | 'dark'; // 文本颜色模式：light=白色文字, dark=深色文字
   textBlocks?: SlideTextBlock[];
 }
 
@@ -239,6 +240,8 @@ export interface FeaturedInstance {
   products: Product[];
   productsPerRow: number;
   productAspectRatio: string;
+  dataSource?: 'auto' | 'manual'; // auto=fetch Best Sellers from Shopify, manual=use manually selected products
+  collectionHandle?: string; // Shopify collection handle for auto mode (default: best-selling)
 }
 
 export interface ThemeConfig {
@@ -350,6 +353,8 @@ export interface ThemeConfig {
   productsSwatchOffsetX?: number; // px, 色块水平偏移（向右）, default 0
   productsSwatchMarginTop?: number; // px, 色块上边距, default 6
   productsSwatchAlign?: "flex-start" | "center" | "flex-end"; // 色块对齐方式, default flex-start
+  productsDataSource?: 'auto' | 'manual'; // auto=fetch Best Sellers from Shopify, manual=use manually configured products
+  productsCollectionHandle?: string; // Shopify collection handle for auto mode
   featuredInstances: FeaturedInstance[]; // multi-instance Best Sellers
 
   showSeries: boolean;
@@ -1115,6 +1120,8 @@ const defaultConfig: ThemeConfig = {
   ],
 
   showFeatured: true,
+  productsDataSource: 'manual',
+  productsCollectionHandle: '',
   featuredTitle: "Best Sellers",
   productAspectRatio: "3/4",
   productsPerRow: 4,
@@ -1567,8 +1574,15 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
     }
   }, [shopifyData]);
 
-  // 从 Shopify Metaobject 获取首页 Banner 数据（在 shopifyData 加载完成后执行，避免被覆盖）
+  // Load Banner data: prefer themeConfig saved slides, fallback to homepage_banner metaobjects
   useEffect(() => {
+    // If themeConfig already has slides saved (from editor), use those
+    const savedSlides = (shopifyData?.themeConfig as any)?.slides;
+    if (savedSlides && Array.isArray(savedSlides) && savedSlides.length > 0) {
+      // Slides are already merged via the themeConfig load above, no need to fetch separately
+      return;
+    }
+    // Fallback: fetch from homepage_banner metaobjects (initial setup before editor is used)
     fetchHomepageBanners().then((banners) => {
       if (banners.length > 0) {
         setConfig((prev) => ({
@@ -1582,6 +1596,7 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
             imageUrl: b.imageUrl ?? "",
             mobileImageUrl: b.mobileImageUrl ?? b.imageUrl ?? "",
             contentPosition: b.contentPosition ?? "middle-center",
+            textColorMode: (b as any).textColorMode ?? "light",
           })),
         }));
       }

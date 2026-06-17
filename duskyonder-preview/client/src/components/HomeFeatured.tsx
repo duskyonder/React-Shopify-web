@@ -162,7 +162,7 @@ function DesktopProductPager({ products, productsPerRow, renderCard, gap = 0, ca
 
   return (
     <>
-    <div className="sf-scroll-section-wrapper" style={{ maxWidth: `${maxWidth}px`, ['--product-card-height' as string]: `${cardHeight}px` } as React.CSSProperties}>
+    <div className="sf-scroll-section-wrapper" style={{ width: "95%", maxWidth: `${maxWidth}px`, ['--product-card-height' as string]: `${cardHeight}px` } as React.CSSProperties}>
       <button
         className="sf-cat-arrow prev"
         onClick={() => setPage(p => Math.max(0, p - 1))}
@@ -210,6 +210,7 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
   const [wishlist, setWishlist] = useState<Set<string>>(new Set());
   const [hoveredColors, setHoveredColors] = useState<Record<string, number>>({}); // productId → colorIdx
   const [isMobile, setIsMobile] = useState(false);
+  const [autoProducts, setAutoProducts] = useState<Product[]>([]);
 
   // Detect mobile
   useEffect(() => {
@@ -218,6 +219,43 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
     window.addEventListener("resize", check, { passive: true });
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Determine which data to use: default instance uses config.products, extra instances use featuredInstances
+  const isDefault = !instanceId || instanceId === "featured_default";
+  const instanceData = isDefault ? null : config.featuredInstances?.find(f => f.id === instanceId);
+
+  // Determine data source
+  const dataSource = isDefault ? (config.productsDataSource ?? 'manual') : (instanceData?.dataSource ?? 'manual');
+  const collectionHandle = isDefault ? (config.productsCollectionHandle ?? '') : (instanceData?.collectionHandle ?? '');
+
+  // Auto-fetch products from Shopify when dataSource is 'auto'
+  useEffect(() => {
+    if (dataSource !== 'auto') return;
+    let cancelled = false;
+    (async () => {
+      const { fetchBestSellingProducts, fetchCollectionProducts } = await import('@/lib/shopify');
+      const results = collectionHandle
+        ? await fetchCollectionProducts(collectionHandle, 12)
+        : await fetchBestSellingProducts(12);
+      if (!cancelled) {
+        setAutoProducts(results.map(p => ({
+          id: p.id,
+          name: p.title,
+          price: p.price,
+          imageUrl: p.imageUrl,
+          hoverImageUrl: p.hoverImageUrl || '',
+          colors: p.colors,
+          colorImages: {},
+          detailUrl: p.detailUrl,
+        })));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [dataSource, collectionHandle]);
+
+  const manualProducts = isDefault ? config.products : (instanceData?.products ?? []);
+  const products = dataSource === 'auto' ? autoProducts : manualProducts;
+  const sectionTitle = isDefault ? config.featuredTitle : (instanceData?.title ?? "Best Sellers");
 
   // Mobile scroll state
   const mobileTrackRef = useRef<HTMLDivElement>(null);
@@ -230,12 +268,6 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
     const cardWidth = el.clientWidth / (productsPerRow ?? 4);
     el.scrollBy({ left: dir * cardWidth, behavior: "smooth" });
   };
-
-  // Determine which data to use: default instance uses config.products, extra instances use featuredInstances
-  const isDefault = !instanceId || instanceId === "featured_default";
-  const instanceData = isDefault ? null : config.featuredInstances?.find(f => f.id === instanceId);
-  const products = isDefault ? config.products : (instanceData?.products ?? []);
-  const sectionTitle = isDefault ? config.featuredTitle : (instanceData?.title ?? "Best Sellers");
   const productsPerRow = isDefault ? (config.productsPerRow ?? 4) : (instanceData?.productsPerRow ?? 4);
   const productAspectRatio = isDefault ? (config.productAspectRatio ?? "3/4") : (instanceData?.productAspectRatio ?? "3/4");
   const desktopGap = config.productsDesktopGap ?? 0;
@@ -393,7 +425,7 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
             renderCard={renderProductCard}
             gap={desktopGap}
             cardWidth={desktopCardWidth}
-            maxWidth={Math.max(config.productsMaxWidth ?? 1680, 1680)}
+            maxWidth={config.productsMaxWidth ?? 1600}
             cardHeight={config.productCardHeight ?? 0}
           />
         )}

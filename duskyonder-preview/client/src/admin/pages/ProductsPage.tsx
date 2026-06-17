@@ -162,9 +162,37 @@ function FeaturedInstanceEditor({ instance }: { instance: FeaturedInstance }) {
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-4 space-y-3">
+        {/* Data Source Toggle */}
         <div className="flex gap-4 items-end">
           <div className="space-y-1.5 flex-1">
-            <Label className="text-xs">每行产品数</Label>
+            <Label className="text-xs">Data Source</Label>
+            <Select
+              value={instance.dataSource ?? 'manual'}
+              onValueChange={v => updateFeaturedInstance(instance.id, { dataSource: v as 'auto' | 'manual' })}
+            >
+              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto (Shopify Best Sellers)</SelectItem>
+                <SelectItem value="manual">Manual (Select Products)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {(instance.dataSource === 'auto') && (
+            <div className="space-y-1.5 flex-1">
+              <Label className="text-xs">Collection Handle (optional)</Label>
+              <Input
+                value={instance.collectionHandle ?? ''}
+                onChange={e => updateFeaturedInstance(instance.id, { collectionHandle: e.target.value })}
+                placeholder="e.g. best-selling (empty = all best sellers)"
+                className="h-8"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-4 items-end">
+          <div className="space-y-1.5 flex-1">
+            <Label className="text-xs">Products Per Row</Label>
             <Select
               value={String(instance.productsPerRow ?? 4)}
               onValueChange={v => updateFeaturedInstance(instance.id, { productsPerRow: Number(v) })}
@@ -172,13 +200,13 @@ function FeaturedInstanceEditor({ instance }: { instance: FeaturedInstance }) {
               <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {[2, 3, 4, 5].map(n => (
-                  <SelectItem key={n} value={String(n)}>{n} 列</SelectItem>
+                  <SelectItem key={n} value={String(n)}>{n} columns</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5 flex-1">
-            <Label className="text-xs">图片比例</Label>
+            <Label className="text-xs">Image Aspect Ratio</Label>
             <Input
               value={instance.productAspectRatio ?? "3/4"}
               onChange={e => updateFeaturedInstance(instance.id, { productAspectRatio: e.target.value })}
@@ -186,12 +214,14 @@ function FeaturedInstanceEditor({ instance }: { instance: FeaturedInstance }) {
               className="h-8"
             />
           </div>
-          <Button size="sm" variant="outline" onClick={() => setSearchOpen(true)}>
-            <Search className="w-4 h-4 mr-1" /> 搜索添加产品
-          </Button>
+          {(instance.dataSource !== 'auto') && (
+            <Button size="sm" variant="outline" onClick={() => setSearchOpen(true)}>
+              <Search className="w-4 h-4 mr-1" /> Search & Add Products
+            </Button>
+          )}
         </div>
 
-        <div className="space-y-1.5">
+        {(instance.dataSource !== 'auto') && <div className="space-y-1.5">
           {products.map((product, i) => (
             <div
               key={product.id}
@@ -222,10 +252,16 @@ function FeaturedInstanceEditor({ instance }: { instance: FeaturedInstance }) {
           ))}
           {products.length === 0 && (
             <div className="text-center py-6 text-muted-foreground text-sm border rounded-lg border-dashed">
-              点击"搜索添加产品"添加产品
+              Click "Search & Add Products" to add products
             </div>
           )}
-        </div>
+        </div>}
+        {(instance.dataSource === 'auto') && (
+          <div className="text-center py-4 text-muted-foreground text-sm border rounded-lg border-dashed bg-muted/30">
+            Products will be automatically fetched from Shopify Best Sellers.
+            {instance.collectionHandle && <span className="block mt-1">Collection: <strong>{instance.collectionHandle}</strong></span>}
+          </div>
+        )}
       </CardContent>
 
       <ProductSearchDialog

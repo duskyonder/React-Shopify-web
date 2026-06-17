@@ -91,9 +91,10 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
         <div className="sf-section-header" style={{ textAlign: titleAlign }}><h2>{config.videosTitle}</h2></div>
         {!videoSectionVisible && <div style={{ minHeight: 300 }} />}
         {videoSectionVisible && <div className="sf-scroll-section-wrapper" style={{
+            width: "95%",
             maxWidth: isMobileVideos
-              ? (config.videosMobileMaxWidth ? `${config.videosMobileMaxWidth}px` : undefined)
-              : `${Math.max(config.videosMaxWidth ?? 1680, 1680)}px`,
+              ? (config.videosMobileMaxWidth ? `${config.videosMobileMaxWidth}px` : '1600px')
+              : `${config.videosMaxWidth ?? 1600}px`,
             ['--video-card-height' as string]: isMobileVideos
               ? (config.videosMobileCardHeight ? `${config.videosMobileCardHeight}px` : undefined)
               : (config.videoCardHeight ? `${config.videoCardHeight}px` : undefined),

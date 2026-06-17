@@ -618,3 +618,125 @@ function generateRandomNonce(): string {
   crypto.getRandomValues(array);
   return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+
+// =====================================================
+// Best Selling Products (Storefront API)
+// =====================================================
+
+const GET_BEST_SELLING_PRODUCTS = `
+  query GetBestSellingProducts($first: Int!) {
+    products(first: $first, sortKey: BEST_SELLING) {
+      nodes {
+        id
+        title
+        handle
+        images(first: 2) {
+          nodes {
+            url
+            altText
+          }
+        }
+        variants(first: 1) {
+          nodes {
+            price {
+              amount
+              currencyCode
+            }
+          }
+        }
+        options {
+          name
+          values
+        }
+      }
+    }
+  }
+`;
+
+const GET_COLLECTION_PRODUCTS = `
+  query GetCollectionProducts($handle: String!, $first: Int!) {
+    collection(handle: $handle) {
+      products(first: $first) {
+        nodes {
+          id
+          title
+          handle
+          images(first: 2) {
+            nodes {
+              url
+              altText
+            }
+          }
+          variants(first: 1) {
+            nodes {
+              price {
+                amount
+                currencyCode
+              }
+            }
+          }
+          options {
+            name
+            values
+          }
+        }
+      }
+    }
+  }
+`;
+
+export interface StorefrontProductSimple {
+  id: string;
+  title: string;
+  handle: string;
+  imageUrl: string;
+  hoverImageUrl?: string;
+  price: string;
+  colors: string[];
+  detailUrl: string;
+}
+
+function mapStorefrontProducts(nodes: any[]): StorefrontProductSimple[] {
+  return nodes.map((node: any) => {
+    const images = node.images?.nodes || [];
+    const price = node.variants?.nodes?.[0]?.price;
+    const colorOption = node.options?.find((o: any) => o.name.toLowerCase() === 'color');
+    return {
+      id: node.id,
+      title: node.title,
+      handle: node.handle,
+      imageUrl: images[0]?.url || '',
+      hoverImageUrl: images[1]?.url || undefined,
+      price: price ? `$${parseFloat(price.amount).toFixed(0)}` : '',
+      colors: colorOption?.values || [],
+      detailUrl: `/products/${node.handle}`,
+    };
+  });
+}
+
+export async function fetchBestSellingProducts(count: number = 12): Promise<StorefrontProductSimple[]> {
+  try {
+    const { data } = await shopifyFetch<{ products: { nodes: any[] } }>({
+      query: GET_BEST_SELLING_PRODUCTS,
+      variables: { first: count },
+    });
+    return mapStorefrontProducts(data.products?.nodes || []);
+  } catch (e) {
+    console.error('Failed to fetch best selling products:', e);
+    return [];
+  }
+}
+
+export async function fetchCollectionProducts(handle: string, count: number = 12): Promise<StorefrontProductSimple[]> {
+  try {
+    const { data } = await shopifyFetch<{ collection: { products: { nodes: any[] } } }>({
+      query: GET_COLLECTION_PRODUCTS,
+      variables: { handle, first: count },
+    });
+    return mapStorefrontProducts(data.collection?.products?.nodes || []);
+  } catch (e) {
+    console.error(`Failed to fetch collection "${handle}" products:`, e);
+    return [];
+  }
+}

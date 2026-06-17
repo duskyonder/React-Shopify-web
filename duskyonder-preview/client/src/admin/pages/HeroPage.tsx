@@ -194,18 +194,43 @@ export default function HeroPage() {
 
               <div className="flex flex-wrap gap-6 items-start">
                 <div className="space-y-1.5">
-                  <Label className="text-xs">文本位置（桌面端）</Label>
+                  <Label className="text-xs">Text Position (Desktop)</Label>
                   <PositionGrid
                     value={slide.contentPosition ?? "middle-center"}
                     onChange={(v) => updateSlide(slide.id, { contentPosition: v })}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">文本位置（移动端）</Label>
+                  <Label className="text-xs">Text Position (Mobile)</Label>
                   <PositionGrid
                     value={slide.contentPositionMobile ?? slide.contentPosition ?? "middle-center"}
                     onChange={(v) => updateSlide(slide.id, { contentPositionMobile: v })}
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Text Color Mode</Label>
+                  <div className="flex gap-2 mt-1">
+                    <button
+                      onClick={() => updateSlide(slide.id, { textColorMode: 'light' })}
+                      className={`px-3 py-1.5 rounded border text-xs font-medium transition-colors ${
+                        (slide.textColorMode ?? 'light') === 'light'
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      Light (White Text)
+                    </button>
+                    <button
+                      onClick={() => updateSlide(slide.id, { textColorMode: 'dark' })}
+                      className={`px-3 py-1.5 rounded border text-xs font-medium transition-colors ${
+                        slide.textColorMode === 'dark'
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      Dark (Black Text)
+                    </button>
+                  </div>
                 </div>
               </div>
             </CardContent>

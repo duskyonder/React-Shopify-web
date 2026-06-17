@@ -428,6 +428,19 @@
   }
 }
 
+/* Dark text mode for hero slides */
+.sf-hero-dark-text .sf-hero-title,
+.sf-hero-dark-text .sf-hero-subtitle,
+.sf-hero-dark-text .sf-hero-text-block,
+.sf-hero-dark-text h1,
+.sf-hero-dark-text p {
+  color: #1a1a1a !important;
+}
+.sf-hero-dark-text .sf-hero-cta-btn {
+  color: #1a1a1a !important;
+  border-color: #1a1a1a !important;
+}
+
 /* --- Section Order Controls --- */
 .sf-section-order-item {
   display: flex;

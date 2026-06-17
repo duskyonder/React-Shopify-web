@@ -221,20 +221,68 @@ function VideoCard({ video }: { video: Video }) {
 }
 
 export default function VideosPage() {
-  const { config, addVideo } = useThemeConfig();
+  const { config, updateConfig, addVideo } = useThemeConfig();
   const videos = config.videos ?? [];
 
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold">视频板块</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">管理首页达人视频内容</p>
+          <h1 className="text-xl font-semibold">Video Section</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Manage homepage influencer videos</p>
         </div>
         <Button onClick={addVideo} size="sm" variant="outline">
-          <Plus className="w-4 h-4 mr-1" /> 添加视频
+          <Plus className="w-4 h-4 mr-1" /> Add Video
         </Button>
       </div>
+
+      {/* Global Video Section Settings */}
+      <Card className="mb-4">
+        <CardContent className="pt-4 pb-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Desktop Gap (px)</Label>
+              <Input
+                type="number"
+                value={config.videosDesktopGap ?? 0}
+                onChange={e => updateConfig({ videosDesktopGap: Number(e.target.value) })}
+                className="h-8"
+                min={0} max={60}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Mobile Gap (px)</Label>
+              <Input
+                type="number"
+                value={config.videosMobileGap ?? 12}
+                onChange={e => updateConfig({ videosMobileGap: Number(e.target.value) })}
+                className="h-8"
+                min={0} max={60}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Desktop Height (px, 0=auto)</Label>
+              <Input
+                type="number"
+                value={config.videoCardHeight ?? 0}
+                onChange={e => updateConfig({ videoCardHeight: Number(e.target.value) })}
+                className="h-8"
+                min={0} max={800}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Mobile Height (px, 0=auto)</Label>
+              <Input
+                type="number"
+                value={config.videosMobileCardHeight ?? 0}
+                onChange={e => updateConfig({ videosMobileCardHeight: Number(e.target.value) })}
+                className="h-8"
+                min={0} max={800}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="space-y-4">
         {videos.map(video => (

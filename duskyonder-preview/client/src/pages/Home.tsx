@@ -62,7 +62,7 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
               <div className="sf-hero-bg" />
             )}
             <div
-              className="sf-hero-content"
+              className={`sf-hero-content${slide.textColorMode === 'dark' ? ' sf-hero-dark-text' : ''}`}
               style={{
                 position: "absolute",
                 display: "flex", flexDirection: "column",
@@ -206,7 +206,7 @@ function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAli
 
   return (
     <section className="sf-section sf-categories">
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
+      <div style={{ width: "95%", maxWidth: 1600, margin: "0 auto" }}>
         <div className="sf-section-header" style={{ textAlign: titleAlign }}><h2>{config.categoriesTitle}</h2></div>
       </div>
       <div
@@ -214,9 +214,9 @@ function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAli
         style={{
           ["--cat-overlay-opacity" as string]: overlayOpacity,
           ["--cat-label-font-size" as string]: isMobile ? `${labelFontSizeMobile}px` : `${labelFontSizeDesktop}px`,
-          maxWidth: 1280,
+          width: "95%",
+          maxWidth: 1600,
           margin: "0 auto",
-          padding: "0 24px",
         } as React.CSSProperties}
       >
         <div
@@ -224,7 +224,7 @@ function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAli
           style={{
             display: "grid",
             gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
-            gap: isMobile ? "12px" : "20px",
+            gap: isMobile ? `${config.categoriesMobileGap || 12}px` : `${config.categoriesDesktopGap || 20}px`,
           }}
           onMouseLeave={() => setHoveredId(null)}
         >
@@ -333,9 +333,10 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
     <>
     <section className="sf-section sf-series-section">
       <div className="sf-series-inner" style={{
+        width: "95%",
         maxWidth: isMobile
-          ? (config.seriesMobileMaxWidth ? `${config.seriesMobileMaxWidth}px` : undefined)
-          : `${Math.max(config.seriesMaxWidth ?? 1680, 1680)}px`,
+          ? (config.seriesMobileMaxWidth ? `${config.seriesMobileMaxWidth}px` : '1600px')
+          : `${config.seriesMaxWidth ?? 1600}px`,
         ["--series-min-height" as string]: isMobile
           ? (config.seriesMobileMinHeight ? `${config.seriesMobileMinHeight}px` : `${config.seriesImageHeight ?? 520}px`)
           : `${config.seriesImageHeight ?? 520}px`,
