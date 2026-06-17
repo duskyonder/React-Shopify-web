@@ -70,7 +70,7 @@
 .sf-nav-link {
   font-size: var(--nav-font-size, 0.85rem);
   font-weight: 500;
-  color: white;
+  color: var(--nav-text-color, #333);
   text-decoration: none;
   letter-spacing: 0.04em;
   transition: color 0.2s;
@@ -79,13 +79,13 @@
 @media (max-width: 767px) {
   .sf-nav-link { font-size: var(--nav-m-font-size, var(--nav-font-size, 0.85rem)); }
 }
-.sf-nav-link:hover { color: rgba(255,255,255,0.7); }
+.sf-nav-link:hover { color: var(--nav-hover-color, #175C40); }
 .sf-header.scrolled .sf-nav-link { color: var(--nav-text-color, #333); }
 .sf-header.scrolled .sf-nav-link:hover { color: var(--nav-hover-color, #175C40); }
 .sf-logo-center {
   font-size: 1.5rem;
   font-weight: 900;
-  color: white;
+  color: #175C40;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   text-decoration: none;
@@ -369,14 +369,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Dynamic: promo height + desktop header 64px */
-  padding-top: calc(var(--promo-height, 40px) + 64px);
+  /* Header separated from hero, no padding compensation needed */
+  padding-top: 0;
   box-sizing: border-box;
   pointer-events: none;
 }
 @media (max-width: 900px) {
-  /* Dynamic: promo mobile height + mobile header 56px */
-  .sf-hero-slide { padding-top: calc(var(--promo-m-height, 36px) + 56px); }
+  /* Header separated from hero, no padding compensation needed */
+  .sf-hero-slide { padding-top: 0; }
 }
 /* active slide stays absolute — only opacity changes, no layout shift */
 .sf-hero-slide.active {

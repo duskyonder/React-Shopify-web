@@ -40,12 +40,9 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
   }, [config.slideshowAutoplay, config.slideshowSpeed, total]);
   useEffect(() => { startTimer(); return () => { if (timerRef.current) clearInterval(timerRef.current); }; }, [startTimer]);
   const go = (n: number) => { setCurrent((current + n + total) % total); startTimer(); };
-  // Hero height must include promo bar + header height so the image fills from page top
-  // (sf-hero uses margin-top: -(promo+header) to pull up; height must compensate)
-  const promoH = config.showPromoBar ? (isMobileHero ? (config.promoBarMobileHeight ?? 36) : (config.promoBarHeight ?? 40)) : 0;
-  const headerH = isMobileHero ? 56 : 64;
+  // Hero sits below the header — height is just the configured hero height
   const baseHeroHeight = isMobileHero ? (config.heroMobileHeight || config.heroHeight || 600) : (config.heroHeight || 600);
-  const heroHeight = baseHeroHeight + promoH + headerH;
+  const heroHeight = baseHeroHeight;
   return (
     <section className="sf-hero" style={{ height: heroHeight }}>
       {config.slides.map((slide, i) => {
@@ -191,89 +188,25 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
 // ==================== CATEGORIES (desktop: single-row scroll with configurable count) ====================
 function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "left" | "center" | "right" }) {
   const { config } = useThemeConfig();
-  const trackRef = useRef<HTMLDivElement>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const isDragging = useRef(false);
-  const dragStartX = useRef(0);
-  const dragScrollLeft = useRef(0);
-  const isJumping = useRef(false);
+  const overlayOpacity = (config.categoryOverlayOpacity ?? 60) / 100;
+  const labelFontSizeDesktop = config.categoryLabelFontSizeDesktop ?? 14;
+  const labelFontSizeMobile = config.categoryLabelFontSizeMobile ?? 12;
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 900);
+    const check = () => setIsMobile(window.innerWidth <= 768);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const cats = config.categories;
-  const desktopCount = config.categoriesDesktopCount ?? 6;
-  const desktopGap = config.categoriesDesktopGap ?? 0;
-  const mobileGap = config.categoriesMobileGap ?? 0;
-  const desktopCardWidth = config.categoriesCardWidth ?? 0;
-  const mobileCardWidth = config.categoriesMobileCardWidth ?? 0;
-  const overlayOpacity = (config.categoryOverlayOpacity ?? 60) / 100;
-  const labelFontSizeDesktop = config.categoryLabelFontSizeDesktop ?? 14;
-  const labelFontSizeMobile = config.categoryLabelFontSizeMobile ?? 12;
-  // Triple-clone for seamless infinite loop: [clone | original | clone]
-  const displayCats = [...cats, ...cats, ...cats];
-
-  // Initialize scroll to middle set
-  useEffect(() => {
-    const el = trackRef.current;
-    if (!el || cats.length === 0) return;
-    requestAnimationFrame(() => {
-      const oneSetWidth = el.scrollWidth / 3;
-      el.scrollLeft = oneSetWidth;
-    });
-  }, [cats.length]);
-
-  // Infinite loop: silently jump when near edges
-  const handleScroll = useCallback(() => {
-    const el = trackRef.current;
-    if (!el || isJumping.current) return;
-    const oneSetWidth = el.scrollWidth / 3;
-    if (el.scrollLeft >= oneSetWidth * 2) {
-      isJumping.current = true;
-      el.style.scrollBehavior = "auto";
-      el.scrollLeft -= oneSetWidth;
-      el.style.scrollBehavior = "";
-      isJumping.current = false;
-    } else if (el.scrollLeft < oneSetWidth * 0.1) {
-      isJumping.current = true;
-      el.style.scrollBehavior = "auto";
-      el.scrollLeft += oneSetWidth;
-      el.style.scrollBehavior = "";
-      isJumping.current = false;
-    }
-  }, []);
-
-  // Mobile-only drag (desktop drag removed per requirement #8)
-  const startDrag = (clientX: number) => {
-    if (!isMobile) return;
-    isDragging.current = true;
-    dragStartX.current = clientX;
-    dragScrollLeft.current = trackRef.current?.scrollLeft || 0;
-  };
-  const moveDrag = (clientX: number) => {
-    if (!isMobile || !isDragging.current || !trackRef.current) return;
-    const delta = dragStartX.current - clientX;
-    trackRef.current.scrollLeft = dragScrollLeft.current + delta;
-  };
-  const endDrag = () => { isDragging.current = false; };
-
-  // Scroll by one card width
-  const scrollByBtn = (dir: number) => {
-    const el = trackRef.current;
-    if (!el) return;
-    // Card width = container width / desktopCount
-    const cardWidth = el.clientWidth / desktopCount;
-    el.scrollBy({ left: dir * cardWidth, behavior: "smooth" });
-  };
+  // Only show first 4 categories
+  const cats = config.categories.slice(0, 4);
 
   return (
     <section className="sf-section sf-categories">
-      <div style={{ maxWidth: 1680, margin: "0 auto", padding: "0 24px" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
         <div className="sf-section-header" style={{ textAlign: titleAlign }}><h2>{config.categoriesTitle}</h2></div>
       </div>
       <div
@@ -281,62 +214,40 @@ function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAli
         style={{
           ["--cat-overlay-opacity" as string]: overlayOpacity,
           ["--cat-label-font-size" as string]: isMobile ? `${labelFontSizeMobile}px` : `${labelFontSizeDesktop}px`,
+          maxWidth: 1280,
+          margin: "0 auto",
+          padding: "0 24px",
         } as React.CSSProperties}
       >
-        <button className="sf-cat-arrow prev" onClick={() => scrollByBtn(-1)}>&#8249;</button>
-        <div className="sf-categories-track-outer">
-          <div
-            ref={trackRef}
-            className="sf-categories-track"
-            style={{
-              overflowX: "auto",
-              scrollbarWidth: "none",
-              scrollBehavior: "smooth",
-              scrollSnapType: isMobile ? "x mandatory" : "none",
-              gap: isMobile ? mobileGap : desktopGap,
-            }}
-            onScroll={handleScroll}
-            onMouseLeave={() => setHoveredId(null)}
-          >
-            {displayCats.map((cat, idx) => {
-              const mobileCardCount = Math.min(desktopCount, 3);
-              const mobileAutoWidth = mobileGap > 0
-                ? `calc((100% - ${mobileGap * (mobileCardCount - 1)}px) / ${mobileCardCount})`
-                : `calc(100% / ${mobileCardCount})`;
-              const desktopAutoWidth = desktopGap > 0
-                ? `calc((100% - ${desktopGap * (desktopCount - 1)}px) / ${desktopCount})`
-                : `calc(100% / ${desktopCount})`;
-              const mobileWidth = mobileCardWidth > 0 ? `${mobileCardWidth}px` : mobileAutoWidth;
-              const desktopWidth = desktopCardWidth > 0 ? `${desktopCardWidth}px` : desktopAutoWidth;
-              return (
-              <a
-                key={`${cat.id}_${idx}`}
-                href={cat.link}
-                className={`sf-category-card sf-category-focus${hoveredId && hoveredId !== cat.id ? " dimmed" : ""}${hoveredId === cat.id ? " focused" : ""}`}
-                style={{
-                  textDecoration: "none",
-                  flexShrink: 0,
-                  ...(isMobile
-                    ? { scrollSnapAlign: "start", width: mobileWidth }
-                    : { width: desktopWidth }),
-                }}
-                onMouseEnter={() => setHoveredId(cat.id)}
-                onMouseLeave={() => setHoveredId(null)}
-              >
-                <div className="sf-cat-img-wrap">
-                  {cat.imageUrl ? (
-                    <img loading="lazy" src={cat.imageUrl} alt={cat.title} />
-                  ) : (
-                    <ImgPlaceholder label={cat.title} />
-                  )}
-                  <div className="sf-cat-overlay-text">{cat.title}</div>
-                </div>
-              </a>
-            );
-            })}
-          </div>
+        <div
+          className="sf-categories-grid"
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
+            gap: isMobile ? "12px" : "20px",
+          }}
+          onMouseLeave={() => setHoveredId(null)}
+        >
+          {cats.map((cat) => (
+            <a
+              key={cat.id}
+              href={cat.link}
+              className={`sf-category-card sf-category-focus${hoveredId && hoveredId !== cat.id ? " dimmed" : ""}${hoveredId === cat.id ? " focused" : ""}`}
+              style={{ textDecoration: "none" }}
+              onMouseEnter={() => setHoveredId(cat.id)}
+              onMouseLeave={() => setHoveredId(null)}
+            >
+              <div className="sf-cat-img-wrap">
+                {cat.imageUrl ? (
+                  <img loading="lazy" src={cat.imageUrl} alt={cat.title} />
+                ) : (
+                  <ImgPlaceholder label={cat.title} />
+                )}
+                <div className="sf-cat-overlay-text">{cat.title}</div>
+              </div>
+            </a>
+          ))}
         </div>
-        <button className="sf-cat-arrow next" onClick={() => scrollByBtn(1)}>&#8250;</button>
       </div>
     </section>
   );

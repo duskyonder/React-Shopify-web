@@ -633,7 +633,8 @@ export function SFFooter() {
         ["--footer-nav-m-font-size" as string]: `${config.footerNavMobileFontSize ?? config.footerNavFontSize ?? 14}px`,
       } as React.CSSProperties}
     >
-      <div className="sf-footer-grid">
+      {/* Desktop: original 4-column grid */}
+      <div className="sf-footer-grid sf-footer-desktop">
         <div className="sf-footer-brand">
           {config.logoImageUrl ? (
             <a href="/"><img src={config.logoImageUrl} alt={config.logoText} style={{ height: 36, objectFit: "contain", marginBottom: 12 }} /></a>
@@ -652,31 +653,76 @@ export function SFFooter() {
         <div className="sf-footer-col">
           <h4>Shop</h4>
           <ul className="sf-footer-links">
-            <li><a href="#">Shop All</a></li>
-            <li><a href="#">New Arrivals</a></li>
-            <li><a href="#">Sale</a></li>
+            <li><a href="/collections">Shop All</a></li>
+            <li><a href="/collections/new-arrivals">New Arrivals</a></li>
+            <li><a href="/collections/sale">Sale</a></li>
           </ul>
         </div>
         <div className="sf-footer-col">
           <h4>Company</h4>
           <ul className="sf-footer-links">
-            <li><a href="#">Our Story</a></li>
-            <li><a href="#">Blog</a></li>
-            <li><a href="#">Sustainability</a></li>
+            <li><a href="/about">Our Story</a></li>
+            <li><a href="/blog">Blog</a></li>
+            <li><a href="/sustainability">Sustainability</a></li>
           </ul>
         </div>
         <div className="sf-footer-col">
           <h4>Help</h4>
           <ul className="sf-footer-links">
-            <li><a href="#">Contact Us</a></li>
-            <li><a href="#">Shipping & Returns</a></li>
-            <li><a href="#">Size Guide</a></li>
+            <li><a href="/contact">Contact Us</a></li>
+            <li><a href="/returns">Shipping & Returns</a></li>
+            <li><a href="/size-guide">Size Guide</a></li>
           </ul>
         </div>
       </div>
+
+      {/* Mobile: stacked layout — brand centered on top, nav columns in 3-col row, social at bottom */}
+      <div className="sf-footer-mobile">
+        <div className="sf-footer-mobile-brand">
+          {config.logoImageUrl ? (
+            <a href="/"><img src={config.logoImageUrl} alt={config.logoText} style={{ height: 32, objectFit: "contain" }} /></a>
+          ) : (
+            <a href="/" className="sf-logo" style={{ color: "#4CAF82", fontSize: "1.2rem" }}>{config.logoText}</a>
+          )}
+          <p>{config.footerAbout}</p>
+        </div>
+        <div className="sf-footer-mobile-nav">
+          <div className="sf-footer-col">
+            <h4>Shop</h4>
+            <ul className="sf-footer-links">
+              <li><a href="/collections">Shop All</a></li>
+              <li><a href="/collections/new-arrivals">New Arrivals</a></li>
+              <li><a href="/collections/sale">Sale</a></li>
+            </ul>
+          </div>
+          <div className="sf-footer-col">
+            <h4>Company</h4>
+            <ul className="sf-footer-links">
+              <li><a href="/about">Our Story</a></li>
+              <li><a href="/blog">Blog</a></li>
+              <li><a href="/sustainability">Sustainability</a></li>
+            </ul>
+          </div>
+          <div className="sf-footer-col">
+            <h4>Help</h4>
+            <ul className="sf-footer-links">
+              <li><a href="/contact">Contact Us</a></li>
+              <li><a href="/returns">Returns</a></li>
+              <li><a href="/size-guide">Size Guide</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="sf-footer-mobile-social">
+          {socialItems.filter(s => s.url).map(s => (
+            <a key={s.key} href={s.url} className="sf-social-link" title={s.label} target="_blank" rel="noopener noreferrer">
+              {SOCIAL_ICON_MAP[s.key] || s.label}
+            </a>
+          ))}
+        </div>
+      </div>
+
       <div className="sf-footer-bottom">
-        <p>{config.footerCopyright || `© ${new Date().getFullYear()} ${config.logoText}. All rights reserved.`}</p>
-        <p>Powered by Shopify</p>
+        <p>{config.footerCopyright || `\u00A9 ${new Date().getFullYear()} ${config.logoText}. All rights reserved.`}</p>
       </div>
     </footer>
   );
