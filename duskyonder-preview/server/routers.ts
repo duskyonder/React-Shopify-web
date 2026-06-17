@@ -6,7 +6,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getAllThemeConfigs, setThemeConfig, getAllUploadedImages, upsertUploadedImage } from "./db";
 import { storagePut } from "./storage";
-import { getShopifyConfig, setShopifyConfig, getAllShopifyConfigs, uploadToShopifyFiles } from "./shopifyConfig";
+import { getShopifyConfig, setShopifyConfig, getAllShopifyConfigs, uploadToShopifyFiles, listShopifyFiles } from "./shopifyConfig";
 
 export const appRouter = router({
   system: systemRouter,
@@ -32,6 +32,17 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await setThemeConfig(input.key, input.value);
         return { success: true };
+      }),
+
+    // List images from Shopify Files (for the image picker dialog)
+    listFiles: publicProcedure
+      .input(z.object({
+        first: z.number().optional().default(50),
+        after: z.string().optional(),
+        query: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await listShopifyFiles(input);
       }),
 
     uploadImage: publicProcedure

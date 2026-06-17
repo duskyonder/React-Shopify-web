@@ -345,3 +345,65 @@ export async function getAllShopifyConfigs(): Promise<Record<string, unknown>> {
   }
   return result;
 }
+
+/**
+ * List images from Shopify Files (Admin API).
+ * Returns a paginated list of MediaImage files.
+ */
+export async function listShopifyFiles(options?: {
+  first?: number;
+  after?: string;
+  query?: string;
+}): Promise<{
+  files: Array<{
+    id: string;
+    url: string;
+    alt: string;
+    width: number;
+    height: number;
+    createdAt: string;
+  }>;
+  pageInfo: { hasNextPage: boolean; endCursor: string | null };
+}> {
+  const first = options?.first ?? 50;
+  const queryStr = options?.query
+    ? `filename:*${options.query}* media_type:IMAGE`
+    : "media_type:IMAGE";
+
+  const data = await shopifyAdminGraphQL(
+    `query ListFiles($first: Int!, $after: String, $query: String) {
+      files(first: $first, after: $after, query: $query, sortKey: CREATED_AT, reverse: true) {
+        pageInfo { hasNextPage endCursor }
+        nodes {
+          ... on MediaImage {
+            id
+            createdAt
+            image { url altText width height }
+          }
+        }
+      }
+    }`,
+    { first, after: options?.after ?? null, query: queryStr }
+  );
+
+  const files = (data as any)?.files;
+  const nodes = (files?.nodes ?? []) as Array<{
+    id: string;
+    createdAt: string;
+    image?: { url: string; altText?: string; width?: number; height?: number };
+  }>;
+
+  return {
+    files: nodes
+      .filter((n) => n.image?.url)
+      .map((n) => ({
+        id: n.id,
+        url: n.image!.url,
+        alt: n.image!.altText ?? "",
+        width: n.image!.width ?? 0,
+        height: n.image!.height ?? 0,
+        createdAt: n.createdAt,
+      })),
+    pageInfo: files?.pageInfo ?? { hasNextPage: false, endCursor: null },
+  };
+}
