@@ -2,20 +2,40 @@
 // Exposes only the routes needed by the storefront and admin editor:
 //   - /api/trpc/siteConfig.*  (Shopify Metaobjects-based config, no DB needed)
 //   - /api/trpc/navigation.*  (Shopify Storefront menu queries, no DB needed)
-// All other routes (auth, theme, storage) require Manus platform env vars
+//   - /api/trpc/theme.uploadImage  (Shopify Files API upload, no DB needed)
+// All other routes (auth, DB-backed theme) require Manus platform env vars
 // and are intentionally excluded from this Vercel deployment.
 
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { z } from "zod";
 import { router, publicProcedure } from "../server/_core/trpc";
-import { getShopifyConfig, setShopifyConfig, getAllShopifyConfigs } from "../server/shopifyConfig";
+import { getShopifyConfig, setShopifyConfig, getAllShopifyConfigs, uploadToShopifyFiles } from "../server/shopifyConfig";
 import { TRPCError } from "@trpc/server";
 import path from "path";
 import fs from "fs";
 
 // Minimal router with only Shopify-backed routes (no DB dependency)
 const vercelRouter = router({
+  // Image upload via Shopify Files API (no Manus storage needed)
+  theme: router({
+    uploadImage: publicProcedure
+      .input(z.object({
+        section: z.string(),
+        slot: z.string(),
+        base64: z.string(),
+        mimeType: z.string(),
+        originalName: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const ext = input.mimeType.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
+        const filename = input.originalName
+          ? input.originalName.replace(/[^a-zA-Z0-9._-]/g, '_')
+          : `${input.section}-${input.slot}-${Date.now()}.${ext}`;
+        const url = await uploadToShopifyFiles(input.base64, input.mimeType, filename);
+        return { url, key: `shopify:${filename}` };
+      }),
+  }),
   siteConfig: router({
     getAll: publicProcedure.query(async () => {
       return await getAllShopifyConfigs();
