@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GripVertical, Plus, Trash2, ChevronDown, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Slider } from "@/components/ui/slider";
+import ImageUploader from "@/components/ImageUploader";
 
 export default function NavigationPage() {
   const { config, updateConfig, updateNavItem, addNavItem, removeNavItem, addNavChild, removeNavChild, updateNavChild } = useThemeConfig();
@@ -69,6 +71,68 @@ export default function NavigationPage() {
         <h1 className="text-xl font-semibold">导航栏</h1>
         <p className="text-muted-foreground text-sm mt-0.5">管理网站顶部导航菜单</p>
       </div>
+
+      {/* Logo Settings */}
+      <Card>
+        <CardHeader className="pb-3 pt-4 px-4">
+          <CardTitle className="text-sm">Logo 设置</CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-4 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">深色 Logo（默认）</Label>
+              <ImageUploader
+                section="logo"
+                slot="main"
+                currentUrl={config.logoImageUrl}
+                onUploaded={(url) => updateConfig({ logoImageUrl: url })}
+                onClear={() => updateConfig({ logoImageUrl: undefined })}
+                aspectRatio="3/1"
+                label="Upload Logo"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">白色 Logo（透明导航栏）</Label>
+              <ImageUploader
+                section="logo"
+                slot="white"
+                currentUrl={config.logoImageUrlWhite}
+                onUploaded={(url) => updateConfig({ logoImageUrlWhite: url })}
+                onClear={() => updateConfig({ logoImageUrlWhite: undefined })}
+                aspectRatio="3/1"
+                label="Upload White Logo"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Logo 文字（无图片时显示）</Label>
+            <Input
+              value={config.logoText ?? ""}
+              onChange={e => updateConfig({ logoText: e.target.value })}
+              placeholder="DUSKYONDER"
+              className="h-8"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs">桌面端 Logo 高度: {config.logoDesktopHeight ?? 40}px</Label>
+              <Slider
+                min={20} max={100} step={2}
+                value={[config.logoDesktopHeight ?? 40]}
+                onValueChange={([v]) => updateConfig({ logoDesktopHeight: v })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">移动端 Logo 高度: {config.logoMobileHeight ?? 32}px</Label>
+              <Slider
+                min={16} max={80} step={2}
+                value={[config.logoMobileHeight ?? 32]}
+                onValueChange={([v]) => updateConfig({ logoMobileHeight: v })}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Import from Shopify */}
       <Card>

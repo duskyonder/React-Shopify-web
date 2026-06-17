@@ -1541,9 +1541,13 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
     }
     if (shopifyData?.uploadedImages && typeof shopifyData.uploadedImages === 'object') {
       const images = shopifyData.uploadedImages as Record<string, Record<string, string>>;
+      // Check if themeConfig already has slides with images saved — if so, don't overwrite them
+      const savedSlides = (shopifyData?.themeConfig as any)?.slides;
+      const hasSavedSlideImages = savedSlides && Array.isArray(savedSlides) && savedSlides.some((s: any) => s.imageUrl);
       setConfig(prev => {
         const next = { ...prev };
-        if (images.slideshow) {
+        if (images.slideshow && !hasSavedSlideImages) {
+          // Only apply legacy uploadedImages for slides if themeConfig has no slide images
           next.slides = prev.slides.map(s => ({ ...s, imageUrl: images.slideshow?.[s.id] || s.imageUrl }));
         }
         if (images["brand-story"]?.main) next.brandStoryImageUrl = images["brand-story"].main;
