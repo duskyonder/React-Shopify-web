@@ -44,6 +44,7 @@ const AdminSeriesPage = lazy(() => import("./admin/pages/SeriesPage"));
 const AdminFabricPage = lazy(() => import("./admin/pages/FabricPage"));
 const AdminFooterPage = lazy(() => import("./admin/pages/FooterPage"));
 const AdminNavigationPage = lazy(() => import("./admin/pages/NavigationPage"));
+const AdminNewsletterPage = lazy(() => import("./admin/pages/NewsletterPage"));
 
 // 页面加载中的骨架屏（轻量占位）
 function PageSkeleton() {
@@ -92,6 +93,7 @@ function Router() {
         <Route path="/admin/fabric" component={() => <AdminLayout><AdminFabricPage /></AdminLayout>} />
         <Route path="/admin/footer" component={() => <AdminLayout><AdminFooterPage /></AdminLayout>} />
         <Route path="/admin/navigation" component={() => <AdminLayout><AdminNavigationPage /></AdminLayout>} />
+        <Route path="/admin/newsletter" component={() => <AdminLayout><AdminNewsletterPage /></AdminLayout>} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>

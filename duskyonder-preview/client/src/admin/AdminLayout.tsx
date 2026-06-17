@@ -10,7 +10,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   LayoutDashboard, Image, Megaphone, Grid3X3, ShoppingBag, Video,
-  Layers, Shirt, PanelBottom, Navigation, LogOut, PanelLeft, Loader2,
+  Layers, Shirt, PanelBottom, Navigation, LogOut, PanelLeft, Loader2, Mail,
 } from "lucide-react";
 
 const menuItems = [
@@ -24,6 +24,7 @@ const menuItems = [
   { icon: Shirt, label: "面料板块", path: "/admin/fabric" },
   { icon: PanelBottom, label: "页脚", path: "/admin/footer" },
   { icon: Navigation, label: "导航栏", path: "/admin/navigation" },
+  { icon: Mail, label: "订阅弹框", path: "/admin/newsletter" },
 ];
 
 interface AdminLayoutProps {

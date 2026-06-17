@@ -1,16 +1,24 @@
 {
-  "routes": [
+  "version": 2,
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist/public",
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
     {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
+      "source": "/api/(.*)",
+      "destination": "/api/index"
     },
     {
-      "src": "/(.*\\..*)",
-      "dest": "/$1"
+      "source": "/manus-storage/(.*)",
+      "destination": "/api/index"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/((?!assets|_next|favicon\\.ico|robots\\.txt).*)",
+      "destination": "/index.html"
     }
   ]
 }

@@ -1,20 +1,43 @@
 import React, { useState, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
+import { useLocation } from "wouter";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
+
+/**
+ * Map a URL pathname to a page key used in newsletterPages config.
+ * Returns null if the page should never show the newsletter (e.g. /admin).
+ */
+function getPageKey(pathname: string): string | null {
+  if (pathname.startsWith("/admin")) return null;
+  if (pathname === "/" || pathname === "") return "home";
+  if (pathname.startsWith("/products/")) return "product";
+  if (pathname.startsWith("/products")) return "products";
+  if (pathname.startsWith("/collections")) return "collections";
+  if (pathname.startsWith("/pages/about")) return "about";
+  return "other";
+}
 
 function SFNewsletter() {
   const { config } = useThemeConfig();
+  const [location] = useLocation();
   const [visible, setVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const shown = useRef(false);
 
+  // Determine if newsletter should show on current page
+  const pageKey = getPageKey(location);
+  const allowedPages: string[] = (config as any).newsletterPages ?? ["home"];
+  const pageAllowed =
+    pageKey !== null &&
+    (allowedPages.includes("all") || allowedPages.includes(pageKey));
+
   useEffect(() => {
-    if (!config.enableNewsletter || shown.current) return;
+    if (!config.enableNewsletter || !pageAllowed || shown.current) return;
     shown.current = true;
     const timer = setTimeout(() => setVisible(true), config.newsletterDelay * 1000);
     return () => clearTimeout(timer);
-  }, [config.enableNewsletter, config.newsletterDelay]);
+  }, [config.enableNewsletter, config.newsletterDelay, pageAllowed]);
 
   if (!visible) return null;
 

@@ -161,6 +161,153 @@ export async function setShopifyConfig(key: string, value: unknown): Promise<voi
 }
 
 /**
+ * Upload a file to Shopify Files (CDN) using the Admin API.
+ * Returns the public CDN URL of the uploaded file.
+ *
+ * Flow:
+ *   1. stagedUploadsCreate  → get a pre-signed S3 target
+ *   2. POST file to S3 target
+ *   3. fileCreate           → register the file in Shopify Files
+ */
+export async function uploadToShopifyFiles(
+  base64: string,
+  mimeType: string,
+  filename: string
+): Promise<string> {
+  // Step 1: Request a staged upload target
+  const stagedData = await shopifyAdminGraphQL(
+    `mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
+      stagedUploadsCreate(input: $input) {
+        stagedTargets {
+          url
+          resourceUrl
+          parameters { name value }
+        }
+        userErrors { field message }
+      }
+    }`,
+    {
+      input: [
+        {
+          filename,
+          mimeType,
+          resource: "FILE",
+          httpMethod: "POST",
+        },
+      ],
+    }
+  );
+
+  const userErrors = (stagedData as any)?.stagedUploadsCreate?.userErrors;
+  if (userErrors && userErrors.length > 0) {
+    throw new Error(`Shopify staged upload error: ${JSON.stringify(userErrors)}`);
+  }
+
+  const targets = (stagedData as any)?.stagedUploadsCreate?.stagedTargets as Array<{
+    url: string;
+    resourceUrl: string;
+    parameters: Array<{ name: string; value: string }>;
+  }>;
+
+  if (!targets || targets.length === 0) {
+    throw new Error("Shopify staged upload: no target returned");
+  }
+
+  const target = targets[0];
+
+  // Step 2: Upload the file bytes to the staged S3 URL
+  const base64Data = base64.replace(/^data:[^;]+;base64,/, "");
+  const buffer = Buffer.from(base64Data, "base64");
+
+  // Build multipart form
+  const boundary = `----FormBoundary${Date.now()}`;
+  const parts: Buffer[] = [];
+
+  for (const param of target.parameters) {
+    parts.push(
+      Buffer.from(
+        `--${boundary}\r\nContent-Disposition: form-data; name="${param.name}"\r\n\r\n${param.value}\r\n`
+      )
+    );
+  }
+
+  // File field must be last
+  parts.push(
+    Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: ${mimeType}\r\n\r\n`
+    )
+  );
+  parts.push(buffer);
+  parts.push(Buffer.from(`\r\n--${boundary}--\r\n`));
+
+  const body = Buffer.concat(parts);
+
+  const uploadRes = await fetch(target.url, {
+    method: "POST",
+    headers: {
+      "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      "Content-Length": String(body.length),
+    },
+    body,
+  });
+
+  if (!uploadRes.ok) {
+    const text = await uploadRes.text().catch(() => "");
+    throw new Error(`Staged upload to S3 failed: ${uploadRes.status} ${uploadRes.statusText}\n${text}`);
+  }
+
+  // Step 3: Register the file in Shopify Files
+  const fileData = await shopifyAdminGraphQL(
+    `mutation fileCreate($files: [FileCreateInput!]!) {
+      fileCreate(files: $files) {
+        files {
+          ... on MediaImage {
+            id
+            image { url }
+          }
+          ... on GenericFile {
+            id
+            url
+          }
+        }
+        userErrors { field message }
+      }
+    }`,
+    {
+      files: [
+        {
+          originalSource: target.resourceUrl,
+          contentType: "IMAGE",
+          filename,
+        },
+      ],
+    }
+  );
+
+  const fileErrors = (fileData as any)?.fileCreate?.userErrors;
+  if (fileErrors && fileErrors.length > 0) {
+    throw new Error(`Shopify fileCreate error: ${JSON.stringify(fileErrors)}`);
+  }
+
+  const files = (fileData as any)?.fileCreate?.files as Array<{
+    image?: { url: string };
+    url?: string;
+  }>;
+
+  if (!files || files.length === 0) {
+    throw new Error("Shopify fileCreate: no file returned");
+  }
+
+  const cdnUrl = files[0].image?.url || files[0].url;
+  if (!cdnUrl) {
+    // File may still be processing — return resourceUrl as fallback
+    return target.resourceUrl;
+  }
+
+  return cdnUrl;
+}
+
+/**
  * Get all config entries as a key-value map.
  */
 export async function getAllShopifyConfigs(): Promise<Record<string, unknown>> {

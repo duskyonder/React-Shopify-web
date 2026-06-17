@@ -6,7 +6,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getAllThemeConfigs, setThemeConfig, getAllUploadedImages, upsertUploadedImage } from "./db";
 import { storagePut } from "./storage";
-import { getShopifyConfig, setShopifyConfig, getAllShopifyConfigs } from "./shopifyConfig";
+import { getShopifyConfig, setShopifyConfig, getAllShopifyConfigs, uploadToShopifyFiles } from "./shopifyConfig";
 
 export const appRouter = router({
   system: systemRouter,
@@ -43,20 +43,21 @@ export const appRouter = router({
         originalName: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        // Decode base64 to buffer
-        const base64Data = input.base64.replace(/^data:[^;]+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-        const ext = input.mimeType.split('/')[1] || 'jpg';
-        const key = `duskyonder/${input.section}/${input.slot}-${Date.now()}.${ext}`;
-        const { url } = await storagePut(key, buffer, input.mimeType);
-        await upsertUploadedImage({
+        const ext = input.mimeType.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
+        const filename = input.originalName
+          ? input.originalName.replace(/[^a-zA-Z0-9._-]/g, '_')
+          : `${input.section}-${input.slot}-${Date.now()}.${ext}`;
+        // Upload to Shopify Files (CDN) instead of Manus storage
+        const url = await uploadToShopifyFiles(input.base64, input.mimeType, filename);
+        // Also record in local DB for reference (non-blocking)
+        upsertUploadedImage({
           section: input.section,
           slot: input.slot,
-          s3Key: key,
+          s3Key: `shopify:${filename}`,
           url,
           originalName: input.originalName,
-        });
-        return { url, key };
+        }).catch((err) => console.warn('DB record failed (non-fatal):', err));
+        return { url, key: `shopify:${filename}` };
       }),
   }),
 

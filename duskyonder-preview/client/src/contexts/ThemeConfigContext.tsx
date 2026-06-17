@@ -376,6 +376,7 @@ export interface ThemeConfig {
   newsletterTheme?: 'dark-green' | 'cream'; // 弹窗主题色，默认 'dark-green'
   newsletterImageUrl?: string; // 左侧图片 URL（Split-layout 用）
   newsletterSocialProof?: string; // 社交证明文字（如 "10,000+ members"）
+  newsletterPages?: string[]; // 弹框出现的页面，如 ['home', 'products']，或 ['all']
 
   footerColumns?: FooterColumn[];
   footerNavFontSize?: number;
@@ -1168,6 +1169,7 @@ const defaultConfig: ThemeConfig = {
   newsletterTheme: 'dark-green',
   newsletterImageUrl: undefined,
   newsletterSocialProof: "Join 10,000+ members who move with purpose",
+  newsletterPages: ["home"],
 
   footerAbout: "DUSKYONDER is dedicated to creating premium, sustainable activewear for modern movement.",
   footerCopyright: undefined,
