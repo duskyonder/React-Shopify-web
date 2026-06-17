@@ -32,6 +32,19 @@ const OrderDetailPage = lazy(() => import("./pages/OrderDetailPage"));
 const WishlistPage = lazy(() => import("./pages/WishlistPage"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 
+// Admin pages (lazy loaded)
+const AdminLayout = lazy(() => import("./admin/AdminLayout"));
+const AdminSectionsPage = lazy(() => import("./admin/pages/SectionsPage"));
+const AdminHeroPage = lazy(() => import("./admin/pages/HeroPage"));
+const AdminPromoBarPage = lazy(() => import("./admin/pages/PromoBarPage"));
+const AdminCategoriesPage = lazy(() => import("./admin/pages/CategoriesPage"));
+const AdminProductsPage = lazy(() => import("./admin/pages/ProductsPage"));
+const AdminVideosPage = lazy(() => import("./admin/pages/VideosPage"));
+const AdminSeriesPage = lazy(() => import("./admin/pages/SeriesPage"));
+const AdminFabricPage = lazy(() => import("./admin/pages/FabricPage"));
+const AdminFooterPage = lazy(() => import("./admin/pages/FooterPage"));
+const AdminNavigationPage = lazy(() => import("./admin/pages/NavigationPage"));
+
 // 页面加载中的骨架屏（轻量占位）
 function PageSkeleton() {
   return (
@@ -68,6 +81,17 @@ function Router() {
         <Route path={"/thank-you"} component={ThankYouPage} />
         <Route path={"/wishlist"} component={WishlistPage} />
         <Route path={"/search"} component={SearchPage} />
+        {/* Admin routes */}
+        <Route path="/admin" component={() => <AdminLayout><AdminSectionsPage /></AdminLayout>} />
+        <Route path="/admin/hero" component={() => <AdminLayout><AdminHeroPage /></AdminLayout>} />
+        <Route path="/admin/promo" component={() => <AdminLayout><AdminPromoBarPage /></AdminLayout>} />
+        <Route path="/admin/categories" component={() => <AdminLayout><AdminCategoriesPage /></AdminLayout>} />
+        <Route path="/admin/products" component={() => <AdminLayout><AdminProductsPage /></AdminLayout>} />
+        <Route path="/admin/videos" component={() => <AdminLayout><AdminVideosPage /></AdminLayout>} />
+        <Route path="/admin/series" component={() => <AdminLayout><AdminSeriesPage /></AdminLayout>} />
+        <Route path="/admin/fabric" component={() => <AdminLayout><AdminFabricPage /></AdminLayout>} />
+        <Route path="/admin/footer" component={() => <AdminLayout><AdminFooterPage /></AdminLayout>} />
+        <Route path="/admin/navigation" component={() => <AdminLayout><AdminNavigationPage /></AdminLayout>} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -55,6 +56,46 @@ export const appRouter = router({
           originalName: input.originalName,
         });
         return { url, key };
+      }),
+  }),
+
+  // Shopify navigation menus
+  navigation: router({
+    getMenu: publicProcedure
+      .input(z.object({ handle: z.string() }))
+      .query(async ({ input }) => {
+        const shopifyDomain = process.env.VITE_SHOPIFY_STORE_DOMAIN || "";
+        const storefrontToken = process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN || "";
+        if (!shopifyDomain || !storefrontToken) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Shopify credentials not configured" });
+        }
+        const gql = `
+          query GetMenu($handle: String!) {
+            menu(handle: $handle) {
+              handle title
+              items {
+                id title url type
+                items {
+                  id title url type
+                  items { id title url type }
+                }
+              }
+            }
+          }
+        `;
+        const res = await fetch(`https://${shopifyDomain}/api/2024-10/graphql.json`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Storefront-Access-Token": storefrontToken,
+          },
+          body: JSON.stringify({ query: gql, variables: { handle: input.handle } }),
+        });
+        const json = await res.json() as any;
+        if (json.errors) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: json.errors[0]?.message ?? "Shopify API error" });
+        }
+        return json.data?.menu ?? null;
       }),
   }),
 });
