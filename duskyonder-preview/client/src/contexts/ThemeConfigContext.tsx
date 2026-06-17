@@ -1488,12 +1488,13 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
   const [isSaving, setIsSaving] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const setConfigMutation = trpc.theme.setConfig.useMutation();
-  const { data: serverData } = trpc.theme.getAll.useQuery();
+  const setConfigMutation = trpc.siteConfig.set.useMutation();
+  const { data: shopifyData } = trpc.siteConfig.getAll.useQuery();
   useEffect(() => {
-    if (serverData?.configs?.themeConfig) {
+    const rawThemeConfig = shopifyData?.themeConfig;
+    if (rawThemeConfig && typeof rawThemeConfig === 'object') {
       try {
-        const saved = JSON.parse(serverData.configs.themeConfig);
+        const saved = rawThemeConfig as any;
         if (saved.navItems && Array.isArray(saved.navItems)) {
           saved.navItems = saved.navItems.map((item: any, i: number) => ({
             id: item.id || `nav_${i + 1}`,
@@ -1528,8 +1529,8 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
         setConfig(prev => ({ ...defaultConfig, ...prev, ...saved }));
       } catch {}
     }
-    if (serverData?.images) {
-      const images = serverData.images;
+    if (shopifyData?.uploadedImages && typeof shopifyData.uploadedImages === 'object') {
+      const images = shopifyData.uploadedImages as Record<string, Record<string, string>>;
       setConfig(prev => {
         const next = { ...prev };
         if (images.slideshow) {
@@ -1562,9 +1563,9 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
         return next;
       });
     }
-  }, [serverData]);
+  }, [shopifyData]);
 
-  // 从 Shopify Metaobject 获取首页 Banner 数据（在 serverData 加载完成后执行，避免被覆盖）
+  // 从 Shopify Metaobject 获取首页 Banner 数据（在 shopifyData 加载完成后执行，避免被覆盖）
   useEffect(() => {
     fetchHomepageBanners().then((banners) => {
       if (banners.length > 0) {
@@ -1585,14 +1586,14 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
     }).catch((err) => {
       console.warn("Shopify banner fetch failed, using default slides:", err);
     });
-  }, [serverData]);
+  }, [shopifyData]);
 
   const persistConfig = useCallback((newConfig: ThemeConfig) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       setIsSaving(true);
       try {
-        await setConfigMutation.mutateAsync({ key: "themeConfig", value: JSON.stringify(newConfig) });
+        await setConfigMutation.mutateAsync({ key: "themeConfig", value: newConfig });
       } finally {
         setIsSaving(false);
       }

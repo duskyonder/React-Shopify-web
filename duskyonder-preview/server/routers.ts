@@ -6,6 +6,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getAllThemeConfigs, setThemeConfig, getAllUploadedImages, upsertUploadedImage } from "./db";
 import { storagePut } from "./storage";
+import { getShopifyConfig, setShopifyConfig, getAllShopifyConfigs } from "./shopifyConfig";
 
 export const appRouter = router({
   system: systemRouter,
@@ -56,6 +57,29 @@ export const appRouter = router({
           originalName: input.originalName,
         });
         return { url, key };
+      }),
+  }),
+
+  // Site configuration via Shopify Metaobjects
+  siteConfig: router({
+    // Get all config sections at once (used by storefront)
+    getAll: publicProcedure.query(async () => {
+      return await getAllShopifyConfigs();
+    }),
+
+    // Get a single config section by key
+    get: publicProcedure
+      .input(z.object({ key: z.string() }))
+      .query(async ({ input }) => {
+        return await getShopifyConfig(input.key);
+      }),
+
+    // Save a config section (used by admin editor)
+    set: publicProcedure
+      .input(z.object({ key: z.string(), value: z.unknown() }))
+      .mutation(async ({ input }) => {
+        await setShopifyConfig(input.key, input.value);
+        return { success: true };
       }),
   }),
 
