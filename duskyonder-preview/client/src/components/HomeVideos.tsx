@@ -661,13 +661,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             ))}
           </div>
         )}
-        {videoSectionVisible && isMobileVideos && totalMobileVideoPages > 1 && (
-          <div className="sf-section-dots">
-            {Array.from({ length: totalMobileVideoPages }).map((_, i) => (
-              <button key={i} className={`sf-section-dot${i === mobileVideoPage ? " active" : ""}`} onClick={() => setMobileVideoPage(i)} />
-            ))}
-          </div>
-        )}
+
       </section>
 
       {/* Desktop Video Modal */}
