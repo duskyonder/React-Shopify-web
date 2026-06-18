@@ -11,7 +11,10 @@ import ImageUploader from "@/components/ImageUploader";
 const SHOPIFY_STORE_DOMAIN = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN as string;
 const SHOPIFY_STOREFRONT_TOKEN = import.meta.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN as string;
 
-async function searchShopifyProducts(query: string): Promise<Product[]> {
+// Extended type that carries the handle back from the search result
+type ProductWithHandle = Product & { handle: string };
+
+async function searchShopifyProducts(query: string): Promise<ProductWithHandle[]> {
   const gql = `
     query SearchProducts($query: String!) {
       products(first: 12, query: $query, sortKey: BEST_SELLING) {
@@ -34,6 +37,7 @@ async function searchShopifyProducts(query: string): Promise<Product[]> {
   const json = await res.json();
   return (json.data?.products?.nodes ?? []).map((p: any) => ({
     id: p.id,
+    handle: p.handle,
     name: p.title,
     price: `$${parseFloat(p.priceRange.minVariantPrice.amount).toFixed(2)}`,
     imageUrl: p.images.nodes[0]?.url ?? "",
@@ -49,10 +53,10 @@ function ProductSearchDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onSelect: (product: Product) => void;
+  onSelect: (product: ProductWithHandle) => void;
 }) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Product[]>([]);
+  const [results, setResults] = useState<ProductWithHandle[]>([]);
   const [loading, setLoading] = useState(false);
 
   const doSearch = useCallback(async () => {
@@ -112,9 +116,10 @@ function VideoCard({ video }: { video: Video }) {
   const { updateVideo, removeVideo } = useThemeConfig();
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const handleSelectProduct = (product: Product) => {
+  const handleSelectProduct = (product: ProductWithHandle) => {
     updateVideo(video.id, {
       linkedProductId: product.id,
+      linkedProductHandle: product.handle,   // ← saves handle so storefront can auto-fetch colors/sizes
       linkedProductName: product.name,
       linkedProductPrice: product.price,
       linkedProductImage: product.imageUrl,
@@ -200,7 +205,7 @@ function VideoCard({ video }: { video: Video }) {
               </div>
               <Button
                 variant="ghost" size="sm"
-                onClick={() => updateVideo(video.id, { linkedProductId: undefined, linkedProductName: undefined, linkedProductImage: undefined })}
+                onClick={() => updateVideo(video.id, { linkedProductId: undefined, linkedProductHandle: undefined, linkedProductName: undefined, linkedProductPrice: undefined, linkedProductImage: undefined })}
                 className="text-destructive hover:text-destructive h-7 w-7 p-0 shrink-0"
               >
                 <Trash2 className="w-3.5 h-3.5" />
