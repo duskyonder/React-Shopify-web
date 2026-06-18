@@ -581,3 +581,7 @@ Branch naming: `backup/before-<short-description>` (e.g. `backup/before-junk-cle
 - [x] TypeScript check: 0 errors
 - [x] Committed to main: cb6b6fd
 - [x] Rolling backup: deleted `backup/before-dead-code-cleanup`, created `backup/before-junk-cleanup`
+
+## Project Rule: Minimal Token / Read Discipline
+
+For every code modification: grep first to confirm exact line numbers → read only the minimal confirmed range → edit. No overlapping reads. Never read a range, then re-read an overlapping range for more context — extend the first read or run a second grep instead.
