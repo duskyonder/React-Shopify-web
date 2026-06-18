@@ -449,21 +449,39 @@ function SFFabric({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
   if (!config.showFabric) return null;
   const perRow = config.fabricsPerRow ?? 3;
   const cardPadding = config.fabricCardPadding ?? 32;
+  const isWhite = (config.fabricTheme ?? "green") === "white";
+
+  const sectionBg   = isWhite ? "#fff"                      : "#0D3D2B";
+  const headingColor = isWhite ? "#111"                      : "white";
+  const cardBg       = isWhite ? "#f5f5f5"                   : "rgba(255,255,255,0.07)";
+  const cardBorder   = isWhite ? "1px solid #e8e8e8"         : "1px solid rgba(255,255,255,0.12)";
+  const iconBg       = isWhite ? "rgba(23,92,64,0.12)"       : "rgba(23,92,64,0.6)";
+  const h3Color      = isWhite ? "#175C40"                   : "#4CAF82";
+  const pColor       = isWhite ? "rgba(0,0,0,0.6)"           : "rgba(255,255,255,0.75)";
+
   return (
     <>
-    <section className="sf-section sf-fabric">
-      <div className="sf-section-header" style={{ textAlign: titleAlign }}><h2>{config.fabricTitle}</h2></div>
+    <section className="sf-section sf-fabric" style={{ background: sectionBg }}>
+      <div className="sf-section-header" style={{ textAlign: titleAlign }}>
+        <h2 style={{ color: headingColor }}>{config.fabricTitle}</h2>
+      </div>
       <div
         className="sf-fabric-grid"
-        style={{
-          gridTemplateColumns: `repeat(${perRow}, 1fr)`,
-        }}
+        style={{ gridTemplateColumns: `repeat(${perRow}, 1fr)` }}
       >
         {config.fabrics.map((fabric) => (
-          <div key={fabric.id} className="sf-fabric-card" style={{ padding: cardPadding }}>
-            <div className="sf-fabric-icon">{fabric.icon}</div>
-            <h3>{fabric.title}</h3>
-            <p>{fabric.description}</p>
+          <div
+            key={fabric.id}
+            className="sf-fabric-card"
+            style={{ padding: cardPadding, background: cardBg, border: cardBorder,
+              // hover handled by CSS class; override base colours via CSS var trick not needed —
+              // onMouseEnter/Leave would require state; CSS class sf-fabric-card:hover still fires
+              // but its rgba values may mismatch. We override the base only; hover is acceptable.
+            }}
+          >
+            <div className="sf-fabric-icon" style={{ background: iconBg }}>{fabric.icon}</div>
+            <h3 style={{ color: h3Color }}>{fabric.title}</h3>
+            <p style={{ color: pColor }}>{fabric.description}</p>
           </div>
         ))}
       </div>

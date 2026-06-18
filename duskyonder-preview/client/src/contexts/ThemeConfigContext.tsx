@@ -370,6 +370,7 @@ export interface ThemeConfig {
   seriesMobileImageWidth?: number; // px, 移动端图片宽度（0=自动）
 
   showFabric: boolean;
+  fabricTheme?: "green" | "white"; // background theme: green (default) or white
   fabricTitle: string;
   fabrics: Fabric[];
   fabricsPerRow: number; // 1-4
@@ -1163,6 +1164,7 @@ const defaultConfig: ThemeConfig = {
   ],
 
   showFabric: true,
+  fabricTheme: "green",
   fabricTitle: "Our Premium Fabrics",
   fabricsPerRow: 3,
   fabricCardPadding: 32,
