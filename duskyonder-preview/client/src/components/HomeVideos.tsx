@@ -373,6 +373,18 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
           }
 
           // Desktop: left video + right product panel
+          // Compute discount label from compare price vs sale price
+          const computeDiscountLabel = () => {
+            if (!activeVideo.linkedProductComparePrice || !activeVideo.linkedProductPrice) return null;
+            const parsePrice = (s: string) => parseFloat(s.replace(/[^0-9.]/g, ''));
+            const sale = parsePrice(activeVideo.linkedProductPrice);
+            const orig = parsePrice(activeVideo.linkedProductComparePrice);
+            if (!orig || !sale || orig <= sale) return null;
+            const pct = Math.round((1 - sale / orig) * 100);
+            return `LIMITED TIME OFFER: ${pct}% OFF`;
+          };
+          const discountLabel = computeDiscountLabel();
+
           const modalMaxW = config.videoModalDesktopWidth || 960;
           return (
             <div
@@ -393,46 +405,47 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                     <span className="sf-video-creator-name">{activeVideo.creatorName || activeVideo.influencerName.replace('@','')}</span>
                   </div>
                 </div>
-                {/* Right: Product info */}
-                <div style={{ flex: 1, padding: "36px 32px 32px", display: "flex", flexDirection: "column", gap: 20, overflowY: "auto", minWidth: 0 }}>
-                  {/* Product images: 2 side by side with hover logic */}
-                  {(imgA || imgB) && (
-                    <div style={{ display: "flex", gap: 10 }}>
-                      {imgA && (
-                        <div
-                          style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 8, overflow: "hidden", background: "#f5f5f5", cursor: imgC ? "pointer" : "default", transition: "opacity 0.2s" }}
-                          onMouseEnter={() => imgC ? setModalHoverImg('A') : undefined}
-                          onMouseLeave={() => setModalHoverImg(null)}
-                        >
-                          <img
-                            src={displayLeft || imgA}
-                            alt={activeVideo.linkedProductName}
-                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s" }}
-                          />
-                        </div>
-                      )}
-                      {imgB && (
-                        <div
-                          style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 8, overflow: "hidden", background: "#f5f5f5", cursor: imgD ? "pointer" : "default", transition: "opacity 0.2s" }}
-                          onMouseEnter={() => imgD ? setModalHoverImg('B') : undefined}
-                          onMouseLeave={() => setModalHoverImg(null)}
-                        >
-                          <img
-                            src={displayRight || imgB}
-                            alt={activeVideo.linkedProductName}
-                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s" }}
-                          />
-                        </div>
-                      )}
+                {/* Right: Product info — two images + name + promo label + price + SHOP NOW */}
+                <div style={{ flex: 1, padding: "32px 32px 32px", display: "flex", flexDirection: "column", gap: 0, overflowY: "auto", minWidth: 0 }}>
+                  {/* Two product images side by side (always shown if at least imgA exists) */}
+                  {imgA && (
+                    <div style={{ display: "flex", gap: 10, marginBottom: 22 }}>
+                      <div
+                        style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5", cursor: imgC ? "pointer" : "default" }}
+                        onMouseEnter={() => imgC ? setModalHoverImg('A') : undefined}
+                        onMouseLeave={() => setModalHoverImg(null)}
+                      >
+                        <img
+                          src={displayLeft || imgA}
+                          alt={activeVideo.linkedProductName}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s" }}
+                        />
+                      </div>
+                      {/* Second image: imgB if available, otherwise show imgA again slightly dimmed */}
+                      <div
+                        style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5", cursor: (imgB && imgD) ? "pointer" : "default" }}
+                        onMouseEnter={() => (imgB && imgD) ? setModalHoverImg('B') : undefined}
+                        onMouseLeave={() => setModalHoverImg(null)}
+                      >
+                        <img
+                          src={imgB ? (displayRight || imgB) : imgA}
+                          alt={activeVideo.linkedProductName}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s", opacity: imgB ? 1 : 0.75 }}
+                        />
+                      </div>
                     </div>
                   )}
                   {/* Product name */}
                   {activeVideo.linkedProductName && (
-                    <div style={{ fontWeight: 700, fontSize: 18, color: "#111", lineHeight: 1.3 }}>{activeVideo.linkedProductName}</div>
+                    <div style={{ fontWeight: 700, fontSize: 20, color: "#111", lineHeight: 1.3, marginBottom: 10 }}>{activeVideo.linkedProductName}</div>
                   )}
-                  {/* Price: current + compare */}
+                  {/* Promo / discount label */}
+                  {discountLabel && (
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 6 }}>{discountLabel}</div>
+                  )}
+                  {/* Price: sale + compare-at */}
                   {(activeVideo.linkedProductPrice || activeVideo.linkedProductComparePrice) && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
                       {activeVideo.linkedProductPrice && (
                         <span style={{ fontWeight: 700, fontSize: 17, color: "#111" }}>{activeVideo.linkedProductPrice}</span>
                       )}
@@ -443,7 +456,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                   )}
                   {/* Color selectors - desktop */}
                   {activeVideo.linkedProductColors && activeVideo.linkedProductColors.length > 0 && (
-                    <div>
+                    <div style={{ marginBottom: 16 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: "#888", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>Color</div>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {activeVideo.linkedProductColors.map((color: string) => (
@@ -465,7 +478,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                   )}
                   {/* Size selectors - desktop */}
                   {activeVideo.linkedProductSizes && activeVideo.linkedProductSizes.length > 0 && (
-                    <div>
+                    <div style={{ marginBottom: 20 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: "#888", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>Size</div>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {activeVideo.linkedProductSizes.map((size: string) => (
@@ -485,7 +498,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                       </div>
                     </div>
                   )}
-                  {/* Shop Now button */}
+                  {/* Shop Now button — full width, black, at bottom */}
                   <button
                     onClick={() => {
                       addItem({
@@ -500,10 +513,10 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                       });
                       openCart();
                     }}
-                    style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "13px 20px", borderRadius: 5, fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", border: "none", cursor: "pointer", textTransform: "uppercase", marginTop: "auto" }}
+                    style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "14px 20px", borderRadius: 5, fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", border: "none", cursor: "pointer", textTransform: "uppercase", marginTop: "auto" }}
                   >SHOP NOW</button>
                 </div>
-                {/* Close button */}
+                {/* Close button — top right corner */}
                 <button
                   onClick={() => { setActiveVideo(null); setModalHoverImg(null); }}
                   style={{ position: "absolute", top: 14, right: 14, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.9)", border: "1px solid #e0e0e0", color: "#333", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}
