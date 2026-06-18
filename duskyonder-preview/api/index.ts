@@ -430,7 +430,7 @@ const vercelRouter = router({
     subscribe: publicProcedure
       .input(z.object({ email: z.string().email(), source: z.enum(["popup", "footer"]).default("footer") }))
       .mutation(async ({ input }) => {
-        // Inline DB insert — avoids importing from server/ which has path-alias issues on Vercel
+        // 1. Save to local DB (best-effort)
         const dbUrl = process.env.DATABASE_URL;
         if (dbUrl) {
           try {
@@ -448,6 +448,66 @@ const vercelRouter = router({
             console.error("[newsletter] DB error:", err);
           }
         }
+
+        // 2. Create or update Shopify customer with email marketing consent = SUBSCRIBED
+        // This triggers any welcome email automation set up in Shopify Email / Shopify Flow.
+        try {
+          // First check if a customer with this email already exists
+          const searchData = await shopifyAdminGraphQL(
+            `query FindCustomer($query: String!) {
+              customers(first: 1, query: $query) {
+                edges { node { id emailMarketingConsent { marketingState } } }
+              }
+            }`,
+            { query: `email:${input.email}` }
+          ) as any;
+
+          const existing = searchData?.customers?.edges?.[0]?.node;
+
+          if (existing) {
+            // Update existing customer to subscribed
+            await shopifyAdminGraphQL(
+              `mutation UpdateCustomer($input: CustomerInput!) {
+                customerUpdate(input: $input) {
+                  customer { id }
+                  userErrors { field message }
+                }
+              }`,
+              {
+                input: {
+                  id: existing.id,
+                  emailMarketingConsent: {
+                    marketingOptInLevel: "SINGLE_OPT_IN",
+                    marketingState: "SUBSCRIBED",
+                  },
+                },
+              }
+            );
+          } else {
+            // Create new customer as subscribed
+            await shopifyAdminGraphQL(
+              `mutation CreateCustomer($input: CustomerInput!) {
+                customerCreate(input: $input) {
+                  customer { id }
+                  userErrors { field message }
+                }
+              }`,
+              {
+                input: {
+                  email: input.email,
+                  emailMarketingConsent: {
+                    marketingOptInLevel: "SINGLE_OPT_IN",
+                    marketingState: "SUBSCRIBED",
+                  },
+                },
+              }
+            );
+          }
+        } catch (err) {
+          console.error("[newsletter] Shopify API error:", err);
+          // Don't fail the request — DB save already succeeded
+        }
+
         return { success: true };
       }),
   }),
