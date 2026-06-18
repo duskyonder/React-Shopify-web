@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import { useThemeConfig, Product } from "@/contexts/ThemeConfigContext";
 import { useCart } from "@/contexts/CartContext";
 import { ColorSwatch } from "@/components/StorefrontShell";
-import { PlayIcon, XIcon, HeartIcon, ImageIcon, ImgPlaceholder } from "@/components/HomeIcons";
+import { PlayIcon, XIcon, HeartIcon, ImgPlaceholder } from "@/components/HomeIcons";
 import { fetchProductByHandle, type ShopifyProduct } from "@/lib/shopify";
 
 // ── Small icon helpers ──────────────────────────────────────────────────────
@@ -42,12 +42,6 @@ const ChevronUpIcon = () => (
 const ChevronDownIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="6 9 12 15 18 9"/>
-  </svg>
-);
-
-const ChevronUpNavIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="18 15 12 9 6 15"/>
   </svg>
 );
 
@@ -445,7 +439,7 @@ function FullscreenPlayer({ video, videoIndex, videos, onClose, onNavigate }: Fu
             disabled={videoIndex === 0}
             style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "none", color: "#fff", cursor: videoIndex === 0 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: videoIndex === 0 ? 0.3 : 1, backdropFilter: "blur(4px)" }}
             aria-label="Previous video"
-          ><ChevronUpNavIcon /></button>
+          ><ChevronUpIcon /></button>
           <button
             onClick={() => onNavigate(Math.min(videos.length - 1, videoIndex + 1))}
             disabled={videoIndex === videos.length - 1}
@@ -590,7 +584,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
               } as React.CSSProperties}
             >
               {videos.map((video, idx) => {
-                const mobileCardCount = 2;
                 // Show card A fully + card B peeking: card A = ~88% of track, gap accounts for peek
                 const mobileAutoWidth = mobileGap > 0
                   ? `calc(88% - ${mobileGap}px)`
@@ -693,8 +686,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
           const displayLeft = modalHoverImg === 'A' ? imgC : imgA;
           const displayRight = modalHoverImg === 'B' ? imgD : imgB;
 
-          const toEmbedUrlLocal = (raw: string) => toEmbedUrl(raw);
-
           const renderVideoContent = (minH: number) => {
             if (!activeVideo.videoPlayUrl) {
               return (
@@ -710,7 +701,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                 </div>
               );
             }
-            const { type, src } = toEmbedUrlLocal(activeVideo.videoPlayUrl);
+            const { type, src } = toEmbedUrl(activeVideo.videoPlayUrl);
             if (type === 'iframe' || type === 'tiktok') {
               return <iframe src={src} style={{ width: "100%", height: "100%", minHeight: minH, border: "none", display: "block", background: "#000" }} allow="autoplay; fullscreen; encrypted-media" allowFullScreen />;
             } else {
@@ -734,7 +725,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             openCart();
           };
 
-          type ColorEntry = { name: string; hex: string | null };
           const derivedColorEntries: ColorEntry[] = shopifyProduct
             ? (shopifyProduct.options.find((o: any) => o.name.toLowerCase() === 'color')?.optionValues || []).map((v: any) => ({
                 name: v.name,
