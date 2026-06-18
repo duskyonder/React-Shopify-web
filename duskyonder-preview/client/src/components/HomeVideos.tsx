@@ -154,48 +154,16 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                       <span className="sf-video-creator-name">{video.creatorName || video.influencerName.replace('@','')}</span>
                     </div>
                   </div>
-                  {(video.linkedProductName || video.linkedProductImage) && (() => {
-                    // Collect all product images for this card
-                    const cardImgs = [
-                      ...(video.linkedProductImages || []),
-                      ...(video.linkedProductImage ? [video.linkedProductImage] : []),
-                    ].filter((v: string, i: number, a: string[]) => a.indexOf(v) === i);
-                    const cardImgA = cardImgs[0] || null;
-                    const cardImgB = cardImgs[1] || null;
-                    return (
-                      <div className="sf-video-product-card">
-                        {/* Two images side by side */}
-                        {(cardImgA || cardImgB) && (
-                          <div className="sf-video-product-imgs">
-                            {cardImgA && (
-                              <div className="sf-video-product-img-wrap">
-                                <img loading="lazy" src={cardImgA} alt={video.linkedProductName} className="sf-video-product-img" />
-                              </div>
-                            )}
-                            {cardImgB && (
-                              <div className="sf-video-product-img-wrap">
-                                <img loading="lazy" src={cardImgB} alt={video.linkedProductName} className="sf-video-product-img" />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        <div className="sf-video-product-info">
-                          <div className="sf-video-product-name">{video.linkedProductName}</div>
-                          {video.linkedProductPrice && (
-                            <div className="sf-video-product-price">{video.linkedProductPrice}</div>
-                          )}
-                          {video.linkedProductComparePrice && (
-                            <div className="sf-video-product-compare">{video.linkedProductComparePrice}</div>
-                          )}
-                          <a
-                            href={video.linkedProductLink || '#'}
-                            className="sf-video-product-shop-btn"
-                            onClick={e => { e.stopPropagation(); }}
-                          >SHOP NOW</a>
-                        </div>
+                  {(video.linkedProductName || video.linkedProductImage) && (
+                    <div className="sf-video-product-card">
+                      {video.linkedProductImage && (
+                        <img loading="lazy" src={video.linkedProductImage} alt={video.linkedProductName} className="sf-video-product-img" />
+                      )}
+                      <div className="sf-video-product-info">
+                        <div className="sf-video-product-name">{video.linkedProductName}</div>
                       </div>
-                    );
-                  })()}
+                    </div>
+                  )}
                 </div>
                 );
               })}
