@@ -159,7 +159,11 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                   fontWeight: config.heroBtnFontWeight || "600",
                   letterSpacing: `${(config.heroBtnLetterSpacing ?? 8) / 100}em`,
                   padding: `var(--hero-btn-pad-y, ${config.heroBtnPaddingY || 12}px) var(--hero-btn-pad-x, ${config.heroBtnPaddingX || 28}px)`,
-                  alignSelf: dAlign === "flex-start" ? "flex-start" : dAlign === "flex-end" ? "flex-end" : "center",
+                  // Mobile: use mAlign for alignSelf; desktop: use dAlign
+                  // We use a CSS variable so the mobile media query can override
+                  ["--hero-btn-self" as string]: dAlign === "flex-start" ? "flex-start" : dAlign === "flex-end" ? "flex-end" : "center",
+                  ["--hero-btn-m-self" as string]: mAlign === "flex-start" ? "flex-start" : mAlign === "flex-end" ? "flex-end" : "center",
+                  alignSelf: "var(--hero-btn-self, center)" as any,
                   // CSS vars for mobile override
                   ["--hero-btn-font-size" as string]: `${config.heroBtnFontSize || 14}px`,
                   ["--hero-btn-m-font-size" as string]: `${config.heroBtnMobileFontSize ?? config.heroBtnFontSize ?? 14}px`,

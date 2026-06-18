@@ -677,49 +677,67 @@ export function SFFooter() {
       </div>
 
       {/* Mobile: stacked layout — brand centered on top, nav columns in 3-col row, social at bottom */}
-      <div className="sf-footer-mobile">
-        <div className="sf-footer-mobile-brand">
-          {config.logoImageUrl ? (
-            <a href="/"><img src={config.logoImageUrl} alt={config.logoText} style={{ height: 32, objectFit: "contain" }} /></a>
-          ) : (
-            <a href="/" className="sf-logo" style={{ color: "#4CAF82", fontSize: "1.2rem" }}>{config.logoText}</a>
-          )}
-          <p>{config.footerAbout}</p>
-        </div>
-        <div className="sf-footer-mobile-nav">
-          <div className="sf-footer-col">
-            <h4>Shop</h4>
-            <ul className="sf-footer-links">
-              <li><a href="/collections">Shop All</a></li>
-              <li><a href="/collections/new-arrivals">New Arrivals</a></li>
-              <li><a href="/collections/sale">Sale</a></li>
-            </ul>
+        <div className="sf-footer-mobile">
+          {/* Brand + tagline */}
+          <div className="sf-footer-mobile-brand">
+            {config.logoImageUrl ? (
+              <a href="/"><img src={config.logoImageUrl} alt={config.logoText} style={{ height: 36, objectFit: "contain" }} /></a>
+            ) : (
+              <a href="/" className="sf-logo" style={{ color: "#4CAF82", fontSize: "1.4rem", display: "block", marginBottom: 8 }}>{config.logoText}</a>
+            )}
+            {config.footerAbout && (
+              <p className="sf-footer-mobile-tagline">{config.footerAbout}</p>
+            )}
           </div>
-          <div className="sf-footer-col">
-            <h4>Company</h4>
+          {/* Newsletter */}
+          <div className="sf-footer-mobile-newsletter">
+            <p className="sf-footer-mobile-newsletter-label">Never miss out</p>
+            <p className="sf-footer-mobile-newsletter-sub">Sign up to our newsletter and be the first notified about new arrivals, offers and more.</p>
+            <form className="sf-footer-mobile-newsletter-form" onSubmit={e => e.preventDefault()}>
+              <input type="email" placeholder="E-mail" className="sf-footer-mobile-newsletter-input" />
+              <button type="submit" className="sf-footer-mobile-newsletter-btn" aria-label="Subscribe">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+              </button>
+            </form>
+          </div>
+          {/* Nav links: 2-column grid */}
+          <div className="sf-footer-mobile-nav">
+            <div className="sf-footer-col">
+              <h4>Shop</h4>
+              <ul className="sf-footer-links">
+                <li><a href="/collections">Shop All</a></li>
+                <li><a href="/collections/new-arrivals">New Arrivals</a></li>
+                <li><a href="/collections/sale">Sale</a></li>
+              </ul>
+            </div>
+            <div className="sf-footer-col">
+              <h4>Support</h4>
+              <ul className="sf-footer-links">
+                <li><a href="/contact">Contact Us</a></li>
+                <li><a href="/returns">Returns</a></li>
+                <li><a href="/size-guide">Size Guide</a></li>
+                <li><a href="/shipping">Shipping Information</a></li>
+              </ul>
+            </div>
+          </div>
+          {/* Explore section — full width below the 2-col grid */}
+          <div className="sf-footer-mobile-explore">
+            <h4>Explore</h4>
             <ul className="sf-footer-links">
               <li><a href="/about">Our Story</a></li>
               <li><a href="/blog">Blog</a></li>
               <li><a href="/sustainability">Sustainability</a></li>
             </ul>
           </div>
-          <div className="sf-footer-col">
-            <h4>Help</h4>
-            <ul className="sf-footer-links">
-              <li><a href="/contact">Contact Us</a></li>
-              <li><a href="/returns">Returns</a></li>
-              <li><a href="/size-guide">Size Guide</a></li>
-            </ul>
+          {/* Social icons */}
+          <div className="sf-footer-mobile-social">
+            {socialItems.filter(s => s.url).map(s => (
+              <a key={s.key} href={s.url} className="sf-social-link" title={s.label} target="_blank" rel="noopener noreferrer">
+                {SOCIAL_ICON_MAP[s.key] || s.label}
+              </a>
+            ))}
           </div>
         </div>
-        <div className="sf-footer-mobile-social">
-          {socialItems.filter(s => s.url).map(s => (
-            <a key={s.key} href={s.url} className="sf-social-link" title={s.label} target="_blank" rel="noopener noreferrer">
-              {SOCIAL_ICON_MAP[s.key] || s.label}
-            </a>
-          ))}
-        </div>
-      </div>
 
       <div className="sf-footer-bottom">
         <p>{config.footerCopyright || `\u00A9 ${new Date().getFullYear()} ${config.logoText}. All rights reserved.`}</p>
