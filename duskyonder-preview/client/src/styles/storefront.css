@@ -177,18 +177,23 @@
   min-height: var(--series-min-height, 520px);
 }
 @media (max-width: 900px) {
-  .sf-series-inner { grid-template-columns: 1fr; gap: 32px; min-height: unset; }
+  .sf-series-section { overflow-x: hidden; padding: 48px 0; }
+  .sf-series-inner { grid-template-columns: 1fr; gap: 32px; min-height: unset; padding: 0; }
   /* Mobile: hide the left image block (it will be shown inline in the list) */
   .sf-series-image.sf-series-image--desktop { display: none; }
-  /* Mobile inline image: inserted between list items */
+  /* Mobile inline image: full-bleed, no side gaps */
   .sf-series-inline-img {
     position: relative;
-    width: var(--series-m-img-width, 100%);
+    width: 100vw;
+    /* Pull out of any ancestor padding to reach screen edges */
+    margin-left: calc(-1 * var(--series-m-side-pad, 0px));
+    margin-right: calc(-1 * var(--series-m-side-pad, 0px));
     /* aspect-ratio controlled via inline style from config.seriesImageAspectRatio */
     overflow: hidden;
-    border-radius: 4px;
+    border-radius: 0;
     background: #1a4d35;
-    margin: 8px 0 4px;
+    margin-top: 8px;
+    margin-bottom: 4px;
     animation: seriesFadeIn 0.4s ease;
   }
   .sf-series-inline-img img {
