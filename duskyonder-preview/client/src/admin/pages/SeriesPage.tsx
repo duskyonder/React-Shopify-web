@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { useThemeConfig, type CollectionSeries } from "@/contexts/ThemeConfigContext";
+import {
+  useThemeConfig,
+  type CollectionSeries,
+} from "@/contexts/ThemeConfigContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +12,8 @@ import { GripVertical, Plus, Trash2 } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
 
 export default function SeriesPage() {
-  const { config, updateConfig, updateSeries, addSeries, removeSeries } = useThemeConfig();
+  const { config, updateConfig, updateSeries, addSeries, removeSeries } =
+    useThemeConfig();
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const seriesList = config.seriesList ?? [];
 
@@ -34,7 +38,9 @@ export default function SeriesPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold">系列板块</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">管理首页系列展示</p>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            管理首页系列展示
+          </p>
         </div>
         <Button onClick={handleAdd} size="sm" variant="outline">
           <Plus className="w-4 h-4 mr-1" /> 添加系列
@@ -58,7 +64,9 @@ export default function SeriesPage() {
               <Label className="text-xs">板块副标题</Label>
               <Input
                 value={config.seriesSubheadline ?? ""}
-                onChange={e => updateConfig({ seriesSubheadline: e.target.value })}
+                onChange={e =>
+                  updateConfig({ seriesSubheadline: e.target.value })
+                }
                 placeholder="副标题"
                 className="h-8"
               />
@@ -73,16 +81,19 @@ export default function SeriesPage() {
             key={series.id}
             draggable
             onDragStart={() => handleDragStart(index)}
-            onDragOver={(e) => handleDragOver(e, index)}
+            onDragOver={e => handleDragOver(e, index)}
             onDragEnd={handleDragEnd}
             className={`transition-all ${dragIndex === index ? "opacity-50 scale-[0.98]" : ""}`}
           >
             <CardContent className="pt-4 pb-4 px-4 space-y-3">
               <div className="flex items-center gap-2">
                 <GripVertical className="w-5 h-5 text-muted-foreground cursor-move shrink-0" />
-                <span className="text-sm font-medium flex-1">{series.name || "未命名系列"}</span>
+                <span className="text-sm font-medium flex-1">
+                  {series.name || "未命名系列"}
+                </span>
                 <Button
-                  variant="ghost" size="sm"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => removeSeries(series.id)}
                   className="text-destructive hover:text-destructive h-8 w-8 p-0"
                 >
@@ -95,7 +106,7 @@ export default function SeriesPage() {
                   section="series"
                   slot={`series_${series.id}`}
                   currentUrl={series.imageUrl}
-                  onUploaded={(url) => updateSeries(series.id, { imageUrl: url })}
+                  onUploaded={url => updateSeries(series.id, { imageUrl: url })}
                   aspectRatio="4/5"
                   label="上传系列图片"
                 />
@@ -104,7 +115,9 @@ export default function SeriesPage() {
                     <Label className="text-xs">标签（小字）</Label>
                     <Input
                       value={series.label ?? ""}
-                      onChange={e => updateSeries(series.id, { label: e.target.value })}
+                      onChange={e =>
+                        updateSeries(series.id, { label: e.target.value })
+                      }
                       placeholder="如: NEW ARRIVAL"
                       className="h-8"
                     />
@@ -113,7 +126,9 @@ export default function SeriesPage() {
                     <Label className="text-xs">系列名称</Label>
                     <Input
                       value={series.name}
-                      onChange={e => updateSeries(series.id, { name: e.target.value })}
+                      onChange={e =>
+                        updateSeries(series.id, { name: e.target.value })
+                      }
                       placeholder="系列名称"
                       className="h-8"
                     />
@@ -122,7 +137,9 @@ export default function SeriesPage() {
                     <Label className="text-xs">描述</Label>
                     <Textarea
                       value={series.description ?? ""}
-                      onChange={e => updateSeries(series.id, { description: e.target.value })}
+                      onChange={e =>
+                        updateSeries(series.id, { description: e.target.value })
+                      }
                       placeholder="系列描述"
                       rows={3}
                       className="text-sm resize-none"
@@ -132,7 +149,9 @@ export default function SeriesPage() {
                     <Label className="text-xs">跳转链接</Label>
                     <Input
                       value={series.link ?? ""}
-                      onChange={e => updateSeries(series.id, { link: e.target.value })}
+                      onChange={e =>
+                        updateSeries(series.id, { link: e.target.value })
+                      }
                       placeholder="/collections/handle"
                       className="h-8"
                     />

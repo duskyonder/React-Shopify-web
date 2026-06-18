@@ -15,7 +15,10 @@ function formatDate(iso: string): string {
   });
 }
 
-export default function BlogArticleDrawer({ article, onClose }: BlogArticleDrawerProps) {
+export default function BlogArticleDrawer({
+  article,
+  onClose,
+}: BlogArticleDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
 
   // Close on Escape key
@@ -81,12 +84,18 @@ export default function BlogArticleDrawer({ article, onClose }: BlogArticleDrawe
 
           {/* Meta */}
           <div className="blog-drawer-meta">
-            {article.tags.map((tag) => (
-              <span key={tag} className="blog-drawer-tag">{tag}</span>
+            {article.tags.map(tag => (
+              <span key={tag} className="blog-drawer-tag">
+                {tag}
+              </span>
             ))}
-            <span className="blog-drawer-date">{formatDate(article.publishedAt)}</span>
+            <span className="blog-drawer-date">
+              {formatDate(article.publishedAt)}
+            </span>
             <span className="blog-card-dot">·</span>
-            <span className="blog-drawer-read-time">{article.readingTimeMinutes} min read</span>
+            <span className="blog-drawer-read-time">
+              {article.readingTimeMinutes} min read
+            </span>
           </div>
 
           {/* Title */}

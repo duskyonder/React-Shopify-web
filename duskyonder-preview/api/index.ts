@@ -43,7 +43,8 @@ async function shopifyAdminGraphQL(
   if (!token) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "SHOPIFY_ADMIN_TOKEN is not configured in Vercel environment variables.",
+      message:
+        "SHOPIFY_ADMIN_TOKEN is not configured in Vercel environment variables.",
     });
   }
   const res = await fetch(
@@ -91,10 +92,14 @@ async function getAllConfigs(): Promise<Record<string, unknown>> {
   if (!nodes) return {};
   const result: Record<string, unknown> = {};
   for (const node of nodes) {
-    const k = node.fields.find((f) => f.key === "config_key");
-    const v = node.fields.find((f) => f.key === "config_value");
+    const k = node.fields.find(f => f.key === "config_key");
+    const v = node.fields.find(f => f.key === "config_value");
     if (k?.value && v?.value) {
-      try { result[k.value] = JSON.parse(v.value); } catch { result[k.value] = v.value; }
+      try {
+        result[k.value] = JSON.parse(v.value);
+      } catch {
+        result[k.value] = v.value;
+      }
     }
   }
   return result;
@@ -119,8 +124,8 @@ async function setConfig(key: string, value: unknown): Promise<void> {
     id: string;
     fields: Array<{ key: string; value: string }>;
   }>;
-  const existing = nodes?.find((n) =>
-    n.fields.find((f) => f.key === "config_key")?.value === key
+  const existing = nodes?.find(
+    n => n.fields.find(f => f.key === "config_key")?.value === key
   );
   if (existing) {
     await shopifyAdminGraphQL(
@@ -192,7 +197,8 @@ async function uploadToShopifyFiles(
     });
   }
 
-  const targets = (stagedData as any)?.stagedUploadsCreate?.stagedTargets as Array<{
+  const targets = (stagedData as any)?.stagedUploadsCreate
+    ?.stagedTargets as Array<{
     url: string;
     resourceUrl: string;
     parameters: Array<{ name: string; value: string }>;
@@ -320,12 +326,17 @@ const vercelRouter = router({
         const nodes = (files?.nodes ?? []) as Array<{
           id: string;
           createdAt: string;
-          image?: { url: string; altText?: string; width?: number; height?: number };
+          image?: {
+            url: string;
+            altText?: string;
+            width?: number;
+            height?: number;
+          };
         }>;
         return {
           files: nodes
-            .filter((n) => n.image?.url)
-            .map((n) => ({
+            .filter(n => n.image?.url)
+            .map(n => ({
               id: n.id,
               url: n.image!.url,
               alt: n.image!.altText ?? "",
@@ -348,11 +359,16 @@ const vercelRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        const ext = input.mimeType.split("/")[1]?.replace("jpeg", "jpg") || "jpg";
+        const ext =
+          input.mimeType.split("/")[1]?.replace("jpeg", "jpg") || "jpg";
         const filename = input.originalName
           ? input.originalName.replace(/[^a-zA-Z0-9._-]/g, "_")
           : `${input.section}-${input.slot}-${Date.now()}.${ext}`;
-        const url = await uploadToShopifyFiles(input.base64, input.mimeType, filename);
+        const url = await uploadToShopifyFiles(
+          input.base64,
+          input.mimeType,
+          filename
+        );
         return { url, key: `shopify:${filename}` };
       }),
   }),
@@ -410,7 +426,10 @@ const vercelRouter = router({
               "Content-Type": "application/json",
               "X-Shopify-Storefront-Access-Token": storefrontToken,
             },
-            body: JSON.stringify({ query: gql, variables: { handle: input.handle } }),
+            body: JSON.stringify({
+              query: gql,
+              variables: { handle: input.handle },
+            }),
           }
         );
         const json = (await res.json()) as {

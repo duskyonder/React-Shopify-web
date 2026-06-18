@@ -8,7 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 
 export default function PromoBarPage() {
-  const { config, updateConfig, updatePromoItem, addPromoItem, removePromoItem } = useThemeConfig();
+  const {
+    config,
+    updateConfig,
+    updatePromoItem,
+    addPromoItem,
+    removePromoItem,
+  } = useThemeConfig();
   const items = config.marqueeItems?.filter(i => i.type === "text") ?? [];
 
   // PromoBar uses showPromoBar + promoBarItems (separate from marquee)
@@ -21,7 +27,10 @@ export default function PromoBarPage() {
   };
 
   const addItem = () => {
-    const newItems = [...promoItems, { id: `promo_${Date.now()}`, text: "New announcement", link: "" }];
+    const newItems = [
+      ...promoItems,
+      { id: `promo_${Date.now()}`, text: "New announcement", link: "" },
+    ];
     updatePromo({ promoBarItems: newItems });
   };
 
@@ -31,7 +40,9 @@ export default function PromoBarPage() {
 
   const updateItem = (id: string, field: string, value: string) => {
     updatePromo({
-      promoBarItems: promoItems.map((i: any) => i.id === id ? { ...i, [field]: value } : i),
+      promoBarItems: promoItems.map((i: any) =>
+        i.id === id ? { ...i, [field]: value } : i
+      ),
     });
   };
 
@@ -53,7 +64,7 @@ export default function PromoBarPage() {
             <div className="flex items-center gap-2">
               <Switch
                 checked={showPromoBar}
-                onCheckedChange={(v) => updatePromo({ showPromoBar: v })}
+                onCheckedChange={v => updatePromo({ showPromoBar: v })}
               />
               <Label className="text-sm">显示促销栏</Label>
             </div>
@@ -62,7 +73,9 @@ export default function PromoBarPage() {
               <Input
                 type="number"
                 value={promoSpeed}
-                onChange={e => updatePromo({ promoBarSpeed: Number(e.target.value) })}
+                onChange={e =>
+                  updatePromo({ promoBarSpeed: Number(e.target.value) })
+                }
                 className="h-8"
                 min={1}
                 max={20}
@@ -92,7 +105,8 @@ export default function PromoBarPage() {
                 />
               </div>
               <Button
-                variant="ghost" size="sm"
+                variant="ghost"
+                size="sm"
                 onClick={() => removeItem(item.id)}
                 className="text-destructive hover:text-destructive h-8 w-8 p-0 shrink-0"
               >

@@ -3,35 +3,57 @@ import ReactDOM from "react-dom";
 import { useThemeConfig, Product } from "@/contexts/ThemeConfigContext";
 import { useCart } from "@/contexts/CartContext";
 import { ColorSwatch } from "@/components/StorefrontShell";
-import { PlayIcon, XIcon, HeartIcon, ImageIcon, ImgPlaceholder } from "@/components/HomeIcons";
+import {
+  PlayIcon,
+  XIcon,
+  HeartIcon,
+  ImageIcon,
+  ImgPlaceholder,
+} from "@/components/HomeIcons";
 import { fetchProductByHandle, type ShopifyProduct } from "@/lib/shopify";
 
-
 // ==================== INFLUENCER VIDEOS ====================
-function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "left" | "center" | "right" }) {
+function SFVideos({
+  titleAlign = "center",
+}: {
+  instanceId?: string;
+  titleAlign?: "left" | "center" | "right";
+}) {
   const { config } = useThemeConfig();
   const { addItem, openCart } = useCart();
   const [activeVideo, setActiveVideo] = useState<any>(null);
-  const [modalHoverImg, setModalHoverImg] = useState<'A' | 'B' | null>(null);
+  const [modalHoverImg, setModalHoverImg] = useState<"A" | "B" | null>(null);
   const [isMobileModal, setIsMobileModal] = useState(false);
-  const [selectedVideoColor, setSelectedVideoColor] = useState<string | null>(null);
-  const [selectedVideoSize, setSelectedVideoSize] = useState<string | null>(null);
-  const [shopifyProduct, setShopifyProduct] = useState<ShopifyProduct | null>(null);
+  const [selectedVideoColor, setSelectedVideoColor] = useState<string | null>(
+    null
+  );
+  const [selectedVideoSize, setSelectedVideoSize] = useState<string | null>(
+    null
+  );
+  const [shopifyProduct, setShopifyProduct] = useState<ShopifyProduct | null>(
+    null
+  );
   const trackRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobileModal(window.innerWidth <= 767);
     checkMobile();
-    window.addEventListener('resize', checkMobile, { passive: true });
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile, { passive: true });
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Auto-fetch Shopify product when modal opens (if handle is set)
   useEffect(() => {
-    if (!activeVideo) { setShopifyProduct(null); return; }
+    if (!activeVideo) {
+      setShopifyProduct(null);
+      return;
+    }
     const handle = activeVideo.linkedProductHandle;
-    if (!handle) { setShopifyProduct(null); return; }
+    if (!handle) {
+      setShopifyProduct(null);
+      return;
+    }
     fetchProductByHandle(handle).then(p => setShopifyProduct(p));
   }, [activeVideo]);
 
@@ -63,9 +85,15 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
   useEffect(() => {
     const el = videoSectionRef.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) { setVideoSectionVisible(true); obs.disconnect(); }
-    }, { rootMargin: "200px" });
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVideoSectionVisible(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
@@ -76,7 +104,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
     const el = trackRef.current;
     if (!el) return;
     const pageWidth = el.clientWidth + mobileGap;
-    el.scrollTo({ left: mobileVideoPage * pageWidth, behavior: 'smooth' });
+    el.scrollTo({ left: mobileVideoPage * pageWidth, behavior: "smooth" });
   }, [mobileVideoPage, isMobileVideos, mobileGap]);
 
   const handleMobileVideoScroll = useCallback(() => {
@@ -84,12 +112,14 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
     if (!el) return;
     const pageWidth = el.clientWidth + mobileGap;
     const newPage = Math.round(el.scrollLeft / pageWidth);
-    setMobileVideoPage(p => p !== newPage ? newPage : p);
+    setMobileVideoPage(p => (p !== newPage ? newPage : p));
   }, [mobileGap]);
 
   const scrollByBtn = (dir: number) => {
     if (isMobileVideos) {
-      setMobileVideoPage(p => Math.max(0, Math.min(totalMobileVideoPages - 1, p + dir)));
+      setMobileVideoPage(p =>
+        Math.max(0, Math.min(totalMobileVideoPages - 1, p + dir))
+      );
     } else {
       setVideoPage(p => Math.max(0, Math.min(totalVideoPages - 1, p + dir)));
     }
@@ -98,459 +128,1055 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
   return (
     <>
       <section className="sf-section sf-videos" ref={videoSectionRef}>
-        <div className="sf-section-header" style={{ textAlign: titleAlign }}><h2>{config.videosTitle}</h2></div>
+        <div className="sf-section-header" style={{ textAlign: titleAlign }}>
+          <h2>{config.videosTitle}</h2>
+        </div>
         {!videoSectionVisible && <div style={{ minHeight: 300 }} />}
-        {videoSectionVisible && <div className="sf-scroll-section-wrapper" style={{
-            width: "95%",
-            maxWidth: isMobileVideos
-              ? (config.videosMobileMaxWidth ? `${config.videosMobileMaxWidth}px` : '1600px')
-              : `${config.videosMaxWidth ?? 1600}px`,
-            ['--video-card-height' as string]: isMobileVideos
-              ? (config.videosMobileCardHeight ? `${config.videosMobileCardHeight}px` : undefined)
-              : (config.videoCardHeight ? `${config.videoCardHeight}px` : undefined),
-          } as React.CSSProperties}>
-          <button className="sf-cat-arrow prev" onClick={() => scrollByBtn(-1)}
-            style={!isMobileVideos ? { opacity: videoPage === 0 ? 0.3 : 1 } : undefined}>&#8249;</button>
-          <div className="sf-scroll-track-outer" style={!isMobileVideos ? { overflow: "hidden" } : undefined}>
-            <div
-              ref={trackRef}
-              className="sf-videos-scroll-track"
-              onScroll={isMobileVideos ? handleMobileVideoScroll : undefined}
-              style={{
-                "--videos-desktop-count": desktopCount,
-                scrollSnapType: isMobileVideos ? "x mandatory" : "none",
-                flexWrap: "nowrap",
-                gap: isMobileVideos ? mobileGap : desktopGap,
-                ...(!isMobileVideos ? {
-                  transform: `translateX(calc(-${videoPage} * (100% + ${desktopGap}px)))`,
-                  transition: "transform 0.4s cubic-bezier(0.23, 1, 0.32, 1)",
-                  willChange: "transform",
-                } : {}),
-              } as React.CSSProperties}
+        {videoSectionVisible && (
+          <div
+            className="sf-scroll-section-wrapper"
+            style={
+              {
+                width: "95%",
+                maxWidth: isMobileVideos
+                  ? config.videosMobileMaxWidth
+                    ? `${config.videosMobileMaxWidth}px`
+                    : "1600px"
+                  : `${config.videosMaxWidth ?? 1600}px`,
+                ["--video-card-height" as string]: isMobileVideos
+                  ? config.videosMobileCardHeight
+                    ? `${config.videosMobileCardHeight}px`
+                    : undefined
+                  : config.videoCardHeight
+                    ? `${config.videoCardHeight}px`
+                    : undefined,
+              } as React.CSSProperties
+            }
+          >
+            <button
+              className="sf-cat-arrow prev"
+              onClick={() => scrollByBtn(-1)}
+              style={
+                !isMobileVideos
+                  ? { opacity: videoPage === 0 ? 0.3 : 1 }
+                  : undefined
+              }
             >
-              {videos.map((video) => {
-                const mobileCardCount = 2;
-                const mobileAutoWidth = mobileGap > 0
-                  ? `calc((100% - ${mobileGap * (mobileCardCount - 1)}px) / ${mobileCardCount})`
-                  : `calc(100% / ${mobileCardCount})`;
-                const desktopAutoWidth = desktopGap > 0
-                  ? `calc((100% - ${desktopGap * (desktopCount - 1)}px) / ${desktopCount})`
-                  : `calc(100% / ${desktopCount})`;
-                const mobileWidth = mobileCardWidth > 0 ? `${mobileCardWidth}px` : mobileAutoWidth;
-                const desktopWidth = desktopCardWidth > 0 ? `${desktopCardWidth}px` : desktopAutoWidth;
-                // Auto-derive thumbnail from YouTube URL if no manual imageUrl
-                const ytMatch = video.videoPlayUrl?.match(/(?:v=|youtu\.be\/)([^&?/]+)/);
-                const autoThumb = ytMatch ? `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg` : undefined;
-                const thumbSrc = video.imageUrl || autoThumb;
-                return (
-                <div
-                  key={video.id}
-                  className="sf-video-card-wrapper"
-                  style={isMobileVideos ? { scrollSnapAlign: "start", flex: `0 0 ${mobileWidth}`, width: mobileWidth } : { flex: `0 0 ${desktopWidth}`, width: desktopWidth }}
-                >
-                  <div
-                    className="sf-video-card"
-                    style={{ aspectRatio: config.videoAspectRatio ?? "9/16", cursor: "pointer" }}
-                    onClick={() => { setActiveVideo(video); setSelectedVideoColor(null); setSelectedVideoSize(null); }}
-                  >
-                    {thumbSrc ? (
-                      <img loading="lazy" src={thumbSrc} alt={video.influencerName} />
-                    ) : (
-                      <ImgPlaceholder label="视频封面" style={{ position: "absolute", inset: 0 }} />
-                    )}
-                    <div className="sf-video-play"><PlayIcon /></div>
-                    {/* Creator badge - top left (name only, no avatar) */}
-                    <div className="sf-video-creator-badge">
-                      <span className="sf-video-creator-name">{video.creatorName || video.influencerName.replace('@','')}</span>
-                    </div>
-                  </div>
-                  {(video.linkedProductName || video.linkedProductImage) && (
-                    <div className="sf-video-product-card">
-                      {video.linkedProductImage && (
-                        <img loading="lazy" src={video.linkedProductImage} alt={video.linkedProductName} className="sf-video-product-img" />
-                      )}
-                      <div className="sf-video-product-info">
-                        <div className="sf-video-product-name">{video.linkedProductName}</div>
+              &#8249;
+            </button>
+            <div
+              className="sf-scroll-track-outer"
+              style={!isMobileVideos ? { overflow: "hidden" } : undefined}
+            >
+              <div
+                ref={trackRef}
+                className="sf-videos-scroll-track"
+                onScroll={isMobileVideos ? handleMobileVideoScroll : undefined}
+                style={
+                  {
+                    "--videos-desktop-count": desktopCount,
+                    scrollSnapType: isMobileVideos ? "x mandatory" : "none",
+                    flexWrap: "nowrap",
+                    gap: isMobileVideos ? mobileGap : desktopGap,
+                    ...(!isMobileVideos
+                      ? {
+                          transform: `translateX(calc(-${videoPage} * (100% + ${desktopGap}px)))`,
+                          transition:
+                            "transform 0.4s cubic-bezier(0.23, 1, 0.32, 1)",
+                          willChange: "transform",
+                        }
+                      : {}),
+                  } as React.CSSProperties
+                }
+              >
+                {videos.map(video => {
+                  const mobileCardCount = 2;
+                  const mobileAutoWidth =
+                    mobileGap > 0
+                      ? `calc((100% - ${mobileGap * (mobileCardCount - 1)}px) / ${mobileCardCount})`
+                      : `calc(100% / ${mobileCardCount})`;
+                  const desktopAutoWidth =
+                    desktopGap > 0
+                      ? `calc((100% - ${desktopGap * (desktopCount - 1)}px) / ${desktopCount})`
+                      : `calc(100% / ${desktopCount})`;
+                  const mobileWidth =
+                    mobileCardWidth > 0
+                      ? `${mobileCardWidth}px`
+                      : mobileAutoWidth;
+                  const desktopWidth =
+                    desktopCardWidth > 0
+                      ? `${desktopCardWidth}px`
+                      : desktopAutoWidth;
+                  // Auto-derive thumbnail from YouTube URL if no manual imageUrl
+                  const ytMatch = video.videoPlayUrl?.match(
+                    /(?:v=|youtu\.be\/)([^&?/]+)/
+                  );
+                  const autoThumb = ytMatch
+                    ? `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`
+                    : undefined;
+                  const thumbSrc = video.imageUrl || autoThumb;
+                  return (
+                    <div
+                      key={video.id}
+                      className="sf-video-card-wrapper"
+                      style={
+                        isMobileVideos
+                          ? {
+                              scrollSnapAlign: "start",
+                              flex: `0 0 ${mobileWidth}`,
+                              width: mobileWidth,
+                            }
+                          : { flex: `0 0 ${desktopWidth}`, width: desktopWidth }
+                      }
+                    >
+                      <div
+                        className="sf-video-card"
+                        style={{
+                          aspectRatio: config.videoAspectRatio ?? "9/16",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => {
+                          setActiveVideo(video);
+                          setSelectedVideoColor(null);
+                          setSelectedVideoSize(null);
+                        }}
+                      >
+                        {thumbSrc ? (
+                          <img
+                            loading="lazy"
+                            src={thumbSrc}
+                            alt={video.influencerName}
+                          />
+                        ) : (
+                          <ImgPlaceholder
+                            label="视频封面"
+                            style={{ position: "absolute", inset: 0 }}
+                          />
+                        )}
+                        <div className="sf-video-play">
+                          <PlayIcon />
+                        </div>
+                        {/* Creator badge - top left (name only, no avatar) */}
+                        <div className="sf-video-creator-badge">
+                          <span className="sf-video-creator-name">
+                            {video.creatorName ||
+                              video.influencerName.replace("@", "")}
+                          </span>
+                        </div>
                       </div>
+                      {(video.linkedProductName ||
+                        video.linkedProductImage) && (
+                        <div className="sf-video-product-card">
+                          {video.linkedProductImage && (
+                            <img
+                              loading="lazy"
+                              src={video.linkedProductImage}
+                              alt={video.linkedProductName}
+                              className="sf-video-product-img"
+                            />
+                          )}
+                          <div className="sf-video-product-info">
+                            <div className="sf-video-product-name">
+                              {video.linkedProductName}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
+            <button
+              className="sf-cat-arrow next"
+              onClick={() => scrollByBtn(1)}
+              style={
+                !isMobileVideos
+                  ? { opacity: videoPage >= totalVideoPages - 1 ? 0.3 : 1 }
+                  : undefined
+              }
+            >
+              &#8250;
+            </button>
           </div>
-          <button className="sf-cat-arrow next" onClick={() => scrollByBtn(1)}
-            style={!isMobileVideos ? { opacity: videoPage >= totalVideoPages - 1 ? 0.3 : 1 } : undefined}>&#8250;</button>
-        </div>}
+        )}
         {videoSectionVisible && !isMobileVideos && totalVideoPages > 1 && (
           <div className="sf-section-dots">
             {Array.from({ length: totalVideoPages }).map((_, i) => (
-              <button key={i} className={`sf-section-dot${i === videoPage ? " active" : ""}`} onClick={() => setVideoPage(i)} />
+              <button
+                key={i}
+                className={`sf-section-dot${i === videoPage ? " active" : ""}`}
+                onClick={() => setVideoPage(i)}
+              />
             ))}
           </div>
         )}
         {videoSectionVisible && isMobileVideos && totalMobileVideoPages > 1 && (
           <div className="sf-section-dots">
             {Array.from({ length: totalMobileVideoPages }).map((_, i) => (
-              <button key={i} className={`sf-section-dot${i === mobileVideoPage ? " active" : ""}`} onClick={() => setMobileVideoPage(i)} />
+              <button
+                key={i}
+                className={`sf-section-dot${i === mobileVideoPage ? " active" : ""}`}
+                onClick={() => setMobileVideoPage(i)}
+              />
             ))}
           </div>
         )}
       </section>
 
       {/* Video Play Modal */}
-      {activeVideo && ReactDOM.createPortal(
-        (() => {
-          // Compute product images for hover logic: A, B, C, D
-          // Prefer Shopify product images when auto-fetched, fall back to manual config
-          const allImgs: string[] = shopifyProduct
-            ? shopifyProduct.images.map((img: { url: string }) => img.url)
-            : [
-                ...(activeVideo.linkedProductImages || []),
-                ...(activeVideo.linkedProductImage ? [activeVideo.linkedProductImage] : []),
-              ].filter((v: string, i: number, a: string[]) => a.indexOf(v) === i); // dedupe
-          // A=allImgs[0], B=allImgs[1], C=allImgs[2], D=allImgs[3]
-          const imgA = allImgs[0] || activeVideo.linkedProductImage || null;
-          const imgB = allImgs[1] || null;
-          const imgC = allImgs[2] || null;
-          const imgD = allImgs[3] || null;
-          // Hover logic: default A+B; hover A => C+B; hover B => A+D
-          const displayLeft = modalHoverImg === 'A' ? imgC : imgA;
-          const displayRight = modalHoverImg === 'B' ? imgD : imgB;
+      {activeVideo &&
+        ReactDOM.createPortal(
+          (() => {
+            // Compute product images for hover logic: A, B, C, D
+            // Prefer Shopify product images when auto-fetched, fall back to manual config
+            const allImgs: string[] = shopifyProduct
+              ? shopifyProduct.images.map((img: { url: string }) => img.url)
+              : [
+                  ...(activeVideo.linkedProductImages || []),
+                  ...(activeVideo.linkedProductImage
+                    ? [activeVideo.linkedProductImage]
+                    : []),
+                ].filter(
+                  (v: string, i: number, a: string[]) => a.indexOf(v) === i
+                ); // dedupe
+            // A=allImgs[0], B=allImgs[1], C=allImgs[2], D=allImgs[3]
+            const imgA = allImgs[0] || activeVideo.linkedProductImage || null;
+            const imgB = allImgs[1] || null;
+            const imgC = allImgs[2] || null;
+            const imgD = allImgs[3] || null;
+            // Hover logic: default A+B; hover A => C+B; hover B => A+D
+            const displayLeft = modalHoverImg === "A" ? imgC : imgA;
+            const displayRight = modalHoverImg === "B" ? imgD : imgB;
 
-          // Convert any video URL to embeddable format
-          const toEmbedUrl = (raw: string): { type: 'iframe' | 'video' | 'tiktok'; src: string } => {
-            const url = raw.trim();
-            // YouTube: watch?v=, youtu.be/, /shorts/
-            const ytId = (() => {
-              const m1 = url.match(/[?&]v=([^&]+)/);
-              if (m1) return m1[1];
-              const m2 = url.match(/youtu\.be\/([^?&]+)/);
-              if (m2) return m2[1];
-              const m3 = url.match(/youtube\.com\/shorts\/([^?&]+)/);
-              if (m3) return m3[1];
-              const m4 = url.match(/youtube\.com\/embed\/([^?&]+)/);
-              if (m4) return m4[1];
-              return null;
-            })();
-            if (ytId) return { type: 'iframe', src: `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0` };
-            // TikTok: /video/ID
-            const ttId = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
-            if (ttId) return { type: 'tiktok', src: `https://www.tiktok.com/embed/v2/${ttId[1]}` };
-            // Direct video file
-            return { type: 'video', src: url };
-          };
+            // Convert any video URL to embeddable format
+            const toEmbedUrl = (
+              raw: string
+            ): { type: "iframe" | "video" | "tiktok"; src: string } => {
+              const url = raw.trim();
+              // YouTube: watch?v=, youtu.be/, /shorts/
+              const ytId = (() => {
+                const m1 = url.match(/[?&]v=([^&]+)/);
+                if (m1) return m1[1];
+                const m2 = url.match(/youtu\.be\/([^?&]+)/);
+                if (m2) return m2[1];
+                const m3 = url.match(/youtube\.com\/shorts\/([^?&]+)/);
+                if (m3) return m3[1];
+                const m4 = url.match(/youtube\.com\/embed\/([^?&]+)/);
+                if (m4) return m4[1];
+                return null;
+              })();
+              if (ytId)
+                return {
+                  type: "iframe",
+                  src: `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`,
+                };
+              // TikTok: /video/ID
+              const ttId = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+              if (ttId)
+                return {
+                  type: "tiktok",
+                  src: `https://www.tiktok.com/embed/v2/${ttId[1]}`,
+                };
+              // Direct video file
+              return { type: "video", src: url };
+            };
 
-          const renderVideoContent = (minH: number) => {
-            if (!activeVideo.videoPlayUrl) {
+            const renderVideoContent = (minH: number) => {
+              if (!activeVideo.videoPlayUrl) {
+                return (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      minHeight: minH,
+                      position: "relative",
+                      background: "#000",
+                    }}
+                  >
+                    {activeVideo.imageUrl ? (
+                      <img
+                        loading="lazy"
+                        src={activeVideo.imageUrl}
+                        alt={activeVideo.influencerName}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          background: "#175C40",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#fff",
+                          flexDirection: "column",
+                          gap: 12,
+                        }}
+                      >
+                        <PlayIcon />
+                        <p style={{ fontSize: 13, opacity: 0.7 }}>
+                          No video link
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              const { type, src } = toEmbedUrl(activeVideo.videoPlayUrl);
+              if (type === "iframe" || type === "tiktok") {
+                return (
+                  <iframe
+                    src={src}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      minHeight: minH,
+                      border: "none",
+                      display: "block",
+                      background: "#000",
+                    }}
+                    allow="autoplay; fullscreen; encrypted-media"
+                    allowFullScreen
+                  />
+                );
+              } else {
+                return (
+                  <video
+                    ref={videoRef}
+                    src={src}
+                    controls
+                    autoPlay
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      minHeight: minH,
+                      objectFit: "contain",
+                      background: "#000",
+                      display: "block",
+                    }}
+                  />
+                );
+              }
+            };
+
+            // imgRatio used in both mobile and desktop product panels
+            const imgRatio = config.videoModalImgRatio || "3/4";
+
+            // Shared Add-to-Cart handler (declared before mobile/desktop branches)
+            const handleAddToCart = () => {
+              addItem({
+                id: activeVideo.linkedProductId || activeVideo.id,
+                name: activeVideo.linkedProductName || "",
+                price: activeVideo.linkedProductPrice || "",
+                comparePrice: activeVideo.linkedProductComparePrice,
+                imageUrl: imgA || activeVideo.linkedProductImage,
+                productUrl: activeVideo.linkedProductLink,
+                selectedColor: selectedVideoColor || undefined,
+                selectedSize: selectedVideoSize || undefined,
+              });
+              openCart();
+            };
+
+            // Derive colors and sizes from Shopify product options (if available)
+            const derivedColors: string[] = shopifyProduct
+              ? shopifyProduct.options.find(
+                  (o: { name: string; values: string[] }) => o.name === "Color"
+                )?.values || []
+              : activeVideo.linkedProductColors || [];
+            const derivedSizes: string[] = shopifyProduct
+              ? shopifyProduct.options.find(
+                  (o: { name: string; values: string[] }) => o.name === "Size"
+                )?.values || []
+              : activeVideo.linkedProductSizes || [];
+
+            if (isMobileModal) {
+              // Mobile: full-screen, 70% video top + 30% product panel bottom
+              // Product panel: left = single image, right = name/price/colors/sizes/ADD TO CART
               return (
-                <div style={{ width: "100%", height: "100%", minHeight: minH, position: "relative", background: "#000" }}>
-                  {activeVideo.imageUrl ? (
-                    <img loading="lazy" src={activeVideo.imageUrl} alt={activeVideo.influencerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", background: "#175C40", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexDirection: "column", gap: 12 }}>
-                      <PlayIcon />
-                      <p style={{ fontSize: 13, opacity: 0.7 }}>No video link</p>
+                <div
+                  className="sf-video-modal-overlay"
+                  onClick={() => {
+                    setActiveVideo(null);
+                    setModalHoverImg(null);
+                  }}
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 99999,
+                    background: "#000",
+                  }}
+                >
+                  <div
+                    className="sf-video-modal-mobile"
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    {/* Top 70%: Video area — letterboxed, no crop */}
+                    <div
+                      style={{
+                        flex: "0 0 70%",
+                        position: "relative",
+                        overflow: "hidden",
+                        background: "#000",
+                      }}
+                    >
+                      {renderVideoContent(300)}
+                      {/* Creator badge top-left */}
+                      <div
+                        className="sf-video-creator-badge"
+                        style={{ top: 14, left: 14 }}
+                      >
+                        <span className="sf-video-creator-name">
+                          {activeVideo.creatorName ||
+                            activeVideo.influencerName.replace("@", "")}
+                        </span>
+                      </div>
+                      {/* Close button top-right — white circle, always visible */}
+                      <button
+                        onClick={() => {
+                          setActiveVideo(null);
+                          setModalHoverImg(null);
+                        }}
+                        style={{
+                          position: "absolute",
+                          top: 14,
+                          right: 14,
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          background: "rgba(255,255,255,0.92)",
+                          border: "none",
+                          color: "#222",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          zIndex: 20,
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+                        }}
+                        aria-label="Close"
+                      >
+                        <XIcon />
+                      </button>
                     </div>
-                  )}
+
+                    {/* Bottom 30%: Product panel — horizontal split */}
+                    <div
+                      style={{
+                        flex: "0 0 30%",
+                        background: "#fff",
+                        display: "flex",
+                        flexDirection: "row",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {/* Left: single product image (img[0] only) — 3:4 aspect ratio with padding */}
+                      {imgA && (
+                        <div
+                          style={{
+                            flex: "0 0 auto",
+                            width: "32%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "#fff",
+                            padding: "8px 6px 8px 10px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "100%",
+                              aspectRatio: "3/4",
+                              borderRadius: 4,
+                              overflow: "hidden",
+                              background: "#f5f5f5",
+                            }}
+                          >
+                            <img
+                              loading="lazy"
+                              src={imgA}
+                              alt={activeVideo.linkedProductName}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                display: "block",
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {/* Right: product info */}
+                      <div
+                        style={{
+                          flex: 1,
+                          padding: "10px 12px 10px",
+                          display: "flex",
+                          flexDirection: "column",
+                          overflow: "hidden",
+                          minWidth: 0,
+                        }}
+                      >
+                        {/* Product name */}
+                        {activeVideo.linkedProductName && (
+                          <div
+                            style={{
+                              fontWeight: 700,
+                              fontSize: 13,
+                              color: "#111",
+                              lineHeight: 1.3,
+                              marginBottom: 4,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {activeVideo.linkedProductName}
+                          </div>
+                        )}
+                        {/* Price row */}
+                        {(activeVideo.linkedProductPrice ||
+                          activeVideo.linkedProductComparePrice) && (
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              marginBottom: 6,
+                            }}
+                          >
+                            {activeVideo.linkedProductPrice && (
+                              <span
+                                style={{
+                                  fontWeight: 700,
+                                  fontSize: 13,
+                                  color: "#111",
+                                }}
+                              >
+                                {activeVideo.linkedProductPrice}
+                              </span>
+                            )}
+                            {activeVideo.linkedProductComparePrice && (
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  color: "#aaa",
+                                  textDecoration: "line-through",
+                                }}
+                              >
+                                {activeVideo.linkedProductComparePrice}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {/* Color swatches — compact */}
+                        {derivedColors.length > 0 && (
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 4,
+                              flexWrap: "wrap",
+                              marginBottom: 5,
+                            }}
+                          >
+                            {derivedColors.map((color: string) => (
+                              <button
+                                key={color}
+                                onClick={() =>
+                                  setSelectedVideoColor(
+                                    selectedVideoColor === color ? null : color
+                                  )
+                                }
+                                style={{
+                                  width: 20,
+                                  height: 20,
+                                  borderRadius: "50%",
+                                  background: color,
+                                  flexShrink: 0,
+                                  border:
+                                    selectedVideoColor === color
+                                      ? "2px solid #111"
+                                      : "1.5px solid #ddd",
+                                  cursor: "pointer",
+                                  padding: 0,
+                                  boxShadow:
+                                    selectedVideoColor === color
+                                      ? "0 0 0 2px #fff inset"
+                                      : "none",
+                                }}
+                                aria-label={color}
+                              />
+                            ))}
+                          </div>
+                        )}
+                        {/* Size buttons — compact */}
+                        {derivedSizes.length > 0 && (
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 4,
+                              flexWrap: "wrap",
+                              marginBottom: 6,
+                            }}
+                          >
+                            {derivedSizes.map((size: string) => (
+                              <button
+                                key={size}
+                                onClick={() =>
+                                  setSelectedVideoSize(
+                                    selectedVideoSize === size ? null : size
+                                  )
+                                }
+                                style={{
+                                  minWidth: 28,
+                                  height: 24,
+                                  padding: "0 5px",
+                                  borderRadius: 3,
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  border:
+                                    selectedVideoSize === size
+                                      ? "1.5px solid #111"
+                                      : "1px solid #ddd",
+                                  background:
+                                    selectedVideoSize === size
+                                      ? "#111"
+                                      : "#fff",
+                                  color:
+                                    selectedVideoSize === size
+                                      ? "#fff"
+                                      : "#333",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {size}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {/* ADD TO CART button */}
+                        <button
+                          onClick={handleAddToCart}
+                          style={{
+                            display: "block",
+                            width: "100%",
+                            background: "#111",
+                            color: "#fff",
+                            textAlign: "center",
+                            padding: "8px 10px",
+                            borderRadius: 4,
+                            fontSize: 11,
+                            fontWeight: 700,
+                            letterSpacing: "0.08em",
+                            border: "none",
+                            cursor: "pointer",
+                            textTransform: "uppercase",
+                            marginTop: "auto",
+                          }}
+                        >
+                          ADD TO CART
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               );
             }
-            const { type, src } = toEmbedUrl(activeVideo.videoPlayUrl);
-            if (type === 'iframe' || type === 'tiktok') {
-              return <iframe src={src} style={{ width: "100%", height: "100%", minHeight: minH, border: "none", display: "block", background: "#000" }} allow="autoplay; fullscreen; encrypted-media" allowFullScreen />;
-            } else {
-              return <video ref={videoRef} src={src} controls autoPlay style={{ width: "100%", height: "100%", minHeight: minH, objectFit: "contain", background: "#000", display: "block" }} />;
-            }
-          };
 
-          // imgRatio used in both mobile and desktop product panels
-          const imgRatio = config.videoModalImgRatio || "3/4";
+            // Compute discount label from compare price vs sale price
+            const computeDiscountLabel = () => {
+              if (
+                !activeVideo.linkedProductComparePrice ||
+                !activeVideo.linkedProductPrice
+              )
+                return null;
+              const parsePrice = (s: string) =>
+                parseFloat(s.replace(/[^0-9.]/g, ""));
+              const sale = parsePrice(activeVideo.linkedProductPrice);
+              const orig = parsePrice(activeVideo.linkedProductComparePrice);
+              if (!orig || !sale || orig <= sale) return null;
+              const pct = Math.round((1 - sale / orig) * 100);
+              return `LIMITED TIME OFFER: ${pct}% OFF`;
+            };
+            const discountLabel = computeDiscountLabel();
 
-          // Shared Add-to-Cart handler (declared before mobile/desktop branches)
-          const handleAddToCart = () => {
-            addItem({
-              id: activeVideo.linkedProductId || activeVideo.id,
-              name: activeVideo.linkedProductName || "",
-              price: activeVideo.linkedProductPrice || "",
-              comparePrice: activeVideo.linkedProductComparePrice,
-              imageUrl: imgA || activeVideo.linkedProductImage,
-              productUrl: activeVideo.linkedProductLink,
-              selectedColor: selectedVideoColor || undefined,
-              selectedSize: selectedVideoSize || undefined,
-            });
-            openCart();
-          };
+            // Shared product info panel (used in both desktop and mobile)
+            const renderColorSwatches = (size = 26) =>
+              derivedColors.length > 0 ? (
+                <div style={{ marginBottom: 12 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#888",
+                      marginBottom: 5,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    Color
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {derivedColors.map((color: string) => (
+                      <button
+                        key={color}
+                        onClick={() =>
+                          setSelectedVideoColor(
+                            selectedVideoColor === color ? null : color
+                          )
+                        }
+                        style={{
+                          width: size,
+                          height: size,
+                          borderRadius: "50%",
+                          background: color,
+                          border:
+                            selectedVideoColor === color
+                              ? "2px solid #111"
+                              : "2px solid #ddd",
+                          cursor: "pointer",
+                          padding: 0,
+                          flexShrink: 0,
+                          boxShadow:
+                            selectedVideoColor === color
+                              ? "0 0 0 2px #fff inset"
+                              : "none",
+                          transition: "border 0.15s, box-shadow 0.15s",
+                        }}
+                        aria-label={color}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null;
 
-          // Derive colors and sizes from Shopify product options (if available)
-          const derivedColors: string[] = shopifyProduct
-            ? (shopifyProduct.options.find((o: { name: string; values: string[] }) => o.name === 'Color')?.values || [])
-            : (activeVideo.linkedProductColors || []);
-          const derivedSizes: string[] = shopifyProduct
-            ? (shopifyProduct.options.find((o: { name: string; values: string[] }) => o.name === 'Size')?.values || [])
-            : (activeVideo.linkedProductSizes || []);
+            const renderSizeButtons = (btnH = 32) =>
+              derivedSizes.length > 0 ? (
+                <div style={{ marginBottom: 12 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#888",
+                      marginBottom: 5,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    Size
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {derivedSizes.map((size: string) => (
+                      <button
+                        key={size}
+                        onClick={() =>
+                          setSelectedVideoSize(
+                            selectedVideoSize === size ? null : size
+                          )
+                        }
+                        style={{
+                          minWidth: 36,
+                          height: btnH,
+                          padding: "0 8px",
+                          borderRadius: 4,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          border:
+                            selectedVideoSize === size
+                              ? "1.5px solid #111"
+                              : "1.5px solid #ddd",
+                          background:
+                            selectedVideoSize === size ? "#111" : "#fff",
+                          color: selectedVideoSize === size ? "#fff" : "#333",
+                          cursor: "pointer",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null;
 
-          if (isMobileModal) {
-            // Mobile: full-screen, 70% video top + 30% product panel bottom
-            // Product panel: left = single image, right = name/price/colors/sizes/ADD TO CART
+            // ── DESKTOP MODAL: 1:1 split, video left, product right ──
+            const modalMaxW = config.videoModalDesktopWidth || 960;
             return (
               <div
                 className="sf-video-modal-overlay"
-                onClick={() => { setActiveVideo(null); setModalHoverImg(null); }}
-                style={{ position: "fixed", inset: 0, zIndex: 99999, background: "#000" }}
+                onClick={() => {
+                  setActiveVideo(null);
+                  setModalHoverImg(null);
+                }}
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 99999,
+                  background: "rgba(0,0,0,0.82)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
                 <div
-                  className="sf-video-modal-mobile"
+                  className="sf-video-modal-inner"
                   onClick={e => e.stopPropagation()}
-                  style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column" }}
+                  style={{
+                    display: "flex",
+                    gap: 0,
+                    maxWidth: modalMaxW,
+                    width: "95vw",
+                    maxHeight: "92vh",
+                    borderRadius: 14,
+                    overflow: "hidden",
+                    background: "#fff",
+                    position: "relative",
+                    boxShadow: "0 24px 80px rgba(0,0,0,0.4)",
+                  }}
                 >
-                  {/* Top 70%: Video area — letterboxed, no crop */}
-                  <div style={{ flex: "0 0 70%", position: "relative", overflow: "hidden", background: "#000" }}>
-                    {renderVideoContent(300)}
+                  {/* Left 50%: Video with black letterbox */}
+                  <div
+                    style={{
+                      flex: "0 0 50%",
+                      background: "#000",
+                      display: "flex",
+                      flexDirection: "column",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {renderVideoContent(520)}
                     {/* Creator badge top-left */}
-                    <div className="sf-video-creator-badge" style={{ top: 14, left: 14 }}>
-                      <span className="sf-video-creator-name">{activeVideo.creatorName || activeVideo.influencerName.replace('@','')}</span>
+                    <div
+                      className="sf-video-creator-badge"
+                      style={{ top: 14, left: 14 }}
+                    >
+                      <span className="sf-video-creator-name">
+                        {activeVideo.creatorName ||
+                          activeVideo.influencerName.replace("@", "")}
+                      </span>
                     </div>
-                    {/* Close button top-right — white circle, always visible */}
-                    <button
-                      onClick={() => { setActiveVideo(null); setModalHoverImg(null); }}
-                      style={{ position: "absolute", top: 14, right: 14, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.92)", border: "none", color: "#222", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }}
-                      aria-label="Close"
-                    ><XIcon /></button>
                   </div>
-
-                  {/* Bottom 30%: Product panel — horizontal split */}
-                  <div style={{ flex: "0 0 30%", background: "#fff", display: "flex", flexDirection: "row", overflow: "hidden" }}>
-                    {/* Left: single product image (img[0] only) — 3:4 aspect ratio with padding */}
+                  {/* Right 50%: Product info */}
+                  <div
+                    style={{
+                      flex: "0 0 50%",
+                      padding: "32px 28px 28px",
+                      display: "flex",
+                      flexDirection: "column",
+                      overflowY: "auto",
+                      minWidth: 0,
+                      background: "#fff",
+                    }}
+                  >
+                    {/* Two product images side by side — A/B with hover A→C, B→D */}
                     {imgA && (
-                      <div style={{ flex: "0 0 auto", width: "32%", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", padding: "8px 6px 8px 10px" }}>
-                        <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 4, overflow: "hidden", background: "#f5f5f5" }}>
+                      <div
+                        style={{ display: "flex", gap: 10, marginBottom: 20 }}
+                      >
+                        <div
+                          style={{
+                            flex: 1,
+                            aspectRatio: imgRatio,
+                            borderRadius: 6,
+                            overflow: "hidden",
+                            background: "#f5f5f5",
+                            cursor: imgC ? "pointer" : "default",
+                          }}
+                          onMouseEnter={() =>
+                            imgC ? setModalHoverImg("A") : undefined
+                          }
+                          onMouseLeave={() => setModalHoverImg(null)}
+                        >
                           <img
-                            loading="lazy"
-                            src={imgA}
+                            src={displayLeft || imgA}
                             alt={activeVideo.linkedProductName}
-                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              display: "block",
+                              transition: "opacity 0.25s",
+                            }}
+                          />
+                        </div>
+                        <div
+                          style={{
+                            flex: 1,
+                            aspectRatio: imgRatio,
+                            borderRadius: 6,
+                            overflow: "hidden",
+                            background: "#f5f5f5",
+                            cursor: imgB && imgD ? "pointer" : "default",
+                          }}
+                          onMouseEnter={() =>
+                            imgB && imgD ? setModalHoverImg("B") : undefined
+                          }
+                          onMouseLeave={() => setModalHoverImg(null)}
+                        >
+                          <img
+                            src={imgB ? displayRight || imgB : imgA}
+                            alt={activeVideo.linkedProductName}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              display: "block",
+                              transition: "opacity 0.25s",
+                              opacity: imgB ? 1 : 0.75,
+                            }}
                           />
                         </div>
                       </div>
                     )}
-                    {/* Right: product info */}
-                    <div style={{ flex: 1, padding: "10px 12px 10px", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
-                      {/* Product name */}
-                      {activeVideo.linkedProductName && (
-                        <div style={{ fontWeight: 700, fontSize: 13, color: "#111", lineHeight: 1.3, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeVideo.linkedProductName}</div>
-                      )}
-                      {/* Price row */}
-                      {(activeVideo.linkedProductPrice || activeVideo.linkedProductComparePrice) && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                          {activeVideo.linkedProductPrice && (
-                            <span style={{ fontWeight: 700, fontSize: 13, color: "#111" }}>{activeVideo.linkedProductPrice}</span>
-                          )}
-                          {activeVideo.linkedProductComparePrice && (
-                            <span style={{ fontSize: 11, color: "#aaa", textDecoration: "line-through" }}>{activeVideo.linkedProductComparePrice}</span>
-                          )}
-                        </div>
-                      )}
-                      {/* Color swatches — compact */}
-                      {derivedColors.length > 0 && (
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 5 }}>
-                          {derivedColors.map((color: string) => (
-                            <button
-                              key={color}
-                              onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
-                              style={{
-                                width: 20, height: 20, borderRadius: "50%", background: color, flexShrink: 0,
-                                border: selectedVideoColor === color ? "2px solid #111" : "1.5px solid #ddd",
-                                cursor: "pointer", padding: 0,
-                                boxShadow: selectedVideoColor === color ? "0 0 0 2px #fff inset" : "none",
-                              }}
-                              aria-label={color}
-                            />
-                          ))}
-                        </div>
-                      )}
-                      {/* Size buttons — compact */}
-                      {derivedSizes.length > 0 && (
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
-                          {derivedSizes.map((size: string) => (
-                            <button
-                              key={size}
-                              onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
-                              style={{
-                                minWidth: 28, height: 24, padding: "0 5px", borderRadius: 3, fontSize: 11, fontWeight: 600,
-                                border: selectedVideoSize === size ? "1.5px solid #111" : "1px solid #ddd",
-                                background: selectedVideoSize === size ? "#111" : "#fff",
-                                color: selectedVideoSize === size ? "#fff" : "#333",
-                                cursor: "pointer",
-                              }}
-                            >{size}</button>
-                          ))}
-                        </div>
-                      )}
-                      {/* ADD TO CART button */}
-                      <button
-                        onClick={handleAddToCart}
-                        style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "8px 10px", borderRadius: 4, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", border: "none", cursor: "pointer", textTransform: "uppercase", marginTop: "auto" }}
-                      >ADD TO CART</button>
-                    </div>
+                    {/* Product name */}
+                    {activeVideo.linkedProductName && (
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          fontSize: 19,
+                          color: "#111",
+                          lineHeight: 1.3,
+                          marginBottom: 6,
+                        }}
+                      >
+                        {activeVideo.linkedProductName}
+                      </div>
+                    )}
+                    {/* Promo label */}
+                    {discountLabel && (
+                      <div
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#555",
+                          letterSpacing: "0.05em",
+                          textTransform: "uppercase",
+                          marginBottom: 6,
+                        }}
+                      >
+                        {discountLabel}
+                      </div>
+                    )}
+                    {/* Price row */}
+                    {(activeVideo.linkedProductPrice ||
+                      activeVideo.linkedProductComparePrice) && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          marginBottom: 16,
+                        }}
+                      >
+                        {activeVideo.linkedProductPrice && (
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              fontSize: 17,
+                              color: "#111",
+                            }}
+                          >
+                            {activeVideo.linkedProductPrice}
+                          </span>
+                        )}
+                        {activeVideo.linkedProductComparePrice && (
+                          <span
+                            style={{
+                              fontSize: 14,
+                              color: "#aaa",
+                              textDecoration: "line-through",
+                            }}
+                          >
+                            {activeVideo.linkedProductComparePrice}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {/* Color swatches */}
+                    {renderColorSwatches(26)}
+                    {/* Size buttons */}
+                    {renderSizeButtons(32)}
+                    {/* ADD TO CART button */}
+                    <button
+                      onClick={handleAddToCart}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        background: "#111",
+                        color: "#fff",
+                        textAlign: "center",
+                        padding: "14px 20px",
+                        borderRadius: 5,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        letterSpacing: "0.1em",
+                        border: "none",
+                        cursor: "pointer",
+                        textTransform: "uppercase",
+                        marginTop: "auto",
+                      }}
+                    >
+                      ADD TO CART
+                    </button>
                   </div>
+                  {/* Close button — top right, always visible */}
+                  <button
+                    onClick={() => {
+                      setActiveVideo(null);
+                      setModalHoverImg(null);
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: 14,
+                      right: 14,
+                      width: 34,
+                      height: 34,
+                      borderRadius: "50%",
+                      background: "rgba(255,255,255,0.9)",
+                      border: "1px solid #e0e0e0",
+                      color: "#333",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: 10,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+                    }}
+                    aria-label="Close"
+                  >
+                    <XIcon />
+                  </button>
                 </div>
               </div>
             );
-          }
-
-          // Compute discount label from compare price vs sale price
-          const computeDiscountLabel = () => {
-            if (!activeVideo.linkedProductComparePrice || !activeVideo.linkedProductPrice) return null;
-            const parsePrice = (s: string) => parseFloat(s.replace(/[^0-9.]/g, ''));
-            const sale = parsePrice(activeVideo.linkedProductPrice);
-            const orig = parsePrice(activeVideo.linkedProductComparePrice);
-            if (!orig || !sale || orig <= sale) return null;
-            const pct = Math.round((1 - sale / orig) * 100);
-            return `LIMITED TIME OFFER: ${pct}% OFF`;
-          };
-          const discountLabel = computeDiscountLabel();
-
-          // Shared product info panel (used in both desktop and mobile)
-          const renderColorSwatches = (size = 26) => (
-            derivedColors.length > 0 ? (
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Color</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {derivedColors.map((color: string) => (
-                    <button
-                      key={color}
-                      onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
-                      style={{
-                        width: size, height: size, borderRadius: "50%", background: color,
-                        border: selectedVideoColor === color ? "2px solid #111" : "2px solid #ddd",
-                        cursor: "pointer", padding: 0, flexShrink: 0,
-                        boxShadow: selectedVideoColor === color ? "0 0 0 2px #fff inset" : "none",
-                        transition: "border 0.15s, box-shadow 0.15s",
-                      }}
-                      aria-label={color}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : null
-          );
-
-          const renderSizeButtons = (btnH = 32) => (
-            derivedSizes.length > 0 ? (
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Size</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {derivedSizes.map((size: string) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
-                      style={{
-                        minWidth: 36, height: btnH, padding: "0 8px", borderRadius: 4, fontSize: 12, fontWeight: 600,
-                        border: selectedVideoSize === size ? "1.5px solid #111" : "1.5px solid #ddd",
-                        background: selectedVideoSize === size ? "#111" : "#fff",
-                        color: selectedVideoSize === size ? "#fff" : "#333",
-                        cursor: "pointer", transition: "all 0.15s",
-                      }}
-                    >{size}</button>
-                  ))}
-                </div>
-              </div>
-            ) : null
-          );
-
-          // ── DESKTOP MODAL: 1:1 split, video left, product right ──
-          const modalMaxW = config.videoModalDesktopWidth || 960;
-          return (
-            <div
-              className="sf-video-modal-overlay"
-              onClick={() => { setActiveVideo(null); setModalHoverImg(null); }}
-              style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.82)", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              <div
-                className="sf-video-modal-inner"
-                onClick={e => e.stopPropagation()}
-                style={{ display: "flex", gap: 0, maxWidth: modalMaxW, width: "95vw", maxHeight: "92vh", borderRadius: 14, overflow: "hidden", background: "#fff", position: "relative", boxShadow: "0 24px 80px rgba(0,0,0,0.4)" }}
-              >
-                {/* Left 50%: Video with black letterbox */}
-                <div style={{ flex: "0 0 50%", background: "#000", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
-                  {renderVideoContent(520)}
-                  {/* Creator badge top-left */}
-                  <div className="sf-video-creator-badge" style={{ top: 14, left: 14 }}>
-                    <span className="sf-video-creator-name">{activeVideo.creatorName || activeVideo.influencerName.replace('@','')}</span>
-                  </div>
-                </div>
-                {/* Right 50%: Product info */}
-                <div style={{ flex: "0 0 50%", padding: "32px 28px 28px", display: "flex", flexDirection: "column", overflowY: "auto", minWidth: 0, background: "#fff" }}>
-                  {/* Two product images side by side — A/B with hover A→C, B→D */}
-                  {imgA && (
-                    <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-                      <div
-                        style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5", cursor: imgC ? "pointer" : "default" }}
-                        onMouseEnter={() => imgC ? setModalHoverImg('A') : undefined}
-                        onMouseLeave={() => setModalHoverImg(null)}
-                      >
-                        <img src={displayLeft || imgA} alt={activeVideo.linkedProductName}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s" }} />
-                      </div>
-                      <div
-                        style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5", cursor: (imgB && imgD) ? "pointer" : "default" }}
-                        onMouseEnter={() => (imgB && imgD) ? setModalHoverImg('B') : undefined}
-                        onMouseLeave={() => setModalHoverImg(null)}
-                      >
-                        <img src={imgB ? (displayRight || imgB) : imgA} alt={activeVideo.linkedProductName}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s", opacity: imgB ? 1 : 0.75 }} />
-                      </div>
-                    </div>
-                  )}
-                  {/* Product name */}
-                  {activeVideo.linkedProductName && (
-                    <div style={{ fontWeight: 700, fontSize: 19, color: "#111", lineHeight: 1.3, marginBottom: 6 }}>{activeVideo.linkedProductName}</div>
-                  )}
-                  {/* Promo label */}
-                  {discountLabel && (
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 6 }}>{discountLabel}</div>
-                  )}
-                  {/* Price row */}
-                  {(activeVideo.linkedProductPrice || activeVideo.linkedProductComparePrice) && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                      {activeVideo.linkedProductPrice && (
-                        <span style={{ fontWeight: 700, fontSize: 17, color: "#111" }}>{activeVideo.linkedProductPrice}</span>
-                      )}
-                      {activeVideo.linkedProductComparePrice && (
-                        <span style={{ fontSize: 14, color: "#aaa", textDecoration: "line-through" }}>{activeVideo.linkedProductComparePrice}</span>
-                      )}
-                    </div>
-                  )}
-                  {/* Color swatches */}
-                  {renderColorSwatches(26)}
-                  {/* Size buttons */}
-                  {renderSizeButtons(32)}
-                  {/* ADD TO CART button */}
-                  <button
-                    onClick={handleAddToCart}
-                    style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "14px 20px", borderRadius: 5, fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", border: "none", cursor: "pointer", textTransform: "uppercase", marginTop: "auto" }}
-                  >ADD TO CART</button>
-                </div>
-                {/* Close button — top right, always visible */}
-                <button
-                  onClick={() => { setActiveVideo(null); setModalHoverImg(null); }}
-                  style={{ position: "absolute", top: 14, right: 14, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.9)", border: "1px solid #e0e0e0", color: "#333", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}
-                  aria-label="Close"
-                ><XIcon /></button>
-              </div>
-            </div>
-          );
-        })()
-        ,
-        document.body
-      )}
+          })(),
+          document.body
+        )}
     </>
   );
 }
 
 // ==================== QUICK VIEW MODAL ====================
-function QuickViewModal({ product, onClose }: { product: Product; onClose: () => void }) {
+function QuickViewModal({
+  product,
+  onClose,
+}: {
+  product: Product;
+  onClose: () => void;
+}) {
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);
   const [selectedSize, setSelectedSize] = useState("S");
   const [imgIdx, setImgIdx] = useState(0);
@@ -574,15 +1200,28 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
 
   // Close on Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
   return (
-    <div className="sf-quickview-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      className="sf-quickview-overlay"
+      onClick={e => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="sf-quickview-modal">
-        <button className="sf-quickview-close" onClick={onClose} aria-label="Close"><XIcon /></button>
+        <button
+          className="sf-quickview-close"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <XIcon />
+        </button>
         <div className="sf-quickview-inner">
           {/* Left: image gallery */}
           <div className="sf-quickview-gallery">
@@ -590,9 +1229,14 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
               {currentImg ? (
                 <img loading="lazy" src={currentImg} alt={product.name} />
               ) : (
-                <ImgPlaceholder label="Product Image" style={{ position: "absolute", inset: 0 }} />
+                <ImgPlaceholder
+                  label="Product Image"
+                  style={{ position: "absolute", inset: 0 }}
+                />
               )}
-              {product.badge && <span className="sf-product-badge">{product.badge}</span>}
+              {product.badge && (
+                <span className="sf-product-badge">{product.badge}</span>
+              )}
             </div>
             {displayImages.length > 1 && (
               <div className="sf-quickview-thumbs">
@@ -617,7 +1261,8 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
             {product.colors.length > 0 && (
               <>
                 <div className="sf-option-label" style={{ marginTop: 16 }}>
-                  Color: <strong style={{ color: "#175C40" }}>{selectedColor}</strong>
+                  Color:{" "}
+                  <strong style={{ color: "#175C40" }}>{selectedColor}</strong>
                 </div>
                 <div className="sf-color-swatches" style={{ marginTop: 8 }}>
                   {product.colors.map((color, i) => (
@@ -626,8 +1271,10 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
                       className={`sf-color-swatch${selectedColorIdx === i ? " active" : ""}`}
                       style={{
                         background: color,
-                        border: color === "#F9F9F9" ? "2px solid #eee" : undefined,
-                        width: 28, height: 28,
+                        border:
+                          color === "#F9F9F9" ? "2px solid #eee" : undefined,
+                        width: 28,
+                        height: 28,
                       }}
                       onClick={() => setSelectedColorIdx(i)}
                       title={color}
@@ -637,9 +1284,11 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
               </>
             )}
 
-            <div className="sf-option-label" style={{ marginTop: 16 }}>Size</div>
+            <div className="sf-option-label" style={{ marginTop: 16 }}>
+              Size
+            </div>
             <div className="sf-size-btns" style={{ marginTop: 8 }}>
-              {sizes.map((size) => (
+              {sizes.map(size => (
                 <button
                   key={size}
                   className={`sf-size-btn${selectedSize === size ? " active" : ""}`}
@@ -650,10 +1299,22 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
               ))}
             </div>
 
-            <div style={{ marginTop: 24, display: "flex", gap: 10, alignItems: "stretch" }}>
+            <div
+              style={{
+                marginTop: 24,
+                display: "flex",
+                gap: 10,
+                alignItems: "stretch",
+              }}
+            >
               <button
                 className="sf-drawer-add-btn"
-                style={{ flex: 1, minWidth: 0, padding: "14px 12px", whiteSpace: "nowrap" }}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  padding: "14px 12px",
+                  whiteSpace: "nowrap",
+                }}
                 onClick={() => onClose()}
               >
                 ADD TO CART
@@ -670,7 +1331,14 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
             {product.detailUrl && (
               <a
                 href={product.detailUrl}
-                style={{ display: "block", textAlign: "center", marginTop: 12, color: "#175C40", fontSize: "0.875rem", textDecoration: "underline" }}
+                style={{
+                  display: "block",
+                  textAlign: "center",
+                  marginTop: 12,
+                  color: "#175C40",
+                  fontSize: "0.875rem",
+                  textDecoration: "underline",
+                }}
               >
                 View Full Details →
               </a>
@@ -681,6 +1349,5 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
     </div>
   );
 }
-
 
 export { SFVideos };

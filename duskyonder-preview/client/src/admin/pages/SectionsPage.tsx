@@ -7,7 +7,8 @@ import { GripVertical, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import type { SectionConfig, SectionKey } from "@/contexts/ThemeConfigContext";
 
 export default function SectionsPage() {
-  const { config, updateConfig, addFeaturedSection, removeFeaturedSection } = useThemeConfig();
+  const { config, updateConfig, addFeaturedSection, removeFeaturedSection } =
+    useThemeConfig();
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const sections = config.sectionOrder ?? [];
@@ -69,7 +70,9 @@ export default function SectionsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold">首页板块管理</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">拖拽排序，控制各板块的显示与隐藏</p>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            拖拽排序，控制各板块的显示与隐藏
+          </p>
         </div>
         <Button onClick={handleAddFeatured} size="sm" variant="outline">
           <Plus className="w-4 h-4 mr-1" /> 添加产品板块
@@ -82,7 +85,7 @@ export default function SectionsPage() {
             key={`${section.key}-${section.instanceId ?? index}`}
             draggable
             onDragStart={() => handleDragStart(index)}
-            onDragOver={(e) => handleDragOver(e, index)}
+            onDragOver={e => handleDragOver(e, index)}
             onDragEnd={handleDragEnd}
             className={`cursor-move transition-all border ${
               dragIndex === index ? "opacity-50 scale-[0.98]" : ""
@@ -91,30 +94,36 @@ export default function SectionsPage() {
             <CardContent className="flex items-center gap-3 py-3 px-4">
               <GripVertical className="w-5 h-5 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
-                <span className="font-medium text-sm">{getSectionLabel(section)}</span>
+                <span className="font-medium text-sm">
+                  {getSectionLabel(section)}
+                </span>
                 {section.instanceId && (
-                  <span className="ml-2 text-xs text-muted-foreground">#{section.instanceId.slice(-4)}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    #{section.instanceId.slice(-4)}
+                  </span>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {section.visible
-                  ? <Eye className="w-4 h-4 text-muted-foreground" />
-                  : <EyeOff className="w-4 h-4 text-muted-foreground" />
-                }
+                {section.visible ? (
+                  <Eye className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <EyeOff className="w-4 h-4 text-muted-foreground" />
+                )}
                 <Switch
                   checked={section.visible}
                   onCheckedChange={() => toggleVisibility(index)}
                 />
-                {section.key === "featured" && sections.filter(s => s.key === "featured").length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveFeatured(section)}
-                    className="text-destructive hover:text-destructive h-8 w-8 p-0"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
+                {section.key === "featured" &&
+                  sections.filter(s => s.key === "featured").length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveFeatured(section)}
+                      className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
               </div>
             </CardContent>
           </Card>
