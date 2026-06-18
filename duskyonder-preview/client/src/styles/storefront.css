@@ -114,7 +114,6 @@
 }
 .sf-category-focus.focused {
   transform: scale(1.06);
-  box-shadow: 0 12px 40px rgba(23,92,64,0.25);
   z-index: 2;
   position: relative;
 }

@@ -40,11 +40,13 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
   }, [config.slideshowAutoplay, config.slideshowSpeed, total]);
   useEffect(() => { startTimer(); return () => { if (timerRef.current) clearInterval(timerRef.current); }; }, [startTimer]);
   const go = (n: number) => { setCurrent((current + n + total) % total); startTimer(); };
-  // Hero sits below the header — height is just the configured hero height
-  const baseHeroHeight = isMobileHero ? (config.heroMobileHeight || config.heroHeight || 600) : (config.heroHeight || 600);
+  // Hero sits below the header — on mobile use 100svh (full screen), on desktop use configured height
+  const baseHeroHeight = isMobileHero
+    ? (config.heroMobileHeight || window.innerHeight)
+    : (config.heroHeight || 600);
   const heroHeight = baseHeroHeight;
   return (
-    <section className="sf-hero" style={{ height: heroHeight }}>
+    <section className="sf-hero" style={{ height: isMobileHero ? '100svh' : heroHeight }}>
       {config.slides.map((slide, i) => {
         const desktopPos = slide.contentPosition || "middle-center";
         const mobilePos = slide.contentPositionMobile || desktopPos;

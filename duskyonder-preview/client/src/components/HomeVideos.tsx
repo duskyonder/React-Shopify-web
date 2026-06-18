@@ -149,15 +149,8 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                       <ImgPlaceholder label="视频封面" style={{ position: "absolute", inset: 0 }} />
                     )}
                     <div className="sf-video-play"><PlayIcon /></div>
-                    {/* Creator badge - top left */}
+                    {/* Creator badge - top left (name only, no avatar) */}
                     <div className="sf-video-creator-badge">
-                      {video.creatorAvatar ? (
-                        <img loading="lazy" src={video.creatorAvatar} alt={video.creatorName || video.influencerName} className="sf-video-creator-avatar" />
-                      ) : (
-                        <div className="sf-video-creator-avatar sf-video-creator-avatar--placeholder">
-                          {(video.creatorName || video.influencerName).replace('@','').charAt(0).toUpperCase()}
-                        </div>
-                      )}
                       <span className="sf-video-creator-name">{video.creatorName || video.influencerName.replace('@','')}</span>
                     </div>
                   </div>
@@ -248,8 +241,11 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             }
           };
 
+          // imgRatio used in both mobile and desktop product panels
+          const imgRatio = config.videoModalImgRatio || "3/4";
+
           if (isMobileModal) {
-            // Mobile: fullscreen video with product overlay at bottom
+            // Mobile: fullscreen video with product panel at bottom
             return (
               <div
                 className="sf-video-modal-overlay"
@@ -264,15 +260,8 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                   {/* Video fills screen */}
                   <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
                     {renderVideoContent(400)}
-                    {/* Creator badge top-left */}
+                    {/* Creator badge top-left (name only) */}
                     <div className="sf-video-creator-badge" style={{ top: 16, left: 16 }}>
-                      {activeVideo.creatorAvatar ? (
-                        <img loading="lazy" src={activeVideo.creatorAvatar} alt={activeVideo.creatorName || activeVideo.influencerName} className="sf-video-creator-avatar" />
-                      ) : (
-                        <div className="sf-video-creator-avatar sf-video-creator-avatar--placeholder">
-                          {(activeVideo.creatorName || activeVideo.influencerName).replace('@','').charAt(0).toUpperCase()}
-                        </div>
-                      )}
                       <span className="sf-video-creator-name">{activeVideo.creatorName || activeVideo.influencerName.replace('@','')}</span>
                     </div>
                     {/* Close button top-right */}
@@ -282,84 +271,100 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                       aria-label="Close"
                     ><XIcon /></button>
                   </div>
-                  {/* Product bar at bottom */}
+                  {/* Product panel at bottom — two-image layout matching desktop style */}
                   {(activeVideo.linkedProductName || imgA) && (
-                    <div style={{ background: "rgba(255,255,255,0.97)", padding: "12px 16px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: (activeVideo.linkedProductColors?.length || activeVideo.linkedProductSizes?.length) ? 8 : 0 }}>
-                        {imgA && (
-                          <div style={{ width: 52, height: 68, borderRadius: 6, overflow: "hidden", flexShrink: 0, background: "#f5f5f5" }}>
-                            <img loading="lazy" src={imgA} alt={activeVideo.linkedProductName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          </div>
-                        )}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, fontSize: 13, color: "#111", lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{activeVideo.linkedProductName}</div>
-                          {/* Price: current + compare */}
-                          {(activeVideo.linkedProductPrice || activeVideo.linkedProductComparePrice) && (
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-                              {activeVideo.linkedProductPrice && (
-                                <span style={{ fontWeight: 700, fontSize: 13, color: "#111" }}>{activeVideo.linkedProductPrice}</span>
-                              )}
-                              {activeVideo.linkedProductComparePrice && (
-                                <span style={{ fontSize: 12, color: "#aaa", textDecoration: "line-through" }}>{activeVideo.linkedProductComparePrice}</span>
-                              )}
+                    <div style={{ background: "#fff", padding: "16px 16px 20px" }}>
+                      {/* Two product images side by side */}
+                      {(imgA || imgB) && (
+                        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                          {imgA && (
+                            <div style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5" }}>
+                              <img loading="lazy" src={imgA} alt={activeVideo.linkedProductName} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                            </div>
+                          )}
+                          {imgB && (
+                            <div style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5" }}>
+                              <img loading="lazy" src={imgB} alt={activeVideo.linkedProductName} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                             </div>
                           )}
                         </div>
-                        <button
-                          onClick={() => {
-                            addItem({
-                              id: activeVideo.linkedProductId || activeVideo.id,
-                              name: activeVideo.linkedProductName || "",
-                              price: activeVideo.linkedProductPrice || "",
-                              comparePrice: activeVideo.linkedProductComparePrice,
-                              imageUrl: imgA || activeVideo.linkedProductImage,
-                              productUrl: activeVideo.linkedProductLink,
-                              selectedColor: selectedVideoColor || undefined,
-                              selectedSize: selectedVideoSize || undefined,
-                            });
-                            openCart();
-                          }}
-                          style={{ flexShrink: 0, background: "#111", color: "#fff", padding: "9px 16px", borderRadius: 4, fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", border: "none", cursor: "pointer", textTransform: "uppercase", whiteSpace: "nowrap" }}
-                        >SHOP NOW</button>
-                      </div>
+                      )}
+                      {/* Product name */}
+                      {activeVideo.linkedProductName && (
+                        <div style={{ fontWeight: 700, fontSize: 15, color: "#111", lineHeight: 1.3, marginBottom: 6 }}>{activeVideo.linkedProductName}</div>
+                      )}
+                      {/* Price row */}
+                      {(activeVideo.linkedProductPrice || activeVideo.linkedProductComparePrice) && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                          {activeVideo.linkedProductPrice && (
+                            <span style={{ fontWeight: 700, fontSize: 15, color: "#111" }}>{activeVideo.linkedProductPrice}</span>
+                          )}
+                          {activeVideo.linkedProductComparePrice && (
+                            <span style={{ fontSize: 13, color: "#aaa", textDecoration: "line-through" }}>{activeVideo.linkedProductComparePrice}</span>
+                          )}
+                        </div>
+                      )}
                       {/* Color swatches */}
                       {activeVideo.linkedProductColors && activeVideo.linkedProductColors.length > 0 && (
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
-                          {activeVideo.linkedProductColors.map((color: string) => (
-                            <button
-                              key={color}
-                              onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
-                              style={{
-                                width: 22, height: 22, borderRadius: "50%",
-                                background: color,
-                                border: selectedVideoColor === color ? "2px solid #111" : "2px solid #ddd",
-                                cursor: "pointer", padding: 0,
-                                boxShadow: selectedVideoColor === color ? "0 0 0 2px #fff inset" : "none",
-                                transition: "border 0.15s",
-                              }}
-                              title={color}
-                            />
-                          ))}
+                        <div style={{ marginBottom: 8 }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Color</div>
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            {activeVideo.linkedProductColors.map((color: string) => (
+                              <button
+                                key={color}
+                                onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
+                                style={{
+                                  width: 24, height: 24, borderRadius: "50%",
+                                  background: color,
+                                  border: selectedVideoColor === color ? "2px solid #111" : "2px solid #ddd",
+                                  cursor: "pointer", padding: 0,
+                                  boxShadow: selectedVideoColor === color ? "0 0 0 2px #fff inset" : "none",
+                                  transition: "border 0.15s",
+                                }}
+                                title={color}
+                              />
+                            ))}
+                          </div>
                         </div>
                       )}
                       {/* Size buttons */}
                       {activeVideo.linkedProductSizes && activeVideo.linkedProductSizes.length > 0 && (
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                          {activeVideo.linkedProductSizes.map((size: string) => (
-                            <button
-                              key={size}
-                              onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
-                              style={{
-                                padding: "3px 10px", borderRadius: 3, fontSize: 11, fontWeight: 600,
-                                border: selectedVideoSize === size ? "1.5px solid #111" : "1.5px solid #ddd",
-                                background: selectedVideoSize === size ? "#111" : "#fff",
-                                color: selectedVideoSize === size ? "#fff" : "#333",
-                                cursor: "pointer", transition: "all 0.15s",
-                              }}
-                            >{size}</button>
-                          ))}
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Size</div>
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            {activeVideo.linkedProductSizes.map((size: string) => (
+                              <button
+                                key={size}
+                                onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
+                                style={{
+                                  minWidth: 36, height: 30, padding: "0 8px", borderRadius: 4, fontSize: 12, fontWeight: 600,
+                                  border: selectedVideoSize === size ? "1.5px solid #111" : "1.5px solid #ddd",
+                                  background: selectedVideoSize === size ? "#111" : "#fff",
+                                  color: selectedVideoSize === size ? "#fff" : "#333",
+                                  cursor: "pointer", transition: "all 0.15s",
+                                }}
+                              >{size}</button>
+                            ))}
+                          </div>
                         </div>
                       )}
+                      {/* SHOP NOW button */}
+                      <button
+                        onClick={() => {
+                          addItem({
+                            id: activeVideo.linkedProductId || activeVideo.id,
+                            name: activeVideo.linkedProductName || "",
+                            price: activeVideo.linkedProductPrice || "",
+                            comparePrice: activeVideo.linkedProductComparePrice,
+                            imageUrl: imgA || activeVideo.linkedProductImage,
+                            productUrl: activeVideo.linkedProductLink,
+                            selectedColor: selectedVideoColor || undefined,
+                            selectedSize: selectedVideoSize || undefined,
+                          });
+                          openCart();
+                        }}
+                        style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "13px 20px", borderRadius: 4, fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", border: "none", cursor: "pointer", textTransform: "uppercase" }}
+                      >SHOP NOW</button>
                     </div>
                   )}
                 </div>
@@ -369,7 +374,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
 
           // Desktop: left video + right product panel
           const modalMaxW = config.videoModalDesktopWidth || 960;
-          const imgRatio = config.videoModalImgRatio || "3/4";
           return (
             <div
               className="sf-video-modal-overlay"
@@ -384,15 +388,8 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                 {/* Left: Video */}
                 <div style={{ flex: "0 0 auto", width: "min(380px, 50vw)", background: "#000", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
                   {renderVideoContent(520)}
-                  {/* Creator badge top-left on video */}
+                  {/* Creator badge top-left on video (name only) */}
                   <div className="sf-video-creator-badge" style={{ top: 14, left: 14 }}>
-                    {activeVideo.creatorAvatar ? (
-                      <img loading="lazy" src={activeVideo.creatorAvatar} alt={activeVideo.creatorName || activeVideo.influencerName} className="sf-video-creator-avatar" />
-                    ) : (
-                      <div className="sf-video-creator-avatar sf-video-creator-avatar--placeholder">
-                        {(activeVideo.creatorName || activeVideo.influencerName).replace('@','').charAt(0).toUpperCase()}
-                      </div>
-                    )}
                     <span className="sf-video-creator-name">{activeVideo.creatorName || activeVideo.influencerName.replace('@','')}</span>
                   </div>
                 </div>
