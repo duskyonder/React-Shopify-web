@@ -42,6 +42,7 @@ export interface Video {
   imageUrl?: string;
   videoPlayUrl?: string; // mp4 or YouTube embed URL
   linkedProductId?: string; // product id to show in video modal
+  linkedProductHandle?: string; // Shopify product handle for auto-fetching images/options
   linkedProductName?: string;
   linkedProductPrice?: string;
   linkedProductImage?: string;

@@ -4,6 +4,7 @@ import { useThemeConfig, Product } from "@/contexts/ThemeConfigContext";
 import { useCart } from "@/contexts/CartContext";
 import { ColorSwatch } from "@/components/StorefrontShell";
 import { PlayIcon, XIcon, HeartIcon, ImageIcon, ImgPlaceholder } from "@/components/HomeIcons";
+import { fetchProductByHandle, type ShopifyProduct } from "@/lib/shopify";
 
 
 // ==================== INFLUENCER VIDEOS ====================
@@ -15,6 +16,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
   const [isMobileModal, setIsMobileModal] = useState(false);
   const [selectedVideoColor, setSelectedVideoColor] = useState<string | null>(null);
   const [selectedVideoSize, setSelectedVideoSize] = useState<string | null>(null);
+  const [shopifyProduct, setShopifyProduct] = useState<ShopifyProduct | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -24,6 +26,14 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
     window.addEventListener('resize', checkMobile, { passive: true });
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Auto-fetch Shopify product when modal opens (if handle is set)
+  useEffect(() => {
+    if (!activeVideo) { setShopifyProduct(null); return; }
+    const handle = activeVideo.linkedProductHandle;
+    if (!handle) { setShopifyProduct(null); return; }
+    fetchProductByHandle(handle).then(p => setShopifyProduct(p));
+  }, [activeVideo]);
 
   if (!config.showVideos) return null;
 
@@ -192,10 +202,13 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
       {activeVideo && ReactDOM.createPortal(
         (() => {
           // Compute product images for hover logic: A, B, C, D
-          const allImgs: string[] = [
-            ...(activeVideo.linkedProductImages || []),
-            ...(activeVideo.linkedProductImage ? [activeVideo.linkedProductImage] : []),
-          ].filter((v: string, i: number, a: string[]) => a.indexOf(v) === i); // dedupe
+          // Prefer Shopify product images when auto-fetched, fall back to manual config
+          const allImgs: string[] = shopifyProduct
+            ? shopifyProduct.images.map((img: { url: string }) => img.url)
+            : [
+                ...(activeVideo.linkedProductImages || []),
+                ...(activeVideo.linkedProductImage ? [activeVideo.linkedProductImage] : []),
+              ].filter((v: string, i: number, a: string[]) => a.indexOf(v) === i); // dedupe
           // A=allImgs[0], B=allImgs[1], C=allImgs[2], D=allImgs[3]
           const imgA = allImgs[0] || activeVideo.linkedProductImage || null;
           const imgB = allImgs[1] || null;
@@ -269,6 +282,14 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             openCart();
           };
 
+          // Derive colors and sizes from Shopify product options (if available)
+          const derivedColors: string[] = shopifyProduct
+            ? (shopifyProduct.options.find((o: { name: string; values: string[] }) => o.name === 'Color')?.values || [])
+            : (activeVideo.linkedProductColors || []);
+          const derivedSizes: string[] = shopifyProduct
+            ? (shopifyProduct.options.find((o: { name: string; values: string[] }) => o.name === 'Size')?.values || [])
+            : (activeVideo.linkedProductSizes || []);
+
           if (isMobileModal) {
             // Mobile: full-screen, 70% video top + 30% product panel bottom
             // Product panel: left = single image, right = name/price/colors/sizes/ADD TO CART
@@ -300,15 +321,17 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
 
                   {/* Bottom 30%: Product panel — horizontal split */}
                   <div style={{ flex: "0 0 30%", background: "#fff", display: "flex", flexDirection: "row", overflow: "hidden" }}>
-                    {/* Left: single product image (img[0] only) */}
+                    {/* Left: single product image (img[0] only) — 3:4 aspect ratio with padding */}
                     {imgA && (
-                      <div style={{ flex: "0 0 auto", width: "30%", position: "relative", overflow: "hidden", background: "#f5f5f5" }}>
-                        <img
-                          loading="lazy"
-                          src={imgA}
-                          alt={activeVideo.linkedProductName}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                        />
+                      <div style={{ flex: "0 0 auto", width: "32%", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", padding: "8px 6px 8px 10px" }}>
+                        <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 4, overflow: "hidden", background: "#f5f5f5" }}>
+                          <img
+                            loading="lazy"
+                            src={imgA}
+                            alt={activeVideo.linkedProductName}
+                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                          />
+                        </div>
                       </div>
                     )}
                     {/* Right: product info */}
@@ -329,9 +352,9 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                         </div>
                       )}
                       {/* Color swatches — compact */}
-                      {activeVideo.linkedProductColors && activeVideo.linkedProductColors.length > 0 && (
+                      {derivedColors.length > 0 && (
                         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 5 }}>
-                          {activeVideo.linkedProductColors.map((color: string) => (
+                          {derivedColors.map((color: string) => (
                             <button
                               key={color}
                               onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
@@ -347,9 +370,9 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                         </div>
                       )}
                       {/* Size buttons — compact */}
-                      {activeVideo.linkedProductSizes && activeVideo.linkedProductSizes.length > 0 && (
+                      {derivedSizes.length > 0 && (
                         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
-                          {activeVideo.linkedProductSizes.map((size: string) => (
+                          {derivedSizes.map((size: string) => (
                             <button
                               key={size}
                               onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
@@ -390,11 +413,11 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
 
           // Shared product info panel (used in both desktop and mobile)
           const renderColorSwatches = (size = 26) => (
-            activeVideo.linkedProductColors && activeVideo.linkedProductColors.length > 0 ? (
+            derivedColors.length > 0 ? (
               <div style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Color</div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {activeVideo.linkedProductColors.map((color: string) => (
+                  {derivedColors.map((color: string) => (
                     <button
                       key={color}
                       onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
@@ -414,11 +437,11 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
           );
 
           const renderSizeButtons = (btnH = 32) => (
-            activeVideo.linkedProductSizes && activeVideo.linkedProductSizes.length > 0 ? (
+            derivedSizes.length > 0 ? (
               <div style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Size</div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {activeVideo.linkedProductSizes.map((size: string) => (
+                  {derivedSizes.map((size: string) => (
                     <button
                       key={size}
                       onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
