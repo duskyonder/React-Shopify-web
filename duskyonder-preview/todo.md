@@ -557,7 +557,27 @@
 - [x] Committed to main: d16deb5 — "refactor: remove dead code (QuickViewModal, isMobileModal, videoRef, mobileVideoCardCount)"
 - [x] Backup branch created: backup/before-dead-code-cleanup
 
-## Project Rule: Dead Code Policy
-After any feature overhaul, audit and remove all dead/unused code — including unused state,
-refs, effects, and unreachable components — before committing. Create a backup branch first
-for any destructive removal. This keeps the codebase lean and avoids confusion in future sessions.
+## Project Rules: Code Quality & Backup Policy
+
+**Dead / junk code:** After every feature change or overhaul, audit and remove all dead/unused
+code before committing — this includes unused imports, duplicate helpers, loop-local constants
+that never change, one-liner pass-through aliases, and re-declared types.
+
+**Rolling backup branch:** Before any modification, create a backup branch from the current
+main tip. When making the next modification, delete the previous backup branch and create a
+new one from the then-current main tip. Only one backup branch exists at a time — it always
+represents the state immediately before the most recent change.
+
+Branch naming: `backup/before-<short-description>` (e.g. `backup/before-junk-cleanup`).
+
+**TypeScript check:** Run `npx tsc --noEmit` after every edit; commit only when 0 errors.
+
+## Junk Code Cleanup — HomeVideos.tsx (2026-06-18)
+- [x] Removed unused `ImageIcon` import
+- [x] Removed `ChevronUpNavIcon` (duplicate of `ChevronUpIcon`); replaced its one usage with `ChevronUpIcon`
+- [x] Removed `mobileCardCount = 2` declared inside `.map()` loop on every iteration (constant, never changes)
+- [x] Removed `toEmbedUrlLocal` alias (one-liner pass-through to `toEmbedUrl`); call `toEmbedUrl` directly
+- [x] Removed inner `type ColorEntry` re-declaration inside desktop modal IIFE (already declared at module top)
+- [x] TypeScript check: 0 errors
+- [x] Committed to main: cb6b6fd
+- [x] Rolling backup: deleted `backup/before-dead-code-cleanup`, created `backup/before-junk-cleanup`
