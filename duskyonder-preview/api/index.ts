@@ -426,6 +426,31 @@ const vercelRouter = router({
         return json.data?.menu ?? null;
       }),
   }),
+  newsletter: router({
+    subscribe: publicProcedure
+      .input(z.object({ email: z.string().email(), source: z.enum(["popup", "footer"]).default("footer") }))
+      .mutation(async ({ input }) => {
+        // Inline DB insert — avoids importing from server/ which has path-alias issues on Vercel
+        const dbUrl = process.env.DATABASE_URL;
+        if (dbUrl) {
+          try {
+            const mysql2 = await import("mysql2/promise");
+            const conn = await mysql2.createConnection(dbUrl);
+            try {
+              await conn.execute(
+                "INSERT IGNORE INTO newsletter_subscribers (email, source) VALUES (?, ?)",
+                [input.email, input.source]
+              );
+            } finally {
+              await conn.end();
+            }
+          } catch (err) {
+            console.error("[newsletter] DB error:", err);
+          }
+        }
+        return { success: true };
+      }),
+  }),
 });
 
 export type VercelRouter = typeof vercelRouter;
