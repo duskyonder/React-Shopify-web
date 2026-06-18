@@ -44,6 +44,36 @@ export default function SeriesPage() {
       {/* Global Settings */}
       <Card className="mb-4">
         <CardContent className="pt-4 pb-4 space-y-3">
+          {/* Theme toggle */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">背景主题</Label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => updateConfig({ seriesTheme: "green" })}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold border transition-all ${
+                  (config.seriesTheme ?? "green") === "green"
+                    ? "bg-[#0D3D2B] text-white border-[#0D3D2B]"
+                    : "bg-white text-[#0D3D2B] border-[#0D3D2B] hover:bg-[#f0f7f4]"
+                }`}
+              >
+                <span className="inline-block w-3 h-3 rounded-full bg-[#0D3D2B] border border-white/30" />
+                深绿
+              </button>
+              <button
+                type="button"
+                onClick={() => updateConfig({ seriesTheme: "white" })}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold border transition-all ${
+                  (config.seriesTheme ?? "green") === "white"
+                    ? "bg-[#111] text-white border-[#111]"
+                    : "bg-white text-[#111] border-[#ccc] hover:bg-[#f5f5f5]"
+                }`}
+              >
+                <span className="inline-block w-3 h-3 rounded-full bg-white border border-gray-300" />
+                白色
+              </button>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">板块大标题</Label>

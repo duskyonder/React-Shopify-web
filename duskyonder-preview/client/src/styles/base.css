@@ -601,29 +601,7 @@
   display: block;
 }
 .sf-category-card:hover img { transform: scale(1.06); }
-/* Gradient overlay at bottom of image — only a subtle bottom gradient for text legibility */
-.sf-cat-img-wrap::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.35) 0%,
-    rgba(0, 0, 0, 0.05) 35%,
-    transparent 55%
-  );
-  pointer-events: none;
-  transition: background 0.35s cubic-bezier(0.23, 1, 0.32, 1);
-  z-index: 1;
-}
-.sf-category-card:hover .sf-cat-img-wrap::after {
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.45) 0%,
-    rgba(0, 0, 0, 0.08) 40%,
-    transparent 60%
-  );
-}
+/* Gradient overlay removed — no dark overlay on category card images */
 /* Text overlaid on image */
 .sf-cat-overlay-text {
   position: absolute;

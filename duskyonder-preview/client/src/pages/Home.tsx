@@ -334,10 +334,28 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
   if (!config.showSeries || total === 0) return null;
 
   const active = series[activeIdx];
+  const isWhiteTheme = (config.seriesTheme ?? "green") === "white";
+
+  // Derived theme tokens
+  const sectionBg = isWhiteTheme ? "#fff" : "#0D3D2B";
+  const contentColor = isWhiteTheme ? "#111" : "white";
+  const labelColor = isWhiteTheme ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.5)";
+  const headlineColor = isWhiteTheme ? "#111" : "white";
+  const headlineEmColor = isWhiteTheme ? "#175C40" : "#4CAF82";
+  const itemNameColor = isWhiteTheme ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.7)";
+  const itemActiveNameColor = isWhiteTheme ? "#111" : "white";
+  const itemHoverNameColor = isWhiteTheme ? "#111" : "white";
+  const itemNumColor = isWhiteTheme ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.4)";
+  const itemActiveNumColor = isWhiteTheme ? "#175C40" : "#4CAF82";
+  const dividerColor = isWhiteTheme ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)";
+  const descColor = isWhiteTheme ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)";
+  const gradientTop = isWhiteTheme ? "transparent" : undefined; // white theme: no gradient transitions
+  const gradientBottom = isWhiteTheme ? "transparent" : undefined;
+  const inlineImgBg = isWhiteTheme ? "#f5f5f5" : "#1a4d35";
 
   return (
     <>
-    <section className="sf-section sf-series-section">
+    <section className="sf-section sf-series-section" style={{ background: sectionBg, color: contentColor }}>
       <div className="sf-series-inner" style={{
         width: "95%",
         maxWidth: isMobile
@@ -371,10 +389,10 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
           )}
         </div>
         <div className="sf-series-content">
-          <div className="sf-series-label">{config.seriesLabel || "TOP COLLECTIONS"}</div>
-          <h2 className="sf-series-headline">
+          <div className="sf-series-label" style={{ color: labelColor }}>{config.seriesLabel || "TOP COLLECTIONS"}</div>
+          <h2 className="sf-series-headline" style={{ color: headlineColor }}>
             {config.seriesHeadline || "THIS DREAMY PRINT"}<br />
-            <em>{config.seriesSubheadline || "DRAWS INSPIRATION"}</em>
+            <em style={{ color: headlineEmColor }}>{config.seriesSubheadline || "DRAWS INSPIRATION"}</em>
           </h2>
           <div className="sf-series-list">
             {series.map((item, i) => (
@@ -384,19 +402,19 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                   onClick={() => { setActiveIdx(i); startTimer(); }}
                 >
                   <div className="sf-series-item-inner">
-                    <span className="sf-series-num">{item.label}</span>
+                    <span className="sf-series-num" style={{ color: i === activeIdx ? itemActiveNumColor : itemNumColor }}>{item.label}</span>
                     <div>
-                      <div className="sf-series-name">{item.name}</div>
+                      <div className="sf-series-name" style={{ color: i === activeIdx ? itemActiveNameColor : itemNameColor }}>{item.name}</div>
                       {item.description && i === activeIdx && (
-                        <div className="sf-series-desc">{item.description}</div>
+                        <div className="sf-series-desc" style={{ color: descColor }}>{item.description}</div>
                       )}
                     </div>
                   </div>
-                  <div className="sf-series-divider" />
+                  <div className="sf-series-divider" style={{ background: dividerColor }} />
                 </div>
                 {/* Mobile: inline image shown below the active item */}
                 {isMobile && i === activeIdx && (
-                  <div className="sf-series-inline-img" style={{ position: "relative", aspectRatio: config.seriesImageAspectRatio || "4/5" }}>
+                  <div className="sf-series-inline-img" style={{ position: "relative", aspectRatio: config.seriesImageAspectRatio || "4/5", background: inlineImgBg }}>
                     {item.link ? (
                       <a href={item.link} style={{ display: "block", width: "100%", height: "100%", position: "absolute", inset: 0 }}>
                         {item.imageUrl ? (

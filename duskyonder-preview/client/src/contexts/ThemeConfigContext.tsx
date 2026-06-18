@@ -452,6 +452,7 @@ export interface ThemeConfig {
   videosMobileMaxWidth?: number; // px, 320-1200, mobile max-width (0=full), default 0
   videosMobileCardHeight?: number; // px, 0-600, mobile card height (0=auto), default 0
   // Series section
+  seriesTheme?: "green" | "white"; // background theme: green (default) or white
   seriesMaxWidth?: number; // px, 800-1920, desktop max-width, default 1680
   seriesImageHeight?: number; // px, 300-800, desktop min-height, default 520
   seriesMobileMaxWidth?: number; // px, 320-1200, mobile max-width (0=full), default 0
@@ -1397,6 +1398,7 @@ const defaultConfig: ThemeConfig = {
   videoCardHeight: 0,
   videosMobileMaxWidth: 0,
   videosMobileCardHeight: 0,
+  seriesTheme: "green",
   seriesMaxWidth: 1680,
   seriesImageHeight: 520,
   seriesMobileMaxWidth: 0,
