@@ -568,8 +568,10 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
               ? (config.videosMobileCardHeight ? `${config.videosMobileCardHeight}px` : undefined)
               : (config.videoCardHeight ? `${config.videoCardHeight}px` : undefined),
           } as React.CSSProperties}>
+          {!isMobileVideos && (
           <button className="sf-cat-arrow prev" onClick={() => scrollByBtn(-1)}
-            style={!isMobileVideos ? { opacity: videoPage === 0 ? 0.3 : 1 } : undefined}>&#8249;</button>
+            style={{ opacity: videoPage === 0 ? 0.3 : 1 }}>&#8249;</button>
+          )}
           <div className="sf-scroll-track-outer" style={!isMobileVideos ? { overflow: "hidden" } : undefined}>
             <div
               ref={trackRef}
@@ -589,9 +591,10 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             >
               {videos.map((video, idx) => {
                 const mobileCardCount = 2;
+                // Show card A fully + card B peeking: card A = ~88% of track, gap accounts for peek
                 const mobileAutoWidth = mobileGap > 0
-                  ? `calc((100% - ${mobileGap * (mobileCardCount - 1)}px) / ${mobileCardCount})`
-                  : `calc(100% / ${mobileCardCount})`;
+                  ? `calc(88% - ${mobileGap}px)`
+                  : `88%`;
                 const desktopAutoWidth = desktopGap > 0
                   ? `calc((100% - ${desktopGap * (desktopCount - 1)}px) / ${desktopCount})`
                   : `calc(100% / ${desktopCount})`;
@@ -653,8 +656,10 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
               })}
             </div>
           </div>
+          {!isMobileVideos && (
           <button className="sf-cat-arrow next" onClick={() => scrollByBtn(1)}
-            style={!isMobileVideos ? { opacity: videoPage >= totalVideoPages - 1 ? 0.3 : 1 } : undefined}>&#8250;</button>
+            style={{ opacity: videoPage >= totalVideoPages - 1 ? 0.3 : 1 }}>&#8250;</button>
+          )}
         </div>}
         {videoSectionVisible && !isMobileVideos && totalVideoPages > 1 && (
           <div className="sf-section-dots">
