@@ -6,6 +6,472 @@ import { ColorSwatch } from "@/components/StorefrontShell";
 import { PlayIcon, XIcon, HeartIcon, ImageIcon, ImgPlaceholder } from "@/components/HomeIcons";
 import { fetchProductByHandle, type ShopifyProduct } from "@/lib/shopify";
 
+// ── Small icon helpers ──────────────────────────────────────────────────────
+const MuteIcon = ({ muted }: { muted: boolean }) => muted ? (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+    <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+  </svg>
+) : (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+  </svg>
+);
+
+const ExpandIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+    <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+  </svg>
+);
+
+const MinimizeIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/>
+    <line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>
+  </svg>
+);
+
+const ChevronUpIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="18 15 12 9 6 15"/>
+  </svg>
+);
+
+const ChevronDownIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+);
+
+const ChevronUpNavIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="18 15 12 9 6 15"/>
+  </svg>
+);
+
+// ── Convert video URL to embeddable format ──────────────────────────────────
+function toEmbedUrl(raw: string): { type: 'iframe' | 'video' | 'tiktok'; src: string } {
+  const url = raw.trim();
+  const ytId = (() => {
+    const m1 = url.match(/[?&]v=([^&]+)/);
+    if (m1) return m1[1];
+    const m2 = url.match(/youtu\.be\/([^?&]+)/);
+    if (m2) return m2[1];
+    const m3 = url.match(/youtube\.com\/shorts\/([^?&]+)/);
+    if (m3) return m3[1];
+    const m4 = url.match(/youtube\.com\/embed\/([^?&]+)/);
+    if (m4) return m4[1];
+    return null;
+  })();
+  if (ytId) return { type: 'iframe', src: `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&rel=0&playsinline=1` };
+  const ttId = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+  if (ttId) return { type: 'tiktok', src: `https://www.tiktok.com/embed/v2/${ttId[1]}` };
+  return { type: 'video', src: url };
+}
+
+// ── Types ───────────────────────────────────────────────────────────────────
+type ColorEntry = { name: string; hex: string | null };
+
+interface VideoCardMobileProps {
+  video: any;
+  mobileWidth: string;
+  mobileGap: number;
+  config: any;
+  videos: any[];
+  videoIndex: number;
+  onFullscreen: (video: any, index: number) => void;
+}
+
+// ── Mobile Video Card (inline play) ─────────────────────────────────────────
+function MobileVideoCard({ video, mobileWidth, mobileGap, config, videos, videoIndex, onFullscreen }: VideoCardMobileProps) {
+  const { addItem, openCart } = useCart();
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [shopifyProduct, setShopifyProduct] = useState<ShopifyProduct | null>(null);
+  const [sheetY, setSheetY] = useState(0);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef<number | null>(null);
+
+  // Auto-fetch Shopify product when playing starts
+  useEffect(() => {
+    if (!playing) return;
+    const handle = video.linkedProductHandle;
+    if (!handle || shopifyProduct) return;
+    fetchProductByHandle(handle).then(p => setShopifyProduct(p));
+  }, [playing, video.linkedProductHandle]);
+
+  // Derive product data
+  const allImgs: string[] = shopifyProduct
+    ? shopifyProduct.images.map((img: { url: string }) => img.url)
+    : [
+        ...(video.linkedProductImages || []),
+        ...(video.linkedProductImage ? [video.linkedProductImage] : []),
+      ].filter((v: string, i: number, a: string[]) => a.indexOf(v) === i);
+  const imgA = allImgs[0] || video.linkedProductImage || null;
+
+  const derivedColorEntries: ColorEntry[] = shopifyProduct
+    ? (shopifyProduct.options.find((o: any) => o.name.toLowerCase() === 'color')?.optionValues || []).map((v: any) => ({
+        name: v.name,
+        hex: v.swatch?.color || null,
+      }))
+    : (video.linkedProductColors || []).map((c: string) => ({
+        name: c,
+        hex: /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(c.trim()) ? c : null,
+      }));
+
+  const derivedSizes: string[] = shopifyProduct
+    ? shopifyProduct.options
+        .filter((o: any) => o.name.toLowerCase() !== 'color')
+        .flatMap((o: any) => o.optionValues.map((v: any) => v.name))
+    : (video.linkedProductSizes || []);
+
+  const productName = shopifyProduct?.title || video.linkedProductName || "";
+  const productPrice = shopifyProduct?.variants?.[0]?.price
+    ? `$${parseFloat(shopifyProduct.variants[0].price.amount).toFixed(2)}`
+    : video.linkedProductPrice || "";
+  const comparePrice = shopifyProduct?.variants?.[0]?.compareAtPrice
+    ? `$${parseFloat(shopifyProduct.variants[0].compareAtPrice.amount).toFixed(2)}`
+    : video.linkedProductComparePrice || "";
+
+  const handleAddToCart = () => {
+    addItem({
+      id: video.linkedProductId || video.id,
+      name: productName,
+      price: productPrice,
+      comparePrice,
+      imageUrl: imgA || video.linkedProductImage,
+      productUrl: video.linkedProductLink,
+      selectedColor: selectedColor || undefined,
+      selectedSize: selectedSize || undefined,
+    });
+    openCart();
+    setSheetOpen(false);
+  };
+
+  // Auto-derive thumbnail
+  const ytMatch = video.videoPlayUrl?.match(/(?:v=|youtu\.be\/)([^&?/]+)/);
+  const autoThumb = ytMatch ? `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg` : undefined;
+  const thumbSrc = video.imageUrl || autoThumb;
+
+  const hasProduct = !!(video.linkedProductName || video.linkedProductImage || video.linkedProductHandle);
+
+  // Bottom sheet drag-to-dismiss
+  const handleSheetTouchStart = (e: React.TouchEvent) => {
+    dragStartY.current = e.touches[0].clientY;
+  };
+  const handleSheetTouchMove = (e: React.TouchEvent) => {
+    if (dragStartY.current === null) return;
+    const dy = e.touches[0].clientY - dragStartY.current;
+    if (dy > 0) setSheetY(dy);
+  };
+  const handleSheetTouchEnd = () => {
+    if (sheetY > 80) setSheetOpen(false);
+    setSheetY(0);
+    dragStartY.current = null;
+  };
+
+  return (
+    <div
+      className="sf-video-card-wrapper"
+      style={{ scrollSnapAlign: "start", flex: `0 0 ${mobileWidth}`, width: mobileWidth }}
+    >
+      {/* Video card — 4:5 aspect ratio */}
+      <div
+        className="sf-video-card"
+        style={{ aspectRatio: "4/5", cursor: "pointer", position: "relative", overflow: "hidden", borderRadius: 10, background: "#000" }}
+        onClick={() => { if (!playing) setPlaying(true); }}
+      >
+        {/* Thumbnail / video */}
+        {!playing ? (
+          <>
+            {thumbSrc ? (
+              <img loading="lazy" src={thumbSrc} alt={video.influencerName} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            ) : (
+              <div style={{ width: "100%", height: "100%", background: "#175C40", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <PlayIcon />
+              </div>
+            )}
+            <div className="sf-video-play"><PlayIcon /></div>
+          </>
+        ) : (
+          (() => {
+            if (!video.videoPlayUrl) {
+              return (
+                <div style={{ width: "100%", height: "100%", background: "#175C40", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
+                  {thumbSrc ? <img loading="lazy" src={thumbSrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} /> : null}
+                  <PlayIcon />
+                  <p style={{ fontSize: 12, color: "#fff", opacity: 0.7, margin: 0 }}>No video link</p>
+                </div>
+              );
+            }
+            const { type, src } = toEmbedUrl(video.videoPlayUrl);
+            if (type === 'video') {
+              return <video src={src} autoPlay playsInline muted={muted} loop style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />;
+            }
+            // iframe / tiktok — muted param already in URL for YT; TikTok handles its own
+            const muteParam = muted ? '&mute=1' : '&mute=0';
+            const finalSrc = type === 'iframe' ? src.replace('&mute=1', muteParam) : src;
+            return <iframe src={finalSrc} style={{ width: "100%", height: "100%", border: "none", display: "block" }} allow="autoplay; fullscreen; encrypted-media" allowFullScreen />;
+          })()
+        )}
+
+        {/* Creator badge — top left */}
+        <div className="sf-video-creator-badge" style={{ top: 10, left: 10 }}>
+          <span className="sf-video-creator-name">{video.creatorName || video.influencerName?.replace('@', '')}</span>
+        </div>
+
+        {/* Controls — top right (only when playing) */}
+        {playing && (
+          <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 10 }}>
+            <button
+              onClick={e => { e.stopPropagation(); setMuted(m => !m); }}
+              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}
+              aria-label={muted ? "Unmute" : "Mute"}
+            ><MuteIcon muted={muted} /></button>
+            <button
+              onClick={e => { e.stopPropagation(); onFullscreen(video, videoIndex); }}
+              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}
+              aria-label="Fullscreen"
+            ><ExpandIcon /></button>
+          </div>
+        )}
+      </div>
+
+      {/* Product strip — below video */}
+      {hasProduct && (
+        <div style={{ display: "flex", alignItems: "center", background: "#fff", borderRadius: "0 0 10px 10px", padding: "8px 10px", gap: 8, marginTop: 0 }}>
+          {imgA && (
+            <img loading="lazy" src={imgA} alt={productName} style={{ width: 44, height: 56, objectFit: "cover", borderRadius: 4, flexShrink: 0, background: "#f0f0f0" }} />
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 600, fontSize: 12, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{productName}</div>
+            <div style={{ fontSize: 12, color: "#333", marginTop: 2 }}>{productPrice}</div>
+          </div>
+          <button
+            onClick={() => setSheetOpen(true)}
+            style={{ width: 30, height: 30, borderRadius: "50%", background: "#111", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+            aria-label="View product details"
+          ><ChevronUpIcon /></button>
+        </div>
+      )}
+
+      {/* Bottom Sheet */}
+      {sheetOpen && ReactDOM.createPortal(
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.5)" }}
+          onClick={() => setSheetOpen(false)}
+        >
+          <div
+            ref={sheetRef}
+            onClick={e => e.stopPropagation()}
+            onTouchStart={handleSheetTouchStart}
+            onTouchMove={handleSheetTouchMove}
+            onTouchEnd={handleSheetTouchEnd}
+            style={{
+              position: "absolute", bottom: 0, left: 0, right: 0,
+              background: "#fff", borderRadius: "16px 16px 0 0",
+              transform: `translateY(${sheetY}px)`,
+              transition: sheetY === 0 ? "transform 0.3s cubic-bezier(0.23,1,0.32,1)" : "none",
+              maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column",
+            }}
+          >
+            {/* Drag handle */}
+            <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 8px" }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: "#ddd" }} />
+            </div>
+
+            {/* 40/60 product panel */}
+            <div style={{ display: "flex", flex: 1, overflow: "hidden", padding: "0 0 16px" }}>
+              {/* Left 40%: portrait image */}
+              <div style={{ flex: "0 0 40%", padding: "0 8px 0 16px", display: "flex", alignItems: "flex-start" }}>
+                <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 8, overflow: "hidden", background: "#f0f0f0" }}>
+                  {imgA ? (
+                    <img loading="lazy" src={imgA} alt={productName} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  ) : (
+                    <div style={{ width: "100%", height: "100%", background: "#e8e8e8" }} />
+                  )}
+                </div>
+              </div>
+
+              {/* Right 60%: product info */}
+              <div style={{ flex: 1, padding: "4px 16px 0 8px", display: "flex", flexDirection: "column", overflowY: "auto", gap: 0, minWidth: 0 }}>
+                {/* Name */}
+                {productName && (
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "#111", lineHeight: 1.3, marginBottom: 5 }}>{productName}</div>
+                )}
+                {/* Price */}
+                {(productPrice || comparePrice) && (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 10 }}>
+                    {productPrice && <span style={{ fontWeight: 700, fontSize: 14, color: "#111" }}>{productPrice}</span>}
+                    {comparePrice && <span style={{ fontSize: 12, color: "#aaa", textDecoration: "line-through" }}>{comparePrice}</span>}
+                  </div>
+                )}
+                {/* Color swatches */}
+                {derivedColorEntries.length > 0 && (
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Color</div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {derivedColorEntries.map(({ name, hex }) => {
+                        const isSel = selectedColor === name;
+                        return hex ? (
+                          <button key={name} onClick={() => setSelectedColor(isSel ? null : name)} title={name}
+                            style={{ width: 22, height: 22, borderRadius: "50%", background: hex, border: isSel ? "2px solid #111" : "1.5px solid #d0d0d0", cursor: "pointer", padding: 0, boxShadow: isSel ? "0 0 0 2px #fff inset" : "none" }}
+                            aria-label={name} />
+                        ) : (
+                          <button key={name} onClick={() => setSelectedColor(isSel ? null : name)}
+                            style={{ padding: "3px 8px", borderRadius: 20, fontSize: 10, fontWeight: 600, border: isSel ? "1.5px solid #111" : "1px solid #ddd", background: isSel ? "#111" : "#fff", color: isSel ? "#fff" : "#555", cursor: "pointer" }}
+                          >{name}</button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {/* Size buttons */}
+                {derivedSizes.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Size</div>
+                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                      {derivedSizes.map((size: string) => (
+                        <button key={size} onClick={() => setSelectedSize(selectedSize === size ? null : size)}
+                          style={{ minWidth: 30, height: 26, padding: "0 6px", borderRadius: 3, fontSize: 11, fontWeight: 500, border: selectedSize === size ? "1.5px solid #111" : "1px solid #d8d8d8", background: selectedSize === size ? "#111" : "#fff", color: selectedSize === size ? "#fff" : "#444", cursor: "pointer" }}
+                        >{size}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Add to cart */}
+                <button onClick={handleAddToCart}
+                  style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "11px 10px", borderRadius: 4, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", border: "none", cursor: "pointer", textTransform: "uppercase", marginTop: "auto" }}
+                >ADD TO CART</button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
+// ── Fullscreen Video Player ──────────────────────────────────────────────────
+interface FullscreenPlayerProps {
+  video: any;
+  videoIndex: number;
+  videos: any[];
+  onClose: () => void;
+  onNavigate: (index: number) => void;
+}
+
+function FullscreenPlayer({ video, videoIndex, videos, onClose, onNavigate }: FullscreenPlayerProps) {
+  const [muted, setMuted] = useState(false);
+  const [shopifyProduct, setShopifyProduct] = useState<ShopifyProduct | null>(null);
+
+  useEffect(() => {
+    const handle = video.linkedProductHandle;
+    if (!handle) { setShopifyProduct(null); return; }
+    fetchProductByHandle(handle).then(p => setShopifyProduct(p));
+  }, [video.linkedProductHandle]);
+
+  const allImgs: string[] = shopifyProduct
+    ? shopifyProduct.images.map((img: { url: string }) => img.url)
+    : [
+        ...(video.linkedProductImages || []),
+        ...(video.linkedProductImage ? [video.linkedProductImage] : []),
+      ].filter((v: string, i: number, a: string[]) => a.indexOf(v) === i);
+  const imgA = allImgs[0] || video.linkedProductImage || null;
+
+  const productName = shopifyProduct?.title || video.linkedProductName || "";
+  const productPrice = shopifyProduct?.variants?.[0]?.price
+    ? `$${parseFloat(shopifyProduct.variants[0].price.amount).toFixed(2)}`
+    : video.linkedProductPrice || "";
+  const productUrl = video.linkedProductLink || "#";
+
+  const hasProduct = !!(productName || imgA);
+
+  if (!video.videoPlayUrl) {
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 999999, background: "#000", display: "flex", flexDirection: "column" }}>
+        {/* Top bar */}
+        <div style={{ display: "flex", alignItems: "center", padding: "12px 16px", gap: 12, background: "rgba(0,0,0,0.6)", zIndex: 10 }}>
+          <div style={{ flex: 1, fontWeight: 600, fontSize: 14, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{productName}</div>
+          <button onClick={() => setMuted(m => !m)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Mute"><MuteIcon muted={muted} /></button>
+          <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Minimize"><MinimizeIcon /></button>
+        </div>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", opacity: 0.5, fontSize: 14 }}>No video link</div>
+        {hasProduct && (
+          <a href={productUrl} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: "rgba(0,0,0,0.7)", textDecoration: "none" }}>
+            {imgA && <img src={imgA} alt={productName} style={{ width: 48, height: 60, objectFit: "cover", borderRadius: 4, flexShrink: 0 }} />}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 13, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{productName}</div>
+              <div style={{ fontSize: 13, color: "#ccc", marginTop: 2 }}>{productPrice}</div>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  const { type, src } = toEmbedUrl(video.videoPlayUrl);
+  const muteParam = muted ? '&mute=1' : '&mute=0';
+  const finalSrc = type === 'iframe' ? src.replace('&mute=1', muteParam) : src;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 999999, background: "#000", display: "flex", flexDirection: "column" }}>
+      {/* Top bar */}
+      <div style={{ display: "flex", alignItems: "center", padding: "12px 16px", gap: 12, background: "rgba(0,0,0,0.6)", zIndex: 10, flexShrink: 0 }}>
+        <div style={{ flex: 1, fontWeight: 600, fontSize: 14, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{productName}</div>
+        <button onClick={() => setMuted(m => !m)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Mute"><MuteIcon muted={muted} /></button>
+        <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Minimize"><MinimizeIcon /></button>
+      </div>
+
+      {/* Video + nav arrows */}
+      <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+        {type === 'video' ? (
+          <video src={finalSrc} autoPlay playsInline muted={muted} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+        ) : (
+          <iframe src={finalSrc} style={{ width: "100%", height: "100%", border: "none", display: "block" }} allow="autoplay; fullscreen; encrypted-media" allowFullScreen />
+        )}
+
+        {/* Right-side nav arrows — vertically centered */}
+        <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 8, zIndex: 10 }}>
+          <button
+            onClick={() => onNavigate(Math.max(0, videoIndex - 1))}
+            disabled={videoIndex === 0}
+            style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "none", color: "#fff", cursor: videoIndex === 0 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: videoIndex === 0 ? 0.3 : 1, backdropFilter: "blur(4px)" }}
+            aria-label="Previous video"
+          ><ChevronUpNavIcon /></button>
+          <button
+            onClick={() => onNavigate(Math.min(videos.length - 1, videoIndex + 1))}
+            disabled={videoIndex === videos.length - 1}
+            style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "none", color: "#fff", cursor: videoIndex === videos.length - 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: videoIndex === videos.length - 1 ? 0.3 : 1, backdropFilter: "blur(4px)" }}
+            aria-label="Next video"
+          ><ChevronDownIcon /></button>
+        </div>
+      </div>
+
+      {/* Bottom product strip — tappable, links to PDP */}
+      {hasProduct && (
+        <a
+          href={productUrl}
+          style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: "rgba(0,0,0,0.75)", textDecoration: "none", flexShrink: 0 }}
+        >
+          {imgA && <img src={imgA} alt={productName} style={{ width: 48, height: 60, objectFit: "cover", borderRadius: 4, flexShrink: 0, background: "#333" }} />}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 600, fontSize: 13, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{productName}</div>
+            <div style={{ fontSize: 13, color: "#ccc", marginTop: 2 }}>{productPrice}</div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      )}
+    </div>
+  );
+}
 
 // ==================== INFLUENCER VIDEOS ====================
 function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "left" | "center" | "right" }) {
@@ -17,6 +483,11 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
   const [selectedVideoColor, setSelectedVideoColor] = useState<string | null>(null);
   const [selectedVideoSize, setSelectedVideoSize] = useState<string | null>(null);
   const [shopifyProduct, setShopifyProduct] = useState<ShopifyProduct | null>(null);
+
+  // Fullscreen state (mobile)
+  const [fullscreenVideo, setFullscreenVideo] = useState<any>(null);
+  const [fullscreenIndex, setFullscreenIndex] = useState<number>(0);
+
   const trackRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -27,7 +498,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Auto-fetch Shopify product when modal opens (if handle is set)
+  // Auto-fetch Shopify product when desktop modal opens
   useEffect(() => {
     if (!activeVideo) { setShopifyProduct(null); return; }
     const handle = activeVideo.linkedProductHandle;
@@ -57,7 +528,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
   const totalVideoPages = Math.ceil(videos.length / desktopCount);
   const totalMobileVideoPages = Math.ceil(videos.length / mobileVideoCardCount);
 
-  // IntersectionObserver lazy loading
   const [videoSectionVisible, setVideoSectionVisible] = useState(false);
   const videoSectionRef = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -70,7 +540,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
     return () => obs.disconnect();
   }, []);
 
-  // Scroll mobile video track when mobileVideoPage changes
   useEffect(() => {
     if (!isMobileVideos) return;
     const el = trackRef.current;
@@ -128,7 +597,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                 } : {}),
               } as React.CSSProperties}
             >
-              {videos.map((video) => {
+              {videos.map((video, idx) => {
                 const mobileCardCount = 2;
                 const mobileAutoWidth = mobileGap > 0
                   ? `calc((100% - ${mobileGap * (mobileCardCount - 1)}px) / ${mobileCardCount})`
@@ -138,43 +607,58 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                   : `calc(100% / ${desktopCount})`;
                 const mobileWidth = mobileCardWidth > 0 ? `${mobileCardWidth}px` : mobileAutoWidth;
                 const desktopWidth = desktopCardWidth > 0 ? `${desktopCardWidth}px` : desktopAutoWidth;
-                // Auto-derive thumbnail from YouTube URL if no manual imageUrl
+
+                if (isMobileVideos) {
+                  return (
+                    <MobileVideoCard
+                      key={video.id}
+                      video={video}
+                      mobileWidth={mobileWidth}
+                      mobileGap={mobileGap}
+                      config={config}
+                      videos={videos}
+                      videoIndex={idx}
+                      onFullscreen={(v, i) => { setFullscreenVideo(v); setFullscreenIndex(i); }}
+                    />
+                  );
+                }
+
+                // Desktop card (unchanged)
                 const ytMatch = video.videoPlayUrl?.match(/(?:v=|youtu\.be\/)([^&?/]+)/);
                 const autoThumb = ytMatch ? `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg` : undefined;
                 const thumbSrc = video.imageUrl || autoThumb;
                 return (
-                <div
-                  key={video.id}
-                  className="sf-video-card-wrapper"
-                  style={isMobileVideos ? { scrollSnapAlign: "start", flex: `0 0 ${mobileWidth}`, width: mobileWidth } : { flex: `0 0 ${desktopWidth}`, width: desktopWidth }}
-                >
                   <div
-                    className="sf-video-card"
-                    style={{ aspectRatio: config.videoAspectRatio ?? "9/16", cursor: "pointer" }}
-                    onClick={() => { setActiveVideo(video); setSelectedVideoColor(null); setSelectedVideoSize(null); }}
+                    key={video.id}
+                    className="sf-video-card-wrapper"
+                    style={{ flex: `0 0 ${desktopWidth}`, width: desktopWidth }}
                   >
-                    {thumbSrc ? (
-                      <img loading="lazy" src={thumbSrc} alt={video.influencerName} />
-                    ) : (
-                      <ImgPlaceholder label="视频封面" style={{ position: "absolute", inset: 0 }} />
-                    )}
-                    <div className="sf-video-play"><PlayIcon /></div>
-                    {/* Creator badge - top left (name only, no avatar) */}
-                    <div className="sf-video-creator-badge">
-                      <span className="sf-video-creator-name">{video.creatorName || video.influencerName.replace('@','')}</span>
-                    </div>
-                  </div>
-                  {(video.linkedProductName || video.linkedProductImage) && (
-                    <div className="sf-video-product-card">
-                      {video.linkedProductImage && (
-                        <img loading="lazy" src={video.linkedProductImage} alt={video.linkedProductName} className="sf-video-product-img" />
+                    <div
+                      className="sf-video-card"
+                      style={{ aspectRatio: config.videoAspectRatio ?? "9/16", cursor: "pointer" }}
+                      onClick={() => { setActiveVideo(video); setSelectedVideoColor(null); setSelectedVideoSize(null); }}
+                    >
+                      {thumbSrc ? (
+                        <img loading="lazy" src={thumbSrc} alt={video.influencerName} />
+                      ) : (
+                        <ImgPlaceholder label="视频封面" style={{ position: "absolute", inset: 0 }} />
                       )}
-                      <div className="sf-video-product-info">
-                        <div className="sf-video-product-name">{video.linkedProductName}</div>
+                      <div className="sf-video-play"><PlayIcon /></div>
+                      <div className="sf-video-creator-badge">
+                        <span className="sf-video-creator-name">{video.creatorName || video.influencerName.replace('@','')}</span>
                       </div>
                     </div>
-                  )}
-                </div>
+                    {(video.linkedProductName || video.linkedProductImage) && (
+                      <div className="sf-video-product-card">
+                        {video.linkedProductImage && (
+                          <img loading="lazy" src={video.linkedProductImage} alt={video.linkedProductName} className="sf-video-product-img" />
+                        )}
+                        <div className="sf-video-product-info">
+                          <div className="sf-video-product-name">{video.linkedProductName}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -198,48 +682,23 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
         )}
       </section>
 
-      {/* Video Play Modal */}
-      {activeVideo && ReactDOM.createPortal(
+      {/* Desktop Video Modal (unchanged) */}
+      {activeVideo && !isMobileModal && ReactDOM.createPortal(
         (() => {
-          // Compute product images for hover logic: A, B, C, D
-          // Prefer Shopify product images when auto-fetched, fall back to manual config
           const allImgs: string[] = shopifyProduct
             ? shopifyProduct.images.map((img: { url: string }) => img.url)
             : [
                 ...(activeVideo.linkedProductImages || []),
                 ...(activeVideo.linkedProductImage ? [activeVideo.linkedProductImage] : []),
-              ].filter((v: string, i: number, a: string[]) => a.indexOf(v) === i); // dedupe
-          // A=allImgs[0], B=allImgs[1], C=allImgs[2], D=allImgs[3]
+              ].filter((v: string, i: number, a: string[]) => a.indexOf(v) === i);
           const imgA = allImgs[0] || activeVideo.linkedProductImage || null;
           const imgB = allImgs[1] || null;
           const imgC = allImgs[2] || null;
           const imgD = allImgs[3] || null;
-          // Hover logic: default A+B; hover A => C+B; hover B => A+D
           const displayLeft = modalHoverImg === 'A' ? imgC : imgA;
           const displayRight = modalHoverImg === 'B' ? imgD : imgB;
 
-          // Convert any video URL to embeddable format
-          const toEmbedUrl = (raw: string): { type: 'iframe' | 'video' | 'tiktok'; src: string } => {
-            const url = raw.trim();
-            // YouTube: watch?v=, youtu.be/, /shorts/
-            const ytId = (() => {
-              const m1 = url.match(/[?&]v=([^&]+)/);
-              if (m1) return m1[1];
-              const m2 = url.match(/youtu\.be\/([^?&]+)/);
-              if (m2) return m2[1];
-              const m3 = url.match(/youtube\.com\/shorts\/([^?&]+)/);
-              if (m3) return m3[1];
-              const m4 = url.match(/youtube\.com\/embed\/([^?&]+)/);
-              if (m4) return m4[1];
-              return null;
-            })();
-            if (ytId) return { type: 'iframe', src: `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0` };
-            // TikTok: /video/ID
-            const ttId = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
-            if (ttId) return { type: 'tiktok', src: `https://www.tiktok.com/embed/v2/${ttId[1]}` };
-            // Direct video file
-            return { type: 'video', src: url };
-          };
+          const toEmbedUrlLocal = (raw: string) => toEmbedUrl(raw);
 
           const renderVideoContent = (minH: number) => {
             if (!activeVideo.videoPlayUrl) {
@@ -256,7 +715,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                 </div>
               );
             }
-            const { type, src } = toEmbedUrl(activeVideo.videoPlayUrl);
+            const { type, src } = toEmbedUrlLocal(activeVideo.videoPlayUrl);
             if (type === 'iframe' || type === 'tiktok') {
               return <iframe src={src} style={{ width: "100%", height: "100%", minHeight: minH, border: "none", display: "block", background: "#000" }} allow="autoplay; fullscreen; encrypted-media" allowFullScreen />;
             } else {
@@ -264,10 +723,8 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             }
           };
 
-          // imgRatio used in both mobile and desktop product panels
           const imgRatio = config.videoModalImgRatio || "3/4";
 
-          // Shared Add-to-Cart handler (declared before mobile/desktop branches)
           const handleAddToCart = () => {
             addItem({
               id: activeVideo.linkedProductId || activeVideo.id,
@@ -282,161 +739,23 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             openCart();
           };
 
-          // Derive colors (with swatch hex) and sizes from Shopify product options
-          // Colors: find the Color option and map each value to { name, hex } using swatch.color
           type ColorEntry = { name: string; hex: string | null };
           const derivedColorEntries: ColorEntry[] = shopifyProduct
-            ? (shopifyProduct.options.find(o => o.name.toLowerCase() === 'color')?.optionValues || []).map(v => ({
+            ? (shopifyProduct.options.find((o: any) => o.name.toLowerCase() === 'color')?.optionValues || []).map((v: any) => ({
                 name: v.name,
-                hex: v.swatch?.color ?? null,
+                hex: v.swatch?.color || null,
               }))
             : (activeVideo.linkedProductColors || []).map((c: string) => ({
                 name: c,
                 hex: /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(c.trim()) ? c : null,
               }));
-          // Sizes: show ALL non-Color options (handles 'Size', 'Inseam', 'Waist', etc.)
+
           const derivedSizes: string[] = shopifyProduct
             ? shopifyProduct.options
-                .filter(o => o.name.toLowerCase() !== 'color')
-                .flatMap(o => o.optionValues.map(v => v.name))
+                .filter((o: any) => o.name.toLowerCase() !== 'color')
+                .flatMap((o: any) => o.optionValues.map((v: any) => v.name))
             : (activeVideo.linkedProductSizes || []);
 
-          if (isMobileModal) {
-            // Mobile: full-screen, 70% video top + 30% product panel bottom
-            // Product panel: left = single image, right = name/price/colors/sizes/ADD TO CART
-            return (
-              <div
-                className="sf-video-modal-overlay"
-                onClick={() => { setActiveVideo(null); setModalHoverImg(null); }}
-                style={{ position: "fixed", inset: 0, zIndex: 99999, background: "#000" }}
-              >
-                <div
-                  className="sf-video-modal-mobile"
-                  onClick={e => e.stopPropagation()}
-                  style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column" }}
-                >
-                  {/* Top 70%: Video area — letterboxed, no crop */}
-                  <div style={{ flex: "0 0 70%", position: "relative", overflow: "hidden", background: "#000" }}>
-                    {renderVideoContent(300)}
-                    {/* Creator badge top-left */}
-                    <div className="sf-video-creator-badge" style={{ top: 14, left: 14 }}>
-                      <span className="sf-video-creator-name">{activeVideo.creatorName || activeVideo.influencerName.replace('@','')}</span>
-                    </div>
-                    {/* Close button top-right — white circle, always visible */}
-                    <button
-                      onClick={() => { setActiveVideo(null); setModalHoverImg(null); }}
-                      style={{ position: "absolute", top: 14, right: 14, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.92)", border: "none", color: "#222", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }}
-                      aria-label="Close"
-                    ><XIcon /></button>
-                  </div>
-
-                  {/* Bottom product panel — high-end two-column layout */}
-                  <div style={{ flex: "0 0 auto", background: "#fff", display: "flex", flexDirection: "row", overflow: "hidden", minHeight: 0 }}>
-                    {/* Left column: portrait product image, 40% width, white bg with padding for editorial feel */}
-                    <div style={{ flex: "0 0 40%", display: "flex", alignItems: "stretch", background: "#fafafa", padding: "10px 8px 10px 12px" }}>
-                      <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 3, overflow: "hidden", background: "#f0f0f0" }}>
-                        {imgA ? (
-                          <img
-                            loading="lazy"
-                            src={imgA}
-                            alt={shopifyProduct?.title || activeVideo.linkedProductName}
-                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                          />
-                        ) : (
-                          <div style={{ width: "100%", height: "100%", background: "#e8e8e8" }} />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right column: product details */}
-                    <div style={{ flex: 1, padding: "12px 14px 10px 10px", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0, gap: 0 }}>
-                      {/* Product name */}
-                      {(shopifyProduct?.title || activeVideo.linkedProductName) && (
-                        <div style={{ fontWeight: 600, fontSize: 12, color: "#111", lineHeight: 1.35, marginBottom: 4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                          {shopifyProduct?.title || activeVideo.linkedProductName}
-                        </div>
-                      )}
-                      {/* Price row */}
-                      {(() => {
-                        const price = shopifyProduct?.variants?.[0]?.price
-                          ? `$${parseFloat(shopifyProduct.variants[0].price.amount).toFixed(2)}`
-                          : activeVideo.linkedProductPrice;
-                        const comparePrice = shopifyProduct?.variants?.[0]?.compareAtPrice
-                          ? `$${parseFloat(shopifyProduct.variants[0].compareAtPrice.amount).toFixed(2)}`
-                          : activeVideo.linkedProductComparePrice;
-                        return (price || comparePrice) ? (
-                          <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginBottom: 7 }}>
-                            {price && <span style={{ fontWeight: 700, fontSize: 13, color: "#111" }}>{price}</span>}
-                            {comparePrice && <span style={{ fontSize: 11, color: "#b0b0b0", textDecoration: "line-through" }}>{comparePrice}</span>}
-                          </div>
-                        ) : null;
-                      })()}
-                      {/* Color swatches */}
-                      {derivedColorEntries.length > 0 && (
-                        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 6, alignItems: "center" }}>
-                          {derivedColorEntries.map(({ name, hex }) => {
-                            const isSel = selectedVideoColor === name;
-                            return hex ? (
-                              <button
-                                key={name}
-                                onClick={() => setSelectedVideoColor(isSel ? null : name)}
-                                title={name}
-                                style={{
-                                  width: 20, height: 20, borderRadius: "50%", background: hex, flexShrink: 0,
-                                  border: isSel ? "2px solid #111" : "1.5px solid #d0d0d0",
-                                  cursor: "pointer", padding: 0,
-                                  boxShadow: isSel ? "0 0 0 2px #fff inset" : "none",
-                                  transition: "border 0.15s",
-                                }}
-                                aria-label={name}
-                              />
-                            ) : (
-                              <button
-                                key={name}
-                                onClick={() => setSelectedVideoColor(isSel ? null : name)}
-                                style={{
-                                  padding: "2px 7px", borderRadius: 20, fontSize: 10, fontWeight: 600,
-                                  border: isSel ? "1.5px solid #111" : "1px solid #ddd",
-                                  background: isSel ? "#111" : "#fff",
-                                  color: isSel ? "#fff" : "#555",
-                                  cursor: "pointer", whiteSpace: "nowrap",
-                                }}
-                              >{name}</button>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {/* Size buttons */}
-                      {derivedSizes.length > 0 && (
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
-                          {derivedSizes.map((size: string) => (
-                            <button
-                              key={size}
-                              onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
-                              style={{
-                                minWidth: 28, height: 24, padding: "0 5px", borderRadius: 2, fontSize: 11, fontWeight: 500,
-                                border: selectedVideoSize === size ? "1.5px solid #111" : "1px solid #d8d8d8",
-                                background: selectedVideoSize === size ? "#111" : "#fff",
-                                color: selectedVideoSize === size ? "#fff" : "#444",
-                                cursor: "pointer", letterSpacing: "0.03em",
-                              }}
-                            >{size}</button>
-                          ))}
-                        </div>
-                      )}
-                      {/* ADD TO CART */}
-                      <button
-                        onClick={handleAddToCart}
-                        style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "9px 10px", borderRadius: 3, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", border: "none", cursor: "pointer", textTransform: "uppercase", marginTop: "auto" }}
-                      >ADD TO CART</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          }
-
-          // Compute discount label from compare price vs sale price
           const computeDiscountLabel = () => {
             if (!activeVideo.linkedProductComparePrice || !activeVideo.linkedProductPrice) return null;
             const parsePrice = (s: string) => parseFloat(s.replace(/[^0-9.]/g, ''));
@@ -448,7 +767,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
           };
           const discountLabel = computeDiscountLabel();
 
-          // Shared product info panel (used in both desktop and mobile)
           const renderColorSwatches = (swatchSize = 26) => (
             derivedColorEntries.length > 0 ? (
               <div style={{ marginBottom: 12 }}>
@@ -457,34 +775,12 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                   {derivedColorEntries.map(({ name, hex }) => {
                     const isSelected = selectedVideoColor === name;
                     return hex ? (
-                      // Has Shopify swatch hex → render as circular color swatch
-                      <button
-                        key={name}
-                        onClick={() => setSelectedVideoColor(isSelected ? null : name)}
-                        title={name}
-                        style={{
-                          width: swatchSize, height: swatchSize, borderRadius: "50%", background: hex,
-                          border: isSelected ? "2px solid #111" : "2px solid #e0e0e0",
-                          cursor: "pointer", padding: 0, flexShrink: 0,
-                          boxShadow: isSelected ? "0 0 0 2px #fff inset" : "none",
-                          transition: "border 0.15s, box-shadow 0.15s",
-                        }}
-                        aria-label={name}
-                      />
+                      <button key={name} onClick={() => setSelectedVideoColor(isSelected ? null : name)} title={name}
+                        style={{ width: swatchSize, height: swatchSize, borderRadius: "50%", background: hex, border: isSelected ? "2px solid #111" : "2px solid #e0e0e0", cursor: "pointer", padding: 0, flexShrink: 0, boxShadow: isSelected ? "0 0 0 2px #fff inset" : "none", transition: "border 0.15s, box-shadow 0.15s" }}
+                        aria-label={name} />
                     ) : (
-                      // No swatch hex → render as text pill
-                      <button
-                        key={name}
-                        onClick={() => setSelectedVideoColor(isSelected ? null : name)}
-                        style={{
-                          padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600,
-                          border: isSelected ? "1.5px solid #111" : "1.5px solid #ddd",
-                          background: isSelected ? "#111" : "#fff",
-                          color: isSelected ? "#fff" : "#444",
-                          cursor: "pointer", flexShrink: 0,
-                          transition: "all 0.15s",
-                          whiteSpace: "nowrap",
-                        }}
+                      <button key={name} onClick={() => setSelectedVideoColor(isSelected ? null : name)}
+                        style={{ padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600, border: isSelected ? "1.5px solid #111" : "1.5px solid #ddd", background: isSelected ? "#111" : "#fff", color: isSelected ? "#fff" : "#444", cursor: "pointer", flexShrink: 0, transition: "all 0.15s", whiteSpace: "nowrap" }}
                       >{name}</button>
                     );
                   })}
@@ -499,16 +795,8 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                 <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Size</div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {derivedSizes.map((size: string) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
-                      style={{
-                        minWidth: 36, height: btnH, padding: "0 8px", borderRadius: 4, fontSize: 12, fontWeight: 600,
-                        border: selectedVideoSize === size ? "1.5px solid #111" : "1.5px solid #ddd",
-                        background: selectedVideoSize === size ? "#111" : "#fff",
-                        color: selectedVideoSize === size ? "#fff" : "#333",
-                        cursor: "pointer", transition: "all 0.15s",
-                      }}
+                    <button key={size} onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
+                      style={{ minWidth: 36, height: btnH, padding: "0 8px", borderRadius: 4, fontSize: 12, fontWeight: 600, border: selectedVideoSize === size ? "1.5px solid #111" : "1.5px solid #ddd", background: selectedVideoSize === size ? "#111" : "#fff", color: selectedVideoSize === size ? "#fff" : "#333", cursor: "pointer", transition: "all 0.15s" }}
                     >{size}</button>
                   ))}
                 </div>
@@ -516,7 +804,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             ) : null
           );
 
-          // ── DESKTOP MODAL: 1:1 split, video left, product right ──
           const modalMaxW = config.videoModalDesktopWidth || 960;
           return (
             <div
@@ -529,46 +816,33 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                 onClick={e => e.stopPropagation()}
                 style={{ display: "flex", gap: 0, maxWidth: modalMaxW, width: "95vw", maxHeight: "92vh", borderRadius: 14, overflow: "hidden", background: "#fff", position: "relative", boxShadow: "0 24px 80px rgba(0,0,0,0.4)" }}
               >
-                {/* Left 50%: Video with black letterbox */}
                 <div style={{ flex: "0 0 50%", background: "#000", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
                   {renderVideoContent(520)}
-                  {/* Creator badge top-left */}
                   <div className="sf-video-creator-badge" style={{ top: 14, left: 14 }}>
                     <span className="sf-video-creator-name">{activeVideo.creatorName || activeVideo.influencerName.replace('@','')}</span>
                   </div>
                 </div>
-                {/* Right 50%: Product info */}
                 <div style={{ flex: "0 0 50%", padding: "32px 28px 28px", display: "flex", flexDirection: "column", overflowY: "auto", minWidth: 0, background: "#fff" }}>
-                  {/* Two product images side by side — A/B with hover A→C, B→D */}
                   {imgA && (
                     <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-                      <div
-                        style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5", cursor: imgC ? "pointer" : "default" }}
+                      <div style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5", cursor: imgC ? "pointer" : "default" }}
                         onMouseEnter={() => imgC ? setModalHoverImg('A') : undefined}
-                        onMouseLeave={() => setModalHoverImg(null)}
-                      >
-                        <img src={displayLeft || imgA} alt={activeVideo.linkedProductName}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s" }} />
+                        onMouseLeave={() => setModalHoverImg(null)}>
+                        <img src={displayLeft || imgA} alt={activeVideo.linkedProductName} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s" }} />
                       </div>
-                      <div
-                        style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5", cursor: (imgB && imgD) ? "pointer" : "default" }}
+                      <div style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5", cursor: (imgB && imgD) ? "pointer" : "default" }}
                         onMouseEnter={() => (imgB && imgD) ? setModalHoverImg('B') : undefined}
-                        onMouseLeave={() => setModalHoverImg(null)}
-                      >
-                        <img src={imgB ? (displayRight || imgB) : imgA} alt={activeVideo.linkedProductName}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s", opacity: imgB ? 1 : 0.75 }} />
+                        onMouseLeave={() => setModalHoverImg(null)}>
+                        <img src={imgB ? (displayRight || imgB) : imgA} alt={activeVideo.linkedProductName} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s", opacity: imgB ? 1 : 0.75 }} />
                       </div>
                     </div>
                   )}
-                  {/* Product name — prefer Shopify title */}
                   {(shopifyProduct?.title || activeVideo.linkedProductName) && (
                     <div style={{ fontWeight: 700, fontSize: 19, color: "#111", lineHeight: 1.3, marginBottom: 6 }}>{shopifyProduct?.title || activeVideo.linkedProductName}</div>
                   )}
-                  {/* Promo label */}
                   {discountLabel && (
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 6 }}>{discountLabel}</div>
                   )}
-                  {/* Price row — prefer Shopify first variant price */}
                   {(() => {
                     const price = shopifyProduct?.variants?.[0]?.price
                       ? `$${parseFloat(shopifyProduct.variants[0].price.amount).toFixed(2)}`
@@ -583,27 +857,32 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                       </div>
                     ) : null;
                   })()}
-                  {/* Color swatches */}
                   {renderColorSwatches(26)}
-                  {/* Size buttons */}
                   {renderSizeButtons(32)}
-                  {/* ADD TO CART button */}
-                  <button
-                    onClick={handleAddToCart}
+                  <button onClick={handleAddToCart}
                     style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "14px 20px", borderRadius: 5, fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", border: "none", cursor: "pointer", textTransform: "uppercase", marginTop: "auto" }}
                   >ADD TO CART</button>
                 </div>
-                {/* Close button — top right, always visible */}
-                <button
-                  onClick={() => { setActiveVideo(null); setModalHoverImg(null); }}
+                <button onClick={() => { setActiveVideo(null); setModalHoverImg(null); }}
                   style={{ position: "absolute", top: 14, right: 14, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.9)", border: "1px solid #e0e0e0", color: "#333", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}
                   aria-label="Close"
                 ><XIcon /></button>
               </div>
             </div>
           );
-        })()
-        ,
+        })(),
+        document.body
+      )}
+
+      {/* Mobile Fullscreen Player */}
+      {fullscreenVideo && ReactDOM.createPortal(
+        <FullscreenPlayer
+          video={fullscreenVideo}
+          videoIndex={fullscreenIndex}
+          videos={videos}
+          onClose={() => setFullscreenVideo(null)}
+          onNavigate={(i) => { setFullscreenVideo(videos[i]); setFullscreenIndex(i); }}
+        />,
         document.body
       )}
     </>
@@ -619,7 +898,6 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
   const sizes = ["XS", "S", "M", "L", "XL"];
 
   const selectedColor = product.colors[selectedColorIdx];
-  // Determine displayed image: colorImages mapping → fallback to imageUrl
   const colorImage = selectedColor && product.colorImages?.[selectedColor];
   const displayImages = [
     colorImage || product.imageUrl,
@@ -628,12 +906,8 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
 
   const currentImg = displayImages[imgIdx] || null;
 
-  useEffect(() => {
-    // When color changes, reset image index
-    setImgIdx(0);
-  }, [selectedColorIdx]);
+  useEffect(() => { setImgIdx(0); }, [selectedColorIdx]);
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
@@ -645,7 +919,6 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
       <div className="sf-quickview-modal">
         <button className="sf-quickview-close" onClick={onClose} aria-label="Close"><XIcon /></button>
         <div className="sf-quickview-inner">
-          {/* Left: image gallery */}
           <div className="sf-quickview-gallery">
             <div className="sf-quickview-main-img">
               {currentImg ? (
@@ -658,23 +931,16 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
             {displayImages.length > 1 && (
               <div className="sf-quickview-thumbs">
                 {displayImages.map((img, i) => (
-                  <button
-                    key={i}
-                    className={`sf-quickview-thumb${imgIdx === i ? " active" : ""}`}
-                    onClick={() => setImgIdx(i)}
-                  >
+                  <button key={i} className={`sf-quickview-thumb${imgIdx === i ? " active" : ""}`} onClick={() => setImgIdx(i)}>
                     <img loading="lazy" src={img} alt={`View ${i + 1}`} />
                   </button>
                 ))}
               </div>
             )}
           </div>
-
-          {/* Right: product info */}
           <div className="sf-quickview-info">
             <h2 className="sf-quickview-name">{product.name}</h2>
             <div className="sf-quickview-price">{product.price}</div>
-
             {product.colors.length > 0 && (
               <>
                 <div className="sf-option-label" style={{ marginTop: 16 }}>
@@ -682,59 +948,25 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
                 </div>
                 <div className="sf-color-swatches" style={{ marginTop: 8 }}>
                   {product.colors.map((color, i) => (
-                    <div
-                      key={i}
-                      className={`sf-color-swatch${selectedColorIdx === i ? " active" : ""}`}
-                      style={{
-                        background: color,
-                        border: color === "#F9F9F9" ? "2px solid #eee" : undefined,
-                        width: 28, height: 28,
-                      }}
-                      onClick={() => setSelectedColorIdx(i)}
-                      title={color}
-                    />
+                    <div key={i} className={`sf-color-swatch${selectedColorIdx === i ? " active" : ""}`}
+                      style={{ background: color, border: color === "#F9F9F9" ? "2px solid #eee" : undefined, width: 28, height: 28 }}
+                      onClick={() => setSelectedColorIdx(i)} title={color} />
                   ))}
                 </div>
               </>
             )}
-
             <div className="sf-option-label" style={{ marginTop: 16 }}>Size</div>
             <div className="sf-size-btns" style={{ marginTop: 8 }}>
               {sizes.map((size) => (
-                <button
-                  key={size}
-                  className={`sf-size-btn${selectedSize === size ? " active" : ""}`}
-                  onClick={() => setSelectedSize(size)}
-                >
-                  {size}
-                </button>
+                <button key={size} className={`sf-size-btn${selectedSize === size ? " active" : ""}`} onClick={() => setSelectedSize(size)}>{size}</button>
               ))}
             </div>
-
             <div style={{ marginTop: 24, display: "flex", gap: 10, alignItems: "stretch" }}>
-              <button
-                className="sf-drawer-add-btn"
-                style={{ flex: 1, minWidth: 0, padding: "14px 12px", whiteSpace: "nowrap" }}
-                onClick={() => onClose()}
-              >
-                ADD TO CART
-              </button>
-              <button
-                className="sf-drawer-add-btn sf-drawer-wishlist-btn"
-                onClick={() => setWishlist(w => !w)}
-                aria-label="Wishlist"
-              >
-                <HeartIcon filled={wishlist} />
-              </button>
+              <button className="sf-drawer-add-btn" style={{ flex: 1, minWidth: 0, padding: "14px 12px", whiteSpace: "nowrap" }} onClick={() => onClose()}>ADD TO CART</button>
+              <button className="sf-drawer-add-btn sf-drawer-wishlist-btn" onClick={() => setWishlist(w => !w)} aria-label="Wishlist"><HeartIcon filled={wishlist} /></button>
             </div>
-
             {product.detailUrl && (
-              <a
-                href={product.detailUrl}
-                style={{ display: "block", textAlign: "center", marginTop: 12, color: "#175C40", fontSize: "0.875rem", textDecoration: "underline" }}
-              >
-                View Full Details →
-              </a>
+              <a href={product.detailUrl} style={{ display: "block", textAlign: "center", marginTop: 12, color: "#175C40", fontSize: "0.875rem", textDecoration: "underline" }}>View Full Details →</a>
             )}
           </div>
         </div>
@@ -742,6 +974,5 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
     </div>
   );
 }
-
 
 export { SFVideos };
