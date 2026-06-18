@@ -205,6 +205,29 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
           const displayLeft = modalHoverImg === 'A' ? imgC : imgA;
           const displayRight = modalHoverImg === 'B' ? imgD : imgB;
 
+          // Convert any video URL to embeddable format
+          const toEmbedUrl = (raw: string): { type: 'iframe' | 'video' | 'tiktok'; src: string } => {
+            const url = raw.trim();
+            // YouTube: watch?v=, youtu.be/, /shorts/
+            const ytId = (() => {
+              const m1 = url.match(/[?&]v=([^&]+)/);
+              if (m1) return m1[1];
+              const m2 = url.match(/youtu\.be\/([^?&]+)/);
+              if (m2) return m2[1];
+              const m3 = url.match(/youtube\.com\/shorts\/([^?&]+)/);
+              if (m3) return m3[1];
+              const m4 = url.match(/youtube\.com\/embed\/([^?&]+)/);
+              if (m4) return m4[1];
+              return null;
+            })();
+            if (ytId) return { type: 'iframe', src: `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0` };
+            // TikTok: /video/ID
+            const ttId = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+            if (ttId) return { type: 'tiktok', src: `https://www.tiktok.com/embed/v2/${ttId[1]}` };
+            // Direct video file
+            return { type: 'video', src: url };
+          };
+
           const renderVideoContent = (minH: number) => {
             if (!activeVideo.videoPlayUrl) {
               return (
@@ -214,38 +237,41 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                   ) : (
                     <div style={{ width: "100%", height: "100%", background: "#175C40", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexDirection: "column", gap: 12 }}>
                       <PlayIcon />
-                      <p style={{ fontSize: 13, opacity: 0.7 }}>暂无视频链接</p>
+                      <p style={{ fontSize: 13, opacity: 0.7 }}>No video link</p>
                     </div>
                   )}
                 </div>
               );
             }
-            const url: string = activeVideo.videoPlayUrl;
-            const isYoutube = url.includes("youtube.com") || url.includes("youtu.be");
-            const isTiktok = url.includes("tiktok.com");
-            if (isYoutube) {
-              const embedUrl = url.includes("embed")
-                ? url
-                : url.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/").split("&")[0] + "?autoplay=1";
-              return <iframe src={embedUrl} style={{ width: "100%", height: "100%", minHeight: minH, border: "none", display: "block" }} allow="autoplay; fullscreen" allowFullScreen />;
-            } else if (isTiktok) {
-              return (
-                <div style={{ width: "100%", height: "100%", minHeight: minH, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexDirection: "column", gap: 12, padding: 24, textAlign: "center", background: "#000" }}>
-                  <PlayIcon />
-                  <p style={{ fontSize: 14, opacity: 0.8 }}>TikTok 视频请直接访问链接</p>
-                  <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: "#4fc3f7", fontSize: 13, wordBreak: "break-all" }}>{url}</a>
-                </div>
-              );
+            const { type, src } = toEmbedUrl(activeVideo.videoPlayUrl);
+            if (type === 'iframe' || type === 'tiktok') {
+              return <iframe src={src} style={{ width: "100%", height: "100%", minHeight: minH, border: "none", display: "block", background: "#000" }} allow="autoplay; fullscreen; encrypted-media" allowFullScreen />;
             } else {
-              return <video ref={videoRef} src={url} controls autoPlay style={{ width: "100%", height: "100%", minHeight: minH, objectFit: "contain", background: "#000", display: "block" }} />;
+              return <video ref={videoRef} src={src} controls autoPlay style={{ width: "100%", height: "100%", minHeight: minH, objectFit: "contain", background: "#000", display: "block" }} />;
             }
           };
 
           // imgRatio used in both mobile and desktop product panels
           const imgRatio = config.videoModalImgRatio || "3/4";
 
+          // Shared Add-to-Cart handler (declared before mobile/desktop branches)
+          const handleAddToCart = () => {
+            addItem({
+              id: activeVideo.linkedProductId || activeVideo.id,
+              name: activeVideo.linkedProductName || "",
+              price: activeVideo.linkedProductPrice || "",
+              comparePrice: activeVideo.linkedProductComparePrice,
+              imageUrl: imgA || activeVideo.linkedProductImage,
+              productUrl: activeVideo.linkedProductLink,
+              selectedColor: selectedVideoColor || undefined,
+              selectedSize: selectedVideoSize || undefined,
+            });
+            openCart();
+          };
+
           if (isMobileModal) {
-            // Mobile: fullscreen video with product panel at bottom
+            // Mobile: full-screen, 70% video top + 30% product panel bottom
+            // Product panel: left = single image, right = name/price/colors/sizes/ADD TO CART
             return (
               <div
                 className="sf-video-modal-overlay"
@@ -257,122 +283,99 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                   onClick={e => e.stopPropagation()}
                   style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column" }}
                 >
-                  {/* Video fills screen */}
-                  <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-                    {renderVideoContent(400)}
-                    {/* Creator badge top-left (name only) */}
-                    <div className="sf-video-creator-badge" style={{ top: 16, left: 16 }}>
+                  {/* Top 70%: Video area — letterboxed, no crop */}
+                  <div style={{ flex: "0 0 70%", position: "relative", overflow: "hidden", background: "#000" }}>
+                    {renderVideoContent(300)}
+                    {/* Creator badge top-left */}
+                    <div className="sf-video-creator-badge" style={{ top: 14, left: 14 }}>
                       <span className="sf-video-creator-name">{activeVideo.creatorName || activeVideo.influencerName.replace('@','')}</span>
                     </div>
-                    {/* Close button top-right */}
+                    {/* Close button top-right — white circle, always visible */}
                     <button
                       onClick={() => { setActiveVideo(null); setModalHoverImg(null); }}
-                      style={{ position: "absolute", top: 14, right: 14, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.4)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}
+                      style={{ position: "absolute", top: 14, right: 14, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.92)", border: "none", color: "#222", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }}
                       aria-label="Close"
                     ><XIcon /></button>
                   </div>
-                  {/* Product panel at bottom — two-image layout matching desktop style */}
-                  {(activeVideo.linkedProductName || imgA) && (
-                    <div style={{ background: "#fff", padding: "16px 16px 20px" }}>
-                      {/* Two product images side by side */}
-                      {(imgA || imgB) && (
-                        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                          {imgA && (
-                            <div style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5" }}>
-                              <img loading="lazy" src={imgA} alt={activeVideo.linkedProductName} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                            </div>
-                          )}
-                          {imgB && (
-                            <div style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5" }}>
-                              <img loading="lazy" src={imgB} alt={activeVideo.linkedProductName} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                            </div>
-                          )}
-                        </div>
-                      )}
+
+                  {/* Bottom 30%: Product panel — horizontal split */}
+                  <div style={{ flex: "0 0 30%", background: "#fff", display: "flex", flexDirection: "row", overflow: "hidden" }}>
+                    {/* Left: single product image (img[0] only) */}
+                    {imgA && (
+                      <div style={{ flex: "0 0 auto", width: "30%", position: "relative", overflow: "hidden", background: "#f5f5f5" }}>
+                        <img
+                          loading="lazy"
+                          src={imgA}
+                          alt={activeVideo.linkedProductName}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        />
+                      </div>
+                    )}
+                    {/* Right: product info */}
+                    <div style={{ flex: 1, padding: "10px 12px 10px", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
                       {/* Product name */}
                       {activeVideo.linkedProductName && (
-                        <div style={{ fontWeight: 700, fontSize: 15, color: "#111", lineHeight: 1.3, marginBottom: 6 }}>{activeVideo.linkedProductName}</div>
+                        <div style={{ fontWeight: 700, fontSize: 13, color: "#111", lineHeight: 1.3, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeVideo.linkedProductName}</div>
                       )}
                       {/* Price row */}
                       {(activeVideo.linkedProductPrice || activeVideo.linkedProductComparePrice) && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                           {activeVideo.linkedProductPrice && (
-                            <span style={{ fontWeight: 700, fontSize: 15, color: "#111" }}>{activeVideo.linkedProductPrice}</span>
+                            <span style={{ fontWeight: 700, fontSize: 13, color: "#111" }}>{activeVideo.linkedProductPrice}</span>
                           )}
                           {activeVideo.linkedProductComparePrice && (
-                            <span style={{ fontSize: 13, color: "#aaa", textDecoration: "line-through" }}>{activeVideo.linkedProductComparePrice}</span>
+                            <span style={{ fontSize: 11, color: "#aaa", textDecoration: "line-through" }}>{activeVideo.linkedProductComparePrice}</span>
                           )}
                         </div>
                       )}
-                      {/* Color swatches */}
+                      {/* Color swatches — compact */}
                       {activeVideo.linkedProductColors && activeVideo.linkedProductColors.length > 0 && (
-                        <div style={{ marginBottom: 8 }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Color</div>
-                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                            {activeVideo.linkedProductColors.map((color: string) => (
-                              <button
-                                key={color}
-                                onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
-                                style={{
-                                  width: 24, height: 24, borderRadius: "50%",
-                                  background: color,
-                                  border: selectedVideoColor === color ? "2px solid #111" : "2px solid #ddd",
-                                  cursor: "pointer", padding: 0,
-                                  boxShadow: selectedVideoColor === color ? "0 0 0 2px #fff inset" : "none",
-                                  transition: "border 0.15s",
-                                }}
-                                title={color}
-                              />
-                            ))}
-                          </div>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 5 }}>
+                          {activeVideo.linkedProductColors.map((color: string) => (
+                            <button
+                              key={color}
+                              onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
+                              style={{
+                                width: 20, height: 20, borderRadius: "50%", background: color, flexShrink: 0,
+                                border: selectedVideoColor === color ? "2px solid #111" : "1.5px solid #ddd",
+                                cursor: "pointer", padding: 0,
+                                boxShadow: selectedVideoColor === color ? "0 0 0 2px #fff inset" : "none",
+                              }}
+                              aria-label={color}
+                            />
+                          ))}
                         </div>
                       )}
-                      {/* Size buttons */}
+                      {/* Size buttons — compact */}
                       {activeVideo.linkedProductSizes && activeVideo.linkedProductSizes.length > 0 && (
-                        <div style={{ marginBottom: 12 }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Size</div>
-                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                            {activeVideo.linkedProductSizes.map((size: string) => (
-                              <button
-                                key={size}
-                                onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
-                                style={{
-                                  minWidth: 36, height: 30, padding: "0 8px", borderRadius: 4, fontSize: 12, fontWeight: 600,
-                                  border: selectedVideoSize === size ? "1.5px solid #111" : "1.5px solid #ddd",
-                                  background: selectedVideoSize === size ? "#111" : "#fff",
-                                  color: selectedVideoSize === size ? "#fff" : "#333",
-                                  cursor: "pointer", transition: "all 0.15s",
-                                }}
-                              >{size}</button>
-                            ))}
-                          </div>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
+                          {activeVideo.linkedProductSizes.map((size: string) => (
+                            <button
+                              key={size}
+                              onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
+                              style={{
+                                minWidth: 28, height: 24, padding: "0 5px", borderRadius: 3, fontSize: 11, fontWeight: 600,
+                                border: selectedVideoSize === size ? "1.5px solid #111" : "1px solid #ddd",
+                                background: selectedVideoSize === size ? "#111" : "#fff",
+                                color: selectedVideoSize === size ? "#fff" : "#333",
+                                cursor: "pointer",
+                              }}
+                            >{size}</button>
+                          ))}
                         </div>
                       )}
-                      {/* SHOP NOW button */}
+                      {/* ADD TO CART button */}
                       <button
-                        onClick={() => {
-                          addItem({
-                            id: activeVideo.linkedProductId || activeVideo.id,
-                            name: activeVideo.linkedProductName || "",
-                            price: activeVideo.linkedProductPrice || "",
-                            comparePrice: activeVideo.linkedProductComparePrice,
-                            imageUrl: imgA || activeVideo.linkedProductImage,
-                            productUrl: activeVideo.linkedProductLink,
-                            selectedColor: selectedVideoColor || undefined,
-                            selectedSize: selectedVideoSize || undefined,
-                          });
-                          openCart();
-                        }}
-                        style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "13px 20px", borderRadius: 4, fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", border: "none", cursor: "pointer", textTransform: "uppercase" }}
-                      >SHOP NOW</button>
+                        onClick={handleAddToCart}
+                        style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "8px 10px", borderRadius: 4, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", border: "none", cursor: "pointer", textTransform: "uppercase", marginTop: "auto" }}
+                      >ADD TO CART</button>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             );
           }
 
-          // Desktop: left video + right product panel
           // Compute discount label from compare price vs sale price
           const computeDiscountLabel = () => {
             if (!activeVideo.linkedProductComparePrice || !activeVideo.linkedProductPrice) return null;
@@ -385,6 +388,55 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
           };
           const discountLabel = computeDiscountLabel();
 
+          // Shared product info panel (used in both desktop and mobile)
+          const renderColorSwatches = (size = 26) => (
+            activeVideo.linkedProductColors && activeVideo.linkedProductColors.length > 0 ? (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Color</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {activeVideo.linkedProductColors.map((color: string) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
+                      style={{
+                        width: size, height: size, borderRadius: "50%", background: color,
+                        border: selectedVideoColor === color ? "2px solid #111" : "2px solid #ddd",
+                        cursor: "pointer", padding: 0, flexShrink: 0,
+                        boxShadow: selectedVideoColor === color ? "0 0 0 2px #fff inset" : "none",
+                        transition: "border 0.15s, box-shadow 0.15s",
+                      }}
+                      aria-label={color}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null
+          );
+
+          const renderSizeButtons = (btnH = 32) => (
+            activeVideo.linkedProductSizes && activeVideo.linkedProductSizes.length > 0 ? (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Size</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {activeVideo.linkedProductSizes.map((size: string) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
+                      style={{
+                        minWidth: 36, height: btnH, padding: "0 8px", borderRadius: 4, fontSize: 12, fontWeight: 600,
+                        border: selectedVideoSize === size ? "1.5px solid #111" : "1.5px solid #ddd",
+                        background: selectedVideoSize === size ? "#111" : "#fff",
+                        color: selectedVideoSize === size ? "#fff" : "#333",
+                        cursor: "pointer", transition: "all 0.15s",
+                      }}
+                    >{size}</button>
+                  ))}
+                </div>
+              </div>
+            ) : null
+          );
+
+          // ── DESKTOP MODAL: 1:1 split, video left, product right ──
           const modalMaxW = config.videoModalDesktopWidth || 960;
           return (
             <div
@@ -397,55 +449,48 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                 onClick={e => e.stopPropagation()}
                 style={{ display: "flex", gap: 0, maxWidth: modalMaxW, width: "95vw", maxHeight: "92vh", borderRadius: 14, overflow: "hidden", background: "#fff", position: "relative", boxShadow: "0 24px 80px rgba(0,0,0,0.4)" }}
               >
-                {/* Left: Video */}
-                <div style={{ flex: "0 0 auto", width: "min(380px, 50vw)", background: "#000", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+                {/* Left 50%: Video with black letterbox */}
+                <div style={{ flex: "0 0 50%", background: "#000", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
                   {renderVideoContent(520)}
-                  {/* Creator badge top-left on video (name only) */}
+                  {/* Creator badge top-left */}
                   <div className="sf-video-creator-badge" style={{ top: 14, left: 14 }}>
                     <span className="sf-video-creator-name">{activeVideo.creatorName || activeVideo.influencerName.replace('@','')}</span>
                   </div>
                 </div>
-                {/* Right: Product info — two images + name + promo label + price + SHOP NOW */}
-                <div style={{ flex: 1, padding: "32px 32px 32px", display: "flex", flexDirection: "column", gap: 0, overflowY: "auto", minWidth: 0 }}>
-                  {/* Two product images side by side (always shown if at least imgA exists) */}
+                {/* Right 50%: Product info */}
+                <div style={{ flex: "0 0 50%", padding: "32px 28px 28px", display: "flex", flexDirection: "column", overflowY: "auto", minWidth: 0, background: "#fff" }}>
+                  {/* Two product images side by side — A/B with hover A→C, B→D */}
                   {imgA && (
-                    <div style={{ display: "flex", gap: 10, marginBottom: 22 }}>
+                    <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
                       <div
                         style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5", cursor: imgC ? "pointer" : "default" }}
                         onMouseEnter={() => imgC ? setModalHoverImg('A') : undefined}
                         onMouseLeave={() => setModalHoverImg(null)}
                       >
-                        <img
-                          src={displayLeft || imgA}
-                          alt={activeVideo.linkedProductName}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s" }}
-                        />
+                        <img src={displayLeft || imgA} alt={activeVideo.linkedProductName}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s" }} />
                       </div>
-                      {/* Second image: imgB if available, otherwise show imgA again slightly dimmed */}
                       <div
                         style={{ flex: 1, aspectRatio: imgRatio, borderRadius: 6, overflow: "hidden", background: "#f5f5f5", cursor: (imgB && imgD) ? "pointer" : "default" }}
                         onMouseEnter={() => (imgB && imgD) ? setModalHoverImg('B') : undefined}
                         onMouseLeave={() => setModalHoverImg(null)}
                       >
-                        <img
-                          src={imgB ? (displayRight || imgB) : imgA}
-                          alt={activeVideo.linkedProductName}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s", opacity: imgB ? 1 : 0.75 }}
-                        />
+                        <img src={imgB ? (displayRight || imgB) : imgA} alt={activeVideo.linkedProductName}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.25s", opacity: imgB ? 1 : 0.75 }} />
                       </div>
                     </div>
                   )}
                   {/* Product name */}
                   {activeVideo.linkedProductName && (
-                    <div style={{ fontWeight: 700, fontSize: 20, color: "#111", lineHeight: 1.3, marginBottom: 10 }}>{activeVideo.linkedProductName}</div>
+                    <div style={{ fontWeight: 700, fontSize: 19, color: "#111", lineHeight: 1.3, marginBottom: 6 }}>{activeVideo.linkedProductName}</div>
                   )}
-                  {/* Promo / discount label */}
+                  {/* Promo label */}
                   {discountLabel && (
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 6 }}>{discountLabel}</div>
                   )}
-                  {/* Price: sale + compare-at */}
+                  {/* Price row */}
                   {(activeVideo.linkedProductPrice || activeVideo.linkedProductComparePrice) && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                       {activeVideo.linkedProductPrice && (
                         <span style={{ fontWeight: 700, fontSize: 17, color: "#111" }}>{activeVideo.linkedProductPrice}</span>
                       )}
@@ -454,69 +499,17 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                       )}
                     </div>
                   )}
-                  {/* Color selectors - desktop */}
-                  {activeVideo.linkedProductColors && activeVideo.linkedProductColors.length > 0 && (
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "#888", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>Color</div>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {activeVideo.linkedProductColors.map((color: string) => (
-                          <button
-                            key={color}
-                            onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
-                            style={{
-                              width: 26, height: 26, borderRadius: "50%", background: color,
-                              border: selectedVideoColor === color ? "2px solid #111" : "2px solid #ddd",
-                              cursor: "pointer", padding: 0, flexShrink: 0,
-                              boxShadow: selectedVideoColor === color ? "0 0 0 2px #fff inset" : "none",
-                              transition: "border 0.15s, box-shadow 0.15s",
-                            }}
-                            aria-label={color}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {/* Size selectors - desktop */}
-                  {activeVideo.linkedProductSizes && activeVideo.linkedProductSizes.length > 0 && (
-                    <div style={{ marginBottom: 20 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "#888", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>Size</div>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {activeVideo.linkedProductSizes.map((size: string) => (
-                          <button
-                            key={size}
-                            onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
-                            style={{
-                              minWidth: 36, height: 32, padding: "0 8px", borderRadius: 4,
-                              border: selectedVideoSize === size ? "1.5px solid #111" : "1.5px solid #ddd",
-                              background: selectedVideoSize === size ? "#111" : "#fff",
-                              color: selectedVideoSize === size ? "#fff" : "#333",
-                              cursor: "pointer", fontSize: 12, fontWeight: 600,
-                              transition: "all 0.15s",
-                            }}
-                          >{size}</button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {/* Shop Now button — full width, black, at bottom */}
+                  {/* Color swatches */}
+                  {renderColorSwatches(26)}
+                  {/* Size buttons */}
+                  {renderSizeButtons(32)}
+                  {/* ADD TO CART button */}
                   <button
-                    onClick={() => {
-                      addItem({
-                        id: activeVideo.linkedProductId || activeVideo.id,
-                        name: activeVideo.linkedProductName || "",
-                        price: activeVideo.linkedProductPrice || "",
-                        comparePrice: activeVideo.linkedProductComparePrice,
-                        imageUrl: imgA || activeVideo.linkedProductImage,
-                        productUrl: activeVideo.linkedProductLink,
-                        selectedColor: selectedVideoColor || undefined,
-                        selectedSize: selectedVideoSize || undefined,
-                      });
-                      openCart();
-                    }}
+                    onClick={handleAddToCart}
                     style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "14px 20px", borderRadius: 5, fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", border: "none", cursor: "pointer", textTransform: "uppercase", marginTop: "auto" }}
-                  >SHOP NOW</button>
+                  >ADD TO CART</button>
                 </div>
-                {/* Close button — top right corner */}
+                {/* Close button — top right, always visible */}
                 <button
                   onClick={() => { setActiveVideo(null); setModalHoverImg(null); }}
                   style={{ position: "absolute", top: 14, right: 14, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.9)", border: "1px solid #e0e0e0", color: "#333", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}
