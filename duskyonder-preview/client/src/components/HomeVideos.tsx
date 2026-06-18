@@ -479,7 +479,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
   const { addItem, openCart } = useCart();
   const [activeVideo, setActiveVideo] = useState<any>(null);
   const [modalHoverImg, setModalHoverImg] = useState<'A' | 'B' | null>(null);
-  const [isMobileModal, setIsMobileModal] = useState(false);
   const [selectedVideoColor, setSelectedVideoColor] = useState<string | null>(null);
   const [selectedVideoSize, setSelectedVideoSize] = useState<string | null>(null);
   const [shopifyProduct, setShopifyProduct] = useState<ShopifyProduct | null>(null);
@@ -489,14 +488,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
   const [fullscreenIndex, setFullscreenIndex] = useState<number>(0);
 
   const trackRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobileModal(window.innerWidth <= 767);
-    checkMobile();
-    window.addEventListener('resize', checkMobile, { passive: true });
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Auto-fetch Shopify product when desktop modal opens
   useEffect(() => {
@@ -516,7 +507,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
   const [isMobileVideos, setIsMobileVideos] = useState(false);
   const [videoPage, setVideoPage] = useState(0);
   const [mobileVideoPage, setMobileVideoPage] = useState(0);
-  const mobileVideoCardCount = 2;
   useEffect(() => {
     const check = () => setIsMobileVideos(window.innerWidth <= 900);
     check();
@@ -526,7 +516,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
 
   const videos = config.videos;
   const totalVideoPages = Math.ceil(videos.length / desktopCount);
-  const totalMobileVideoPages = Math.ceil(videos.length / mobileVideoCardCount);
+  const totalMobileVideoPages = Math.ceil(videos.length / 2);
 
   const [videoSectionVisible, setVideoSectionVisible] = useState(false);
   const videoSectionRef = useRef<HTMLElement>(null);
@@ -682,8 +672,8 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
         )}
       </section>
 
-      {/* Desktop Video Modal (unchanged) */}
-      {activeVideo && !isMobileModal && ReactDOM.createPortal(
+      {/* Desktop Video Modal */}
+      {activeVideo && ReactDOM.createPortal(
         (() => {
           const allImgs: string[] = shopifyProduct
             ? shopifyProduct.images.map((img: { url: string }) => img.url)
@@ -719,7 +709,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             if (type === 'iframe' || type === 'tiktok') {
               return <iframe src={src} style={{ width: "100%", height: "100%", minHeight: minH, border: "none", display: "block", background: "#000" }} allow="autoplay; fullscreen; encrypted-media" allowFullScreen />;
             } else {
-              return <video ref={videoRef} src={src} controls autoPlay style={{ width: "100%", height: "100%", minHeight: minH, objectFit: "contain", background: "#000", display: "block" }} />;
+              return <video src={src} controls autoPlay style={{ width: "100%", height: "100%", minHeight: minH, objectFit: "contain", background: "#000", display: "block" }} />;
             }
           };
 
@@ -886,92 +876,6 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
         document.body
       )}
     </>
-  );
-}
-
-// ==================== QUICK VIEW MODAL ====================
-function QuickViewModal({ product, onClose }: { product: Product; onClose: () => void }) {
-  const [selectedColorIdx, setSelectedColorIdx] = useState(0);
-  const [selectedSize, setSelectedSize] = useState("S");
-  const [imgIdx, setImgIdx] = useState(0);
-  const [wishlist, setWishlist] = useState(false);
-  const sizes = ["XS", "S", "M", "L", "XL"];
-
-  const selectedColor = product.colors[selectedColorIdx];
-  const colorImage = selectedColor && product.colorImages?.[selectedColor];
-  const displayImages = [
-    colorImage || product.imageUrl,
-    product.hoverImageUrl,
-  ].filter(Boolean) as string[];
-
-  const currentImg = displayImages[imgIdx] || null;
-
-  useEffect(() => { setImgIdx(0); }, [selectedColorIdx]);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
-
-  return (
-    <div className="sf-quickview-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="sf-quickview-modal">
-        <button className="sf-quickview-close" onClick={onClose} aria-label="Close"><XIcon /></button>
-        <div className="sf-quickview-inner">
-          <div className="sf-quickview-gallery">
-            <div className="sf-quickview-main-img">
-              {currentImg ? (
-                <img loading="lazy" src={currentImg} alt={product.name} />
-              ) : (
-                <ImgPlaceholder label="Product Image" style={{ position: "absolute", inset: 0 }} />
-              )}
-              {product.badge && <span className="sf-product-badge">{product.badge}</span>}
-            </div>
-            {displayImages.length > 1 && (
-              <div className="sf-quickview-thumbs">
-                {displayImages.map((img, i) => (
-                  <button key={i} className={`sf-quickview-thumb${imgIdx === i ? " active" : ""}`} onClick={() => setImgIdx(i)}>
-                    <img loading="lazy" src={img} alt={`View ${i + 1}`} />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="sf-quickview-info">
-            <h2 className="sf-quickview-name">{product.name}</h2>
-            <div className="sf-quickview-price">{product.price}</div>
-            {product.colors.length > 0 && (
-              <>
-                <div className="sf-option-label" style={{ marginTop: 16 }}>
-                  Color: <strong style={{ color: "#175C40" }}>{selectedColor}</strong>
-                </div>
-                <div className="sf-color-swatches" style={{ marginTop: 8 }}>
-                  {product.colors.map((color, i) => (
-                    <div key={i} className={`sf-color-swatch${selectedColorIdx === i ? " active" : ""}`}
-                      style={{ background: color, border: color === "#F9F9F9" ? "2px solid #eee" : undefined, width: 28, height: 28 }}
-                      onClick={() => setSelectedColorIdx(i)} title={color} />
-                  ))}
-                </div>
-              </>
-            )}
-            <div className="sf-option-label" style={{ marginTop: 16 }}>Size</div>
-            <div className="sf-size-btns" style={{ marginTop: 8 }}>
-              {sizes.map((size) => (
-                <button key={size} className={`sf-size-btn${selectedSize === size ? " active" : ""}`} onClick={() => setSelectedSize(size)}>{size}</button>
-              ))}
-            </div>
-            <div style={{ marginTop: 24, display: "flex", gap: 10, alignItems: "stretch" }}>
-              <button className="sf-drawer-add-btn" style={{ flex: 1, minWidth: 0, padding: "14px 12px", whiteSpace: "nowrap" }} onClick={() => onClose()}>ADD TO CART</button>
-              <button className="sf-drawer-add-btn sf-drawer-wishlist-btn" onClick={() => setWishlist(w => !w)} aria-label="Wishlist"><HeartIcon filled={wishlist} /></button>
-            </div>
-            {product.detailUrl && (
-              <a href={product.detailUrl} style={{ display: "block", textAlign: "center", marginTop: 12, color: "#175C40", fontSize: "0.875rem", textDecoration: "underline" }}>View Full Details →</a>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 
