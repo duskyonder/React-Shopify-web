@@ -1541,7 +1541,23 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
             saved.influencer.applyPageSectionOrder = defaultConfig.influencer.applyPageSectionOrder;
           }
         }
-        setConfig(prev => ({ ...defaultConfig, ...prev, ...saved }));
+        // Guard all user-editable array fields: if the saved config already has a valid array,
+        // do NOT let the defaultConfig spread overwrite it. This prevents editor changes (e.g.
+        // adding banner slides, categories, series, fabrics, videos) from being reset whenever
+        // the website code is redeployed and defaultConfig changes.
+        const arrayFields = [
+          "slides", "categories", "videos", "seriesList", "fabrics",
+          "promoBarItems", "sectionOrder", "products", "featuredInstances",
+          "newsletterPages", "pdpShippingBlocks", "pdpSizeGuide", "pdpDefaultSizes",
+        ] as const;
+        const mergedConfig = { ...defaultConfig, ...saved };
+        for (const field of arrayFields) {
+          if (Array.isArray(saved[field])) {
+            // saved value wins — do not let defaultConfig overwrite it
+            (mergedConfig as any)[field] = saved[field];
+          }
+        }
+        setConfig(() => mergedConfig);
       } catch {}
     }
     if (shopifyData?.uploadedImages && typeof shopifyData.uploadedImages === 'object') {
