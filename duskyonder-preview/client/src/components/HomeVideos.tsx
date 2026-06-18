@@ -654,13 +654,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             style={{ opacity: videoPage >= totalVideoPages - 1 ? 0.3 : 1 }}>&#8250;</button>
           )}
         </div>}
-        {videoSectionVisible && !isMobileVideos && totalVideoPages > 1 && (
-          <div className="sf-section-dots">
-            {Array.from({ length: totalVideoPages }).map((_, i) => (
-              <button key={i} className={`sf-section-dot${i === videoPage ? " active" : ""}`} onClick={() => setVideoPage(i)} />
-            ))}
-          </div>
-        )}
+
 
       </section>
 
