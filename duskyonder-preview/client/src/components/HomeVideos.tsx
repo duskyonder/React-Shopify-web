@@ -335,38 +335,58 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                       </div>
                     )}
                     {/* Right: product info */}
-                    <div style={{ flex: 1, padding: "10px 12px 10px", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
-                      {/* Product name */}
-                      {activeVideo.linkedProductName && (
-                        <div style={{ fontWeight: 700, fontSize: 13, color: "#111", lineHeight: 1.3, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeVideo.linkedProductName}</div>
+                    <div style={{ flex: 1, padding: "10px 12px 10px 8px", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+                      {/* Product name — prefer Shopify title */}
+                      {(shopifyProduct?.title || activeVideo.linkedProductName) && (
+                        <div style={{ fontWeight: 700, fontSize: 13, color: "#111", lineHeight: 1.3, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shopifyProduct?.title || activeVideo.linkedProductName}</div>
                       )}
-                      {/* Price row */}
-                      {(activeVideo.linkedProductPrice || activeVideo.linkedProductComparePrice) && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                          {activeVideo.linkedProductPrice && (
-                            <span style={{ fontWeight: 700, fontSize: 13, color: "#111" }}>{activeVideo.linkedProductPrice}</span>
-                          )}
-                          {activeVideo.linkedProductComparePrice && (
-                            <span style={{ fontSize: 11, color: "#aaa", textDecoration: "line-through" }}>{activeVideo.linkedProductComparePrice}</span>
-                          )}
-                        </div>
-                      )}
+                      {/* Price row — prefer Shopify first variant price */}
+                      {(() => {
+                        const price = shopifyProduct?.variants?.[0]?.price
+                          ? `$${parseFloat(shopifyProduct.variants[0].price.amount).toFixed(2)}`
+                          : activeVideo.linkedProductPrice;
+                        const comparePrice = shopifyProduct?.variants?.[0]?.compareAtPrice
+                          ? `$${parseFloat(shopifyProduct.variants[0].compareAtPrice.amount).toFixed(2)}`
+                          : activeVideo.linkedProductComparePrice;
+                        return (price || comparePrice) ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                            {price && <span style={{ fontWeight: 700, fontSize: 13, color: "#111" }}>{price}</span>}
+                            {comparePrice && <span style={{ fontSize: 11, color: "#aaa", textDecoration: "line-through" }}>{comparePrice}</span>}
+                          </div>
+                        ) : null;
+                      })()}
                       {/* Color swatches — compact */}
                       {derivedColors.length > 0 && (
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 5 }}>
-                          {derivedColors.map((color: string) => (
-                            <button
-                              key={color}
-                              onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
-                              style={{
-                                width: 20, height: 20, borderRadius: "50%", background: color, flexShrink: 0,
-                                border: selectedVideoColor === color ? "2px solid #111" : "1.5px solid #ddd",
-                                cursor: "pointer", padding: 0,
-                                boxShadow: selectedVideoColor === color ? "0 0 0 2px #fff inset" : "none",
-                              }}
-                              aria-label={color}
-                            />
-                          ))}
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 5, alignItems: "center" }}>
+                          {derivedColors.map((color: string) => {
+                            const isHexMobile = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(color.trim());
+                            const isSel = selectedVideoColor === color;
+                            return isHexMobile ? (
+                              <button
+                                key={color}
+                                onClick={() => setSelectedVideoColor(isSel ? null : color)}
+                                style={{
+                                  width: 18, height: 18, borderRadius: "50%", background: color, flexShrink: 0,
+                                  border: isSel ? "2px solid #111" : "1.5px solid #ddd",
+                                  cursor: "pointer", padding: 0,
+                                  boxShadow: isSel ? "0 0 0 2px #fff inset" : "none",
+                                }}
+                                aria-label={color}
+                              />
+                            ) : (
+                              <button
+                                key={color}
+                                onClick={() => setSelectedVideoColor(isSel ? null : color)}
+                                style={{
+                                  padding: "2px 7px", borderRadius: 20, fontSize: 10, fontWeight: 600,
+                                  border: isSel ? "1.5px solid #111" : "1px solid #ddd",
+                                  background: isSel ? "#111" : "#fff",
+                                  color: isSel ? "#fff" : "#444",
+                                  cursor: "pointer", whiteSpace: "nowrap",
+                                }}
+                              >{color}</button>
+                            );
+                          })}
                         </div>
                       )}
                       {/* Size buttons — compact */}
@@ -411,26 +431,49 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
           };
           const discountLabel = computeDiscountLabel();
 
+          // Helper: detect if a string is a CSS color (hex, rgb, named CSS color)
+          const isHexColor = (s: string) => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s.trim());
+
           // Shared product info panel (used in both desktop and mobile)
           const renderColorSwatches = (size = 26) => (
             derivedColors.length > 0 ? (
               <div style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Color</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {derivedColors.map((color: string) => (
-                    <button
-                      key={color}
-                      onClick={() => setSelectedVideoColor(selectedVideoColor === color ? null : color)}
-                      style={{
-                        width: size, height: size, borderRadius: "50%", background: color,
-                        border: selectedVideoColor === color ? "2px solid #111" : "2px solid #ddd",
-                        cursor: "pointer", padding: 0, flexShrink: 0,
-                        boxShadow: selectedVideoColor === color ? "0 0 0 2px #fff inset" : "none",
-                        transition: "border 0.15s, box-shadow 0.15s",
-                      }}
-                      aria-label={color}
-                    />
-                  ))}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                  {derivedColors.map((color: string) => {
+                    const isHex = isHexColor(color);
+                    const isSelected = selectedVideoColor === color;
+                    return isHex ? (
+                      // Hex color: render as circular swatch
+                      <button
+                        key={color}
+                        onClick={() => setSelectedVideoColor(isSelected ? null : color)}
+                        style={{
+                          width: size, height: size, borderRadius: "50%", background: color,
+                          border: isSelected ? "2px solid #111" : "2px solid #ddd",
+                          cursor: "pointer", padding: 0, flexShrink: 0,
+                          boxShadow: isSelected ? "0 0 0 2px #fff inset" : "none",
+                          transition: "border 0.15s, box-shadow 0.15s",
+                        }}
+                        aria-label={color}
+                      />
+                    ) : (
+                      // Color name string (from Shopify): render as text pill
+                      <button
+                        key={color}
+                        onClick={() => setSelectedVideoColor(isSelected ? null : color)}
+                        style={{
+                          padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600,
+                          border: isSelected ? "1.5px solid #111" : "1.5px solid #ddd",
+                          background: isSelected ? "#111" : "#fff",
+                          color: isSelected ? "#fff" : "#444",
+                          cursor: "pointer", flexShrink: 0,
+                          transition: "all 0.15s",
+                          whiteSpace: "nowrap",
+                        }}
+                      >{color}</button>
+                    );
+                  })}
                 </div>
               </div>
             ) : null
@@ -503,25 +546,29 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                       </div>
                     </div>
                   )}
-                  {/* Product name */}
-                  {activeVideo.linkedProductName && (
-                    <div style={{ fontWeight: 700, fontSize: 19, color: "#111", lineHeight: 1.3, marginBottom: 6 }}>{activeVideo.linkedProductName}</div>
+                  {/* Product name — prefer Shopify title */}
+                  {(shopifyProduct?.title || activeVideo.linkedProductName) && (
+                    <div style={{ fontWeight: 700, fontSize: 19, color: "#111", lineHeight: 1.3, marginBottom: 6 }}>{shopifyProduct?.title || activeVideo.linkedProductName}</div>
                   )}
                   {/* Promo label */}
                   {discountLabel && (
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 6 }}>{discountLabel}</div>
                   )}
-                  {/* Price row */}
-                  {(activeVideo.linkedProductPrice || activeVideo.linkedProductComparePrice) && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                      {activeVideo.linkedProductPrice && (
-                        <span style={{ fontWeight: 700, fontSize: 17, color: "#111" }}>{activeVideo.linkedProductPrice}</span>
-                      )}
-                      {activeVideo.linkedProductComparePrice && (
-                        <span style={{ fontSize: 14, color: "#aaa", textDecoration: "line-through" }}>{activeVideo.linkedProductComparePrice}</span>
-                      )}
-                    </div>
-                  )}
+                  {/* Price row — prefer Shopify first variant price */}
+                  {(() => {
+                    const price = shopifyProduct?.variants?.[0]?.price
+                      ? `$${parseFloat(shopifyProduct.variants[0].price.amount).toFixed(2)}`
+                      : activeVideo.linkedProductPrice;
+                    const comparePrice = shopifyProduct?.variants?.[0]?.compareAtPrice
+                      ? `$${parseFloat(shopifyProduct.variants[0].compareAtPrice.amount).toFixed(2)}`
+                      : activeVideo.linkedProductComparePrice;
+                    return (price || comparePrice) ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                        {price && <span style={{ fontWeight: 700, fontSize: 17, color: "#111" }}>{price}</span>}
+                        {comparePrice && <span style={{ fontSize: 14, color: "#aaa", textDecoration: "line-through" }}>{comparePrice}</span>}
+                      </div>
+                    ) : null;
+                  })()}
                   {/* Color swatches */}
                   {renderColorSwatches(26)}
                   {/* Size buttons */}
