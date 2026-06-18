@@ -62,11 +62,14 @@ export default function ImageUploader({
     setLoadingMore(false);
   }, [filesData]);
 
-  // Reset when picker opens or search changes
+  // Reset and force-refetch when picker opens
   useEffect(() => {
     if (pickerOpen) {
       setCursor(undefined);
       setAllFiles([]);
+      // Force a fresh network fetch even if tRPC cache is still warm
+      // (needed when the same picker query was used by a previous card instance)
+      setTimeout(() => refetchFiles(), 0);
     }
   }, [pickerOpen]);
 
