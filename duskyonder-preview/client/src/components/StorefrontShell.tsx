@@ -4,41 +4,105 @@ import { useCart } from "@/contexts/CartContext";
 
 // ==================== ICONS ====================
 const SearchIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.35-4.35" />
   </svg>
 );
 const CartIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
     <line x1="3" y1="6" x2="21" y2="6" />
     <path d="M16 10a4 4 0 0 1-8 0" />
   </svg>
 );
 const UserIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
     <circle cx="12" cy="7" r="4" />
   </svg>
 );
 const HeartIcon = ({ filled = false }: { filled?: boolean }) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill={filled ? "currentColor" : "none"}
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
 );
 const ChevronLeftIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+  >
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
 );
 const ChevronRightIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+  >
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
 );
 const ChevronDownIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+  >
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
 );
 
 // ==================== SPLIT COLOR SWATCH (shared) ====================
-export function ColorSwatch({ value, active, onClick, size = 10 }: {
-  value: string; active?: boolean; onClick?: () => void; size?: number;
+export function ColorSwatch({
+  value,
+  active,
+  onClick,
+  size = 10,
+}: {
+  value: string;
+  active?: boolean;
+  onClick?: () => void;
+  size?: number;
 }) {
   const isSplit = value.includes("+");
   const [c1, c2] = isSplit ? value.split("+") : [value, value];
@@ -65,8 +129,8 @@ export function ColorSwatch({ value, active, onClick, size = 10 }: {
         border: active
           ? `1.5px solid #333`
           : needsBorder
-          ? "1px solid #ccc"
-          : "none",
+            ? "1px solid #ccc"
+            : "none",
         flexShrink: 0,
         position: "relative",
         transform: active ? "scale(1.25)" : "scale(1)",
@@ -76,8 +140,26 @@ export function ColorSwatch({ value, active, onClick, size = 10 }: {
     >
       {isSplit ? (
         <>
-          <div style={{ position: "absolute", left: 0, top: 0, width: "50%", height: "100%", background: c1 }} />
-          <div style={{ position: "absolute", right: 0, top: 0, width: "50%", height: "100%", background: c2 }} />
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: "50%",
+              height: "100%",
+              background: c1,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              right: 0,
+              top: 0,
+              width: "50%",
+              height: "100%",
+              background: c2,
+            }}
+          />
         </>
       ) : (
         <div style={{ width: "100%", height: "100%", background: c1 }} />
@@ -98,11 +180,19 @@ export function SFPromoBar() {
   const startTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (total > 1) {
-      timerRef.current = setInterval(() => setCurrent(c => (c + 1) % total), 4000);
+      timerRef.current = setInterval(
+        () => setCurrent(c => (c + 1) % total),
+        4000
+      );
     }
   }, [total]);
 
-  useEffect(() => { startTimer(); return () => { if (timerRef.current) clearInterval(timerRef.current); }; }, [startTimer]);
+  useEffect(() => {
+    startTimer();
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [startTimer]);
 
   if (!config.showPromoBar || total === 0) return null;
 
@@ -122,17 +212,34 @@ export function SFPromoBar() {
 
   return (
     <div className="sf-promo-bar" style={promoStyle}>
-      <button className="sf-promo-arrow" onClick={() => { setCurrent((current - 1 + total) % total); startTimer(); }}>
+      <button
+        className="sf-promo-arrow"
+        onClick={() => {
+          setCurrent((current - 1 + total) % total);
+          startTimer();
+        }}
+      >
         <ChevronLeftIcon />
       </button>
       <div className="sf-promo-text">
         {item?.link ? (
-          <a href={item.link} style={{ color: "inherit", textDecoration: "none" }}>{item?.text}</a>
+          <a
+            href={item.link}
+            style={{ color: "inherit", textDecoration: "none" }}
+          >
+            {item?.text}
+          </a>
         ) : (
           <span>{item?.text}</span>
         )}
       </div>
-      <button className="sf-promo-arrow" onClick={() => { setCurrent((current + 1) % total); startTimer(); }}>
+      <button
+        className="sf-promo-arrow"
+        onClick={() => {
+          setCurrent((current + 1) % total);
+          startTimer();
+        }}
+      >
         <ChevronRightIcon />
       </button>
     </div>
@@ -160,7 +267,12 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
   useEffect(() => {
     if (!searchOpen) return;
     const timer = setTimeout(() => searchInputRef.current?.focus(), 80);
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); } };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSearchOpen(false);
+        setSearchQuery("");
+      }
+    };
     document.addEventListener("keydown", handler);
     document.body.style.overflow = "hidden";
     return () => {
@@ -174,7 +286,13 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
   const searchResults = useCallback(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    const results: Array<{ type: string; title: string; url: string; imageUrl?: string; subtitle?: string }> = [];
+    const results: Array<{
+      type: string;
+      title: string;
+      url: string;
+      imageUrl?: string;
+      subtitle?: string;
+    }> = [];
     // Products
     const allProducts = [
       ...(config.products || []),
@@ -185,23 +303,43 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
       if (seen.has(p.id)) return;
       seen.add(p.id);
       if (p.name?.toLowerCase().includes(q)) {
-        results.push({ type: "Product", title: p.name, url: (p as any).detailUrl || `/products/${p.name.toLowerCase().replace(/\s+/g, "-")}`, imageUrl: p.imageUrl, subtitle: p.price });
+        results.push({
+          type: "Product",
+          title: p.name,
+          url:
+            (p as any).detailUrl ||
+            `/products/${p.name.toLowerCase().replace(/\s+/g, "-")}`,
+          imageUrl: p.imageUrl,
+          subtitle: p.price,
+        });
       }
     });
     // Collections
     (config.collections || []).forEach(c => {
       if (c.title?.toLowerCase().includes(q)) {
-        results.push({ type: "Collection", title: c.title, url: `/collections/${c.handle}` });
+        results.push({
+          type: "Collection",
+          title: c.title,
+          url: `/collections/${c.handle}`,
+        });
       }
     });
     // Nav pages
     (config.navItems || []).forEach(item => {
       if (item.label?.toLowerCase().includes(q)) {
-        results.push({ type: "Page", title: item.label, url: item.link || "/" });
+        results.push({
+          type: "Page",
+          title: item.label,
+          url: item.link || "/",
+        });
       }
       (item.children || []).forEach(child => {
         if (child.label?.toLowerCase().includes(q)) {
-          results.push({ type: "Page", title: child.label, url: child.link || "/" });
+          results.push({
+            type: "Page",
+            title: child.label,
+            url: child.link || "/",
+          });
         }
       });
     });
@@ -218,41 +356,69 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
   const logoMobileH = config.logoMobileHeight ?? 32;
   // 选择当前应显示的 Logo URL
   const activeLogoUrl = isTransparent
-    ? (config.logoImageUrlWhite || config.logoImageUrl)
-    : (config.logoImageUrl || config.logoImageUrlWhite);
+    ? config.logoImageUrlWhite || config.logoImageUrl
+    : config.logoImageUrl || config.logoImageUrlWhite;
 
   const renderLogo = () => {
     const greenUrl = config.logoImageUrl || config.logoImageUrlWhite;
     const whiteUrl = config.logoImageUrlWhite || config.logoImageUrl;
     if (greenUrl || whiteUrl) {
       return (
-        <a href="/" className="sf-logo sf-logo-center" style={{ display: "flex", alignItems: "center", position: "relative" }}>
+        <a
+          href="/"
+          className="sf-logo sf-logo-center"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            position: "relative",
+          }}
+        >
           {/* 绿色 Logo：白底导航栏时显示 */}
           {greenUrl && (
-            <img src={greenUrl} alt={config.logoText}
-              style={{ height: logoDesktopH, maxWidth: 200, objectFit: "contain",
+            <img
+              src={greenUrl}
+              alt={config.logoText}
+              style={{
+                height: logoDesktopH,
+                maxWidth: 200,
+                objectFit: "contain",
                 position: isTransparent ? "absolute" : "relative",
                 opacity: isTransparent ? 0 : 1,
                 transition: "opacity 0.1s ease",
-                pointerEvents: isTransparent ? "none" : "auto" }} />
+                pointerEvents: isTransparent ? "none" : "auto",
+              }}
+            />
           )}
           {/* 白色 Logo：透明导航栏时显示 */}
           {whiteUrl && (
-            <img src={whiteUrl} alt={config.logoText}
-              style={{ height: logoDesktopH, maxWidth: 200, objectFit: "contain",
+            <img
+              src={whiteUrl}
+              alt={config.logoText}
+              style={{
+                height: logoDesktopH,
+                maxWidth: 200,
+                objectFit: "contain",
                 position: isTransparent ? "relative" : "absolute",
                 opacity: isTransparent ? 1 : 0,
                 transition: "opacity 0.1s ease",
-                pointerEvents: isTransparent ? "auto" : "none" }} />
+                pointerEvents: isTransparent ? "auto" : "none",
+              }}
+            />
           )}
         </a>
       );
     }
-    return <a href="/" className="sf-logo sf-logo-center">{config.logoText}</a>;
+    return (
+      <a href="/" className="sf-logo sf-logo-center">
+        {config.logoText}
+      </a>
+    );
   };
 
   const [openNavId, setOpenNavId] = useState<string | null>(null);
-  const navHoverTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const navHoverTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>(
+    {}
+  );
 
   const handleNavEnter = (id: string) => {
     if (navHoverTimers.current[id]) clearTimeout(navHoverTimers.current[id]);
@@ -274,7 +440,7 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
     "--nav-m-font-size": `${config.navMobileFontSize ?? config.navFontSize ?? 14}px`,
   } as React.CSSProperties;
 
-  const renderNavItem = (item: typeof navItems[0], i: number) => {
+  const renderNavItem = (item: (typeof navItems)[0], i: number) => {
     const hasChildren = item.children && item.children.length > 0;
     const isOpen = openNavId === item.id;
     return (
@@ -287,17 +453,42 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
       >
         <a href={item.link} className="sf-nav-link" style={navLinkStyle}>
           {item.label}
-          {hasChildren && <span style={{ marginLeft: 3, opacity: 0.7, display: "inline-flex", alignItems: "center" }}><ChevronDownIcon /></span>}
+          {hasChildren && (
+            <span
+              style={{
+                marginLeft: 3,
+                opacity: 0.7,
+                display: "inline-flex",
+                alignItems: "center",
+              }}
+            >
+              <ChevronDownIcon />
+            </span>
+          )}
         </a>
         {hasChildren && (
           <div
             className="sf-nav-dropdown"
-            style={isOpen ? { opacity: 1, pointerEvents: "auto", transform: "translateX(-50%) translateY(0)" } : undefined}
+            style={
+              isOpen
+                ? {
+                    opacity: 1,
+                    pointerEvents: "auto",
+                    transform: "translateX(-50%) translateY(0)",
+                  }
+                : undefined
+            }
             onMouseEnter={() => handleNavEnter(item.id)}
             onMouseLeave={() => handleNavLeave(item.id)}
           >
-            {item.children!.map((child) => (
-              <a key={child.id} href={child.link} className="sf-nav-dropdown-item">{child.label}</a>
+            {item.children!.map(child => (
+              <a
+                key={child.id}
+                href={child.link}
+                className="sf-nav-dropdown-item"
+              >
+                {child.label}
+              </a>
             ))}
           </div>
         )}
@@ -309,14 +500,20 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
     <>
       <header
         className={`sf-header${scrolled || darkMode ? " scrolled" : ""}${!config.showPromoBar ? " no-promo" : ""}${darkMode ? " dark-mode" : ""}`}
-        style={{
-          // top is controlled by CSS var(--promo-height) / var(--promo-m-height) in index.css
-          ["--promo-height" as string]: config.showPromoBar ? `${config.promoBarHeight ?? 40}px` : "0px",
-          ["--promo-m-height" as string]: config.showPromoBar ? `${config.promoBarMobileHeight ?? 36}px` : "0px",
-          // inject nav color CSS variables for dynamic theming
-          ["--nav-text-color" as string]: config.navTextColor || "#333333",
-          ["--nav-hover-color" as string]: config.navHoverColor || "#175C40",
-        } as React.CSSProperties}
+        style={
+          {
+            // top is controlled by CSS var(--promo-height) / var(--promo-m-height) in index.css
+            ["--promo-height" as string]: config.showPromoBar
+              ? `${config.promoBarHeight ?? 40}px`
+              : "0px",
+            ["--promo-m-height" as string]: config.showPromoBar
+              ? `${config.promoBarMobileHeight ?? 36}px`
+              : "0px",
+            // inject nav color CSS variables for dynamic theming
+            ["--nav-text-color" as string]: config.navTextColor || "#333333",
+            ["--nav-hover-color" as string]: config.navHoverColor || "#175C40",
+          } as React.CSSProperties
+        }
       >
         {/* Desktop */}
         <div className="sf-header-inner sf-header-desktop">
@@ -329,12 +526,37 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
               {navRight.map((item, i) => renderNavItem(item, i))}
             </nav>
             <div className="sf-header-actions">
-              <button className="sf-icon-btn" aria-label="Search" onClick={() => setSearchOpen(true)}><SearchIcon /></button>
-              <a href={config.accountUrl || "/account/login"} className="sf-icon-btn" aria-label="Account"><UserIcon /></a>
-              <a href={config.wishlistUrl || "/wishlist"} className="sf-icon-btn" aria-label="Wishlist"><HeartIcon /></a>
-              <button className="sf-icon-btn" aria-label="Cart" style={{ position: "relative" }} onClick={openCart}>
+              <button
+                className="sf-icon-btn"
+                aria-label="Search"
+                onClick={() => setSearchOpen(true)}
+              >
+                <SearchIcon />
+              </button>
+              <a
+                href={config.accountUrl || "/account/login"}
+                className="sf-icon-btn"
+                aria-label="Account"
+              >
+                <UserIcon />
+              </a>
+              <a
+                href={config.wishlistUrl || "/wishlist"}
+                className="sf-icon-btn"
+                aria-label="Wishlist"
+              >
+                <HeartIcon />
+              </a>
+              <button
+                className="sf-icon-btn"
+                aria-label="Cart"
+                style={{ position: "relative" }}
+                onClick={openCart}
+              >
                 <CartIcon />
-                {totalCount > 0 && <span className="cart-badge">{totalCount}</span>}
+                {totalCount > 0 && (
+                  <span className="cart-badge">{totalCount}</span>
+                )}
               </button>
             </div>
           </div>
@@ -343,42 +565,96 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
         {/* Mobile */}
         <div className="sf-header-inner sf-header-mobile">
           <div className="sf-mobile-left">
-            <button className="sf-icon-btn" aria-label="Search" onClick={() => setSearchOpen(true)}><SearchIcon /></button>
-            <button className="sf-icon-btn sf-hamburger" aria-label="Menu" onClick={() => setMobileOpen(true)}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <button
+              className="sf-icon-btn"
+              aria-label="Search"
+              onClick={() => setSearchOpen(true)}
+            >
+              <SearchIcon />
+            </button>
+            <button
+              className="sf-icon-btn sf-hamburger"
+              aria-label="Menu"
+              onClick={() => setMobileOpen(true)}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <line x1="3" y1="12" x2="21" y2="12" />
                 <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
           </div>
-          {(config.logoImageUrl || config.logoImageUrlWhite) ? (
-            <a href="/" className="sf-logo sf-logo-center" style={{ display: "flex", alignItems: "center", position: "relative" }}>
+          {config.logoImageUrl || config.logoImageUrlWhite ? (
+            <a
+              href="/"
+              className="sf-logo sf-logo-center"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                position: "relative",
+              }}
+            >
               {(config.logoImageUrl || config.logoImageUrlWhite) && (
-                <img src={config.logoImageUrl || config.logoImageUrlWhite!} alt={config.logoText}
-                  style={{ height: logoMobileH, maxWidth: 140, objectFit: "contain",
+                <img
+                  src={config.logoImageUrl || config.logoImageUrlWhite!}
+                  alt={config.logoText}
+                  style={{
+                    height: logoMobileH,
+                    maxWidth: 140,
+                    objectFit: "contain",
                     position: isTransparent ? "absolute" : "relative",
                     opacity: isTransparent ? 0 : 1,
                     transition: "opacity 0.1s ease",
-                    pointerEvents: isTransparent ? "none" : "auto" }} />
+                    pointerEvents: isTransparent ? "none" : "auto",
+                  }}
+                />
               )}
               {(config.logoImageUrlWhite || config.logoImageUrl) && (
-                <img src={config.logoImageUrlWhite || config.logoImageUrl!} alt={config.logoText}
-                  style={{ height: logoMobileH, maxWidth: 140, objectFit: "contain",
+                <img
+                  src={config.logoImageUrlWhite || config.logoImageUrl!}
+                  alt={config.logoText}
+                  style={{
+                    height: logoMobileH,
+                    maxWidth: 140,
+                    objectFit: "contain",
                     position: isTransparent ? "relative" : "absolute",
                     opacity: isTransparent ? 1 : 0,
                     transition: "opacity 0.1s ease",
-                    pointerEvents: isTransparent ? "auto" : "none" }} />
+                    pointerEvents: isTransparent ? "auto" : "none",
+                  }}
+                />
               )}
             </a>
           ) : (
-            <a href="/" className="sf-logo sf-logo-center">{config.logoText}</a>
+            <a href="/" className="sf-logo sf-logo-center">
+              {config.logoText}
+            </a>
           )}
           <div className="sf-mobile-right">
-            <a href={config.wishlistUrl || "/wishlist"} className="sf-icon-btn" aria-label="Wishlist"><HeartIcon /></a>
-            <button className="sf-icon-btn" aria-label="Cart" style={{ position: "relative" }} onClick={openCart}>
+            <a
+              href={config.wishlistUrl || "/wishlist"}
+              className="sf-icon-btn"
+              aria-label="Wishlist"
+            >
+              <HeartIcon />
+            </a>
+            <button
+              className="sf-icon-btn"
+              aria-label="Cart"
+              style={{ position: "relative" }}
+              onClick={openCart}
+            >
               <CartIcon />
-              {totalCount > 0 && <span className="cart-badge">{totalCount}</span>}
+              {totalCount > 0 && (
+                <span className="cart-badge">{totalCount}</span>
+              )}
             </button>
           </div>
         </div>
@@ -388,19 +664,44 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
       {searchOpen && (
         <div
           style={{
-            position: "fixed", inset: 0, zIndex: 9500,
+            position: "fixed",
+            inset: 0,
+            zIndex: 9500,
             background: "rgba(0,0,0,0.7)",
             backdropFilter: "blur(4px)",
-            display: "flex", flexDirection: "column", alignItems: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
             paddingTop: "clamp(60px, 12vh, 120px)",
             animation: "fadeIn 0.2s ease",
           }}
-          onClick={(e) => { if (e.target === e.currentTarget) { setSearchOpen(false); setSearchQuery(""); } }}
+          onClick={e => {
+            if (e.target === e.currentTarget) {
+              setSearchOpen(false);
+              setSearchQuery("");
+            }
+          }}
         >
           {/* Search box */}
           <div style={{ width: "min(640px, 90vw)", position: "relative" }}>
-            <div style={{ display: "flex", alignItems: "center", background: "#fff", borderRadius: 4, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.3)" }}>
-              <div style={{ padding: "0 16px", color: "#888", flexShrink: 0, display: "flex" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                background: "#fff",
+                borderRadius: 4,
+                overflow: "hidden",
+                boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
+              }}
+            >
+              <div
+                style={{
+                  padding: "0 16px",
+                  color: "#888",
+                  flexShrink: 0,
+                  display: "flex",
+                }}
+              >
                 <SearchIcon />
               </div>
               <input
@@ -415,23 +716,52 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
                 }}
                 placeholder="Search products, collections..."
                 style={{
-                  flex: 1, padding: "18px 0", border: "none", outline: "none",
-                  fontSize: "1.05rem", background: "transparent", color: "#1A1A1A",
+                  flex: 1,
+                  padding: "18px 0",
+                  border: "none",
+                  outline: "none",
+                  fontSize: "1.05rem",
+                  background: "transparent",
+                  color: "#1A1A1A",
                 }}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  style={{ padding: "0 16px", background: "none", border: "none", cursor: "pointer", color: "#aaa", fontSize: "1.1rem" }}
-                >✕</button>
+                  style={{
+                    padding: "0 16px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#aaa",
+                    fontSize: "1.1rem",
+                  }}
+                >
+                  ✕
+                </button>
               )}
             </div>
 
             {/* Results */}
             {searchQuery.trim() && (
-              <div style={{ background: "#fff", borderRadius: 4, marginTop: 8, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.25)" }}>
+              <div
+                style={{
+                  background: "#fff",
+                  borderRadius: 4,
+                  marginTop: 8,
+                  overflow: "hidden",
+                  boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
+                }}
+              >
                 {searchResults().length === 0 ? (
-                  <div style={{ padding: "24px", textAlign: "center", color: "#888", fontSize: "0.9rem" }}>
+                  <div
+                    style={{
+                      padding: "24px",
+                      textAlign: "center",
+                      color: "#888",
+                      fontSize: "0.9rem",
+                    }}
+                  >
                     No results for "{searchQuery}"
                   </div>
                 ) : (
@@ -439,31 +769,88 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
                     <a
                       key={i}
                       href={result.url}
-                      onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+                      onClick={() => {
+                        setSearchOpen(false);
+                        setSearchQuery("");
+                      }}
                       style={{
-                        display: "flex", alignItems: "center", gap: 14,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
                         padding: "12px 20px",
                         textDecoration: "none",
-                        borderBottom: i < searchResults().length - 1 ? "1px solid #f5f5f5" : "none",
+                        borderBottom:
+                          i < searchResults().length - 1
+                            ? "1px solid #f5f5f5"
+                            : "none",
                         transition: "background 0.1s",
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.background = "#f9f9f9")}
-                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                      onMouseEnter={e =>
+                        (e.currentTarget.style.background = "#f9f9f9")
+                      }
+                      onMouseLeave={e =>
+                        (e.currentTarget.style.background = "transparent")
+                      }
                     >
                       {result.imageUrl ? (
-                        <img src={result.imageUrl} alt="" style={{ width: 44, height: 52, objectFit: "cover", borderRadius: 3, flexShrink: 0 }} />
+                        <img
+                          src={result.imageUrl}
+                          alt=""
+                          style={{
+                            width: 44,
+                            height: 52,
+                            objectFit: "cover",
+                            borderRadius: 3,
+                            flexShrink: 0,
+                          }}
+                        />
                       ) : (
-                        <div style={{ width: 44, height: 44, background: "#f0f0f0", borderRadius: 3, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>
-                          {result.type === "Product" ? "👕" : result.type === "Collection" ? "📦" : "📄"}
+                        <div
+                          style={{
+                            width: 44,
+                            height: 44,
+                            background: "#f0f0f0",
+                            borderRadius: 3,
+                            flexShrink: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "1rem",
+                          }}
+                        >
+                          {result.type === "Product"
+                            ? "👕"
+                            : result.type === "Collection"
+                              ? "📦"
+                              : "📄"}
                         </div>
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "#1A1A1A", marginBottom: 2 }}>{result.title}</div>
+                        <div
+                          style={{
+                            fontWeight: 600,
+                            fontSize: "0.88rem",
+                            color: "#1A1A1A",
+                            marginBottom: 2,
+                          }}
+                        >
+                          {result.title}
+                        </div>
                         <div style={{ fontSize: "0.75rem", color: "#888" }}>
-                          {result.type}{result.subtitle ? ` · ${result.subtitle}` : ""}
+                          {result.type}
+                          {result.subtitle ? ` · ${result.subtitle}` : ""}
                         </div>
                       </div>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#ccc"
+                        strokeWidth="2"
+                      >
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
                     </a>
                   ))
                 )}
@@ -472,16 +859,33 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
 
             {/* Suggestions (empty state) */}
             {!searchQuery.trim() && (
-              <div style={{ marginTop: 24, display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-                {["Leggings", "Sports Bra", "Shorts", "New Arrivals", "Best Sellers"].map(tag => (
+              <div
+                style={{
+                  marginTop: 24,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  justifyContent: "center",
+                }}
+              >
+                {[
+                  "Leggings",
+                  "Sports Bra",
+                  "Shorts",
+                  "New Arrivals",
+                  "Best Sellers",
+                ].map(tag => (
                   <button
                     key={tag}
                     onClick={() => setSearchQuery(tag)}
                     style={{
-                      padding: "8px 16px", borderRadius: 20,
+                      padding: "8px 16px",
+                      borderRadius: 20,
                       background: "rgba(255,255,255,0.15)",
                       border: "1px solid rgba(255,255,255,0.3)",
-                      color: "#fff", fontSize: "0.82rem", cursor: "pointer",
+                      color: "#fff",
+                      fontSize: "0.82rem",
+                      cursor: "pointer",
                       transition: "background 0.15s",
                     }}
                   >
@@ -493,7 +897,14 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
           </div>
 
           {/* Close hint */}
-          <div style={{ marginTop: 24, color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", letterSpacing: "0.04em" }}>
+          <div
+            style={{
+              marginTop: 24,
+              color: "rgba(255,255,255,0.5)",
+              fontSize: "0.78rem",
+              letterSpacing: "0.04em",
+            }}
+          >
             Press ESC to close
           </div>
         </div>
@@ -502,42 +913,151 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
       {/* Mobile Nav Drawer */}
       {mobileOpen && (
         <>
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 400 }} onClick={() => setMobileOpen(false)} />
-          <div style={{
-            position: "fixed", top: 0, left: 0, bottom: 0, width: 300,
-            background: "white", zIndex: 401, display: "flex", flexDirection: "column",
-            boxShadow: "4px 0 24px rgba(0,0,0,0.15)",
-            animation: "slideInLeft 0.3s cubic-bezier(0.23,1,0.32,1)",
-          }}>
-            <div style={{ padding: "20px 24px", borderBottom: "1px solid #eee", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.4)",
+              zIndex: 400,
+            }}
+            onClick={() => setMobileOpen(false)}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: 300,
+              background: "white",
+              zIndex: 401,
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "4px 0 24px rgba(0,0,0,0.15)",
+              animation: "slideInLeft 0.3s cubic-bezier(0.23,1,0.32,1)",
+            }}
+          >
+            <div
+              style={{
+                padding: "20px 24px",
+                borderBottom: "1px solid #eee",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               {config.logoImageUrl ? (
-                <img src={config.logoImageUrl} alt={config.logoText} style={{ height: Math.max(logoMobileH - 4, 24), objectFit: "contain" }} />
+                <img
+                  src={config.logoImageUrl}
+                  alt={config.logoText}
+                  style={{
+                    height: Math.max(logoMobileH - 4, 24),
+                    objectFit: "contain",
+                  }}
+                />
               ) : (
-                <span className="sf-logo" style={{ fontSize: "1.1rem" }}>{config.logoText}</span>
+                <span className="sf-logo" style={{ fontSize: "1.1rem" }}>
+                  {config.logoText}
+                </span>
               )}
-              <button onClick={() => setMobileOpen(false)} style={{ background: "none", border: "none", fontSize: "1.4rem", cursor: "pointer", color: "#666" }}>✕</button>
+              <button
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "1.4rem",
+                  cursor: "pointer",
+                  color: "#666",
+                }}
+              >
+                ✕
+              </button>
             </div>
             <nav style={{ padding: "8px 0", flex: 1, overflowY: "auto" }}>
-              {navItems.map((item) => (
+              {navItems.map(item => (
                 <div key={item.id}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     {item.children && item.children.length > 0 ? (
                       <button
-                        onClick={() => setMobileExpanded(mobileExpanded === item.id ? null : item.id)}
-                        style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "space-between", padding: "14px 24px", background: "none", border: "none", cursor: "pointer", color: "#333", fontSize: "1rem", fontWeight: 500, textAlign: "left" }}
+                        onClick={() =>
+                          setMobileExpanded(
+                            mobileExpanded === item.id ? null : item.id
+                          )
+                        }
+                        style={{
+                          display: "flex",
+                          flex: 1,
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "14px 24px",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: "#333",
+                          fontSize: "1rem",
+                          fontWeight: 500,
+                          textAlign: "left",
+                        }}
                       >
                         <span>{item.label}</span>
-                        <span style={{ marginLeft: 8, color: "#999", transition: "transform 0.2s", transform: mobileExpanded === item.id ? "rotate(180deg)" : "rotate(0deg)", display: "inline-flex" }}>
+                        <span
+                          style={{
+                            marginLeft: 8,
+                            color: "#999",
+                            transition: "transform 0.2s",
+                            transform:
+                              mobileExpanded === item.id
+                                ? "rotate(180deg)"
+                                : "rotate(0deg)",
+                            display: "inline-flex",
+                          }}
+                        >
                           <ChevronDownIcon />
                         </span>
                       </button>
                     ) : (
-                      <a href={item.link} onClick={() => setMobileOpen(false)}
-                        style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, padding: "14px 24px", color: "#333", textDecoration: "none", fontSize: "1rem", fontWeight: 500 }}
+                      <a
+                        href={item.link}
+                        onClick={() => setMobileOpen(false)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          flex: 1,
+                          padding: "14px 24px",
+                          color: "#333",
+                          textDecoration: "none",
+                          fontSize: "1rem",
+                          fontWeight: 500,
+                        }}
                       >
                         {item.label}
-                        {(item.link?.includes("influencer") || item.link?.includes("creators") || item.label?.toLowerCase().includes("influencer") || item.label?.toLowerCase().includes("creator")) && (
-                          <span style={{ display: "inline-block", padding: "2px 7px", background: "#175C40", color: "#fff", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", borderRadius: 3, lineHeight: 1.5 }}>JOIN</span>
+                        {(item.link?.includes("influencer") ||
+                          item.link?.includes("creators") ||
+                          item.label?.toLowerCase().includes("influencer") ||
+                          item.label?.toLowerCase().includes("creator")) && (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              padding: "2px 7px",
+                              background: "#175C40",
+                              color: "#fff",
+                              fontSize: "0.65rem",
+                              fontWeight: 700,
+                              letterSpacing: "0.08em",
+                              textTransform: "uppercase",
+                              borderRadius: 3,
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            JOIN
+                          </span>
                         )}
                       </a>
                     )}
@@ -545,9 +1065,21 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
                   {mobileExpanded === item.id && item.children && (
                     <div style={{ background: "#f9f9f9", paddingLeft: 16 }}>
                       {item.children.map(child => (
-                        <a key={child.id} href={child.link} onClick={() => setMobileOpen(false)}
-                          style={{ display: "block", padding: "10px 24px", color: "#555", textDecoration: "none", fontSize: "0.9rem", borderBottom: "1px solid #eee" }}
-                        >{child.label}</a>
+                        <a
+                          key={child.id}
+                          href={child.link}
+                          onClick={() => setMobileOpen(false)}
+                          style={{
+                            display: "block",
+                            padding: "10px 24px",
+                            color: "#555",
+                            textDecoration: "none",
+                            fontSize: "0.9rem",
+                            borderBottom: "1px solid #eee",
+                          }}
+                        >
+                          {child.label}
+                        </a>
                       ))}
                     </div>
                   )}
@@ -555,11 +1087,38 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
                 </div>
               ))}
             </nav>
-            <div style={{ padding: "20px 24px", borderTop: "1px solid #eee", display: "flex", gap: 16 }}>
-              <a href={config.accountUrl || "/account/login"} style={{ display: "flex", alignItems: "center", gap: 8, color: "#333", textDecoration: "none", fontSize: "0.9rem" }}>
+            <div
+              style={{
+                padding: "20px 24px",
+                borderTop: "1px solid #eee",
+                display: "flex",
+                gap: 16,
+              }}
+            >
+              <a
+                href={config.accountUrl || "/account/login"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  color: "#333",
+                  textDecoration: "none",
+                  fontSize: "0.9rem",
+                }}
+              >
                 <UserIcon /> Account
               </a>
-              <a href={config.wishlistUrl || "/wishlist"} style={{ display: "flex", alignItems: "center", gap: 8, color: "#333", textDecoration: "none", fontSize: "0.9rem" }}>
+              <a
+                href={config.wishlistUrl || "/wishlist"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  color: "#333",
+                  textDecoration: "none",
+                  fontSize: "0.9rem",
+                }}
+              >
                 <HeartIcon /> Wishlist
               </a>
             </div>
@@ -626,121 +1185,230 @@ export function SFFooter() {
   return (
     <footer
       className="sf-footer"
-      style={{
-        ["--footer-pad-y" as string]: `${config.footerPaddingY ?? 60}px`,
-        ["--footer-m-pad-y" as string]: `${config.footerMobilePaddingY ?? 24}px`,
-        ["--footer-nav-font-size" as string]: `${config.footerNavFontSize ?? 14}px`,
-        ["--footer-nav-m-font-size" as string]: `${config.footerNavMobileFontSize ?? config.footerNavFontSize ?? 14}px`,
-      } as React.CSSProperties}
+      style={
+        {
+          ["--footer-pad-y" as string]: `${config.footerPaddingY ?? 60}px`,
+          ["--footer-m-pad-y" as string]: `${config.footerMobilePaddingY ?? 24}px`,
+          ["--footer-nav-font-size" as string]: `${config.footerNavFontSize ?? 14}px`,
+          ["--footer-nav-m-font-size" as string]: `${config.footerNavMobileFontSize ?? config.footerNavFontSize ?? 14}px`,
+        } as React.CSSProperties
+      }
     >
       {/* Desktop: original 4-column grid */}
       <div className="sf-footer-grid sf-footer-desktop">
         <div className="sf-footer-brand">
           {config.logoImageUrl ? (
-            <a href="/"><img src={config.logoImageUrl} alt={config.logoText} style={{ height: 36, objectFit: "contain", marginBottom: 12 }} /></a>
+            <a href="/">
+              <img
+                src={config.logoImageUrl}
+                alt={config.logoText}
+                style={{ height: 36, objectFit: "contain", marginBottom: 12 }}
+              />
+            </a>
           ) : (
-            <a href="/" className="sf-logo">{config.logoText}</a>
+            <a href="/" className="sf-logo">
+              {config.logoText}
+            </a>
           )}
           <p>{config.footerAbout}</p>
           <div className="sf-social-links" style={{ marginTop: 16 }}>
-            {socialItems.filter(s => s.url).map(s => (
-              <a key={s.key} href={s.url} className="sf-social-link" title={s.label} target="_blank" rel="noopener noreferrer">
-                {SOCIAL_ICON_MAP[s.key] || s.label}
-              </a>
-            ))}
+            {socialItems
+              .filter(s => s.url)
+              .map(s => (
+                <a
+                  key={s.key}
+                  href={s.url}
+                  className="sf-social-link"
+                  title={s.label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {SOCIAL_ICON_MAP[s.key] || s.label}
+                </a>
+              ))}
           </div>
         </div>
         <div className="sf-footer-col">
           <h4>Shop</h4>
           <ul className="sf-footer-links">
-            <li><a href="/collections">Shop All</a></li>
-            <li><a href="/collections/new-arrivals">New Arrivals</a></li>
-            <li><a href="/collections/sale">Sale</a></li>
+            <li>
+              <a href="/collections">Shop All</a>
+            </li>
+            <li>
+              <a href="/collections/new-arrivals">New Arrivals</a>
+            </li>
+            <li>
+              <a href="/collections/sale">Sale</a>
+            </li>
           </ul>
         </div>
         <div className="sf-footer-col">
           <h4>Company</h4>
           <ul className="sf-footer-links">
-            <li><a href="/about">Our Story</a></li>
-            <li><a href="/blog">Blog</a></li>
-            <li><a href="/sustainability">Sustainability</a></li>
+            <li>
+              <a href="/about">Our Story</a>
+            </li>
+            <li>
+              <a href="/blog">Blog</a>
+            </li>
+            <li>
+              <a href="/sustainability">Sustainability</a>
+            </li>
           </ul>
         </div>
         <div className="sf-footer-col">
           <h4>Help</h4>
           <ul className="sf-footer-links">
-            <li><a href="/contact">Contact Us</a></li>
-            <li><a href="/returns">Shipping & Returns</a></li>
-            <li><a href="/size-guide">Size Guide</a></li>
+            <li>
+              <a href="/contact">Contact Us</a>
+            </li>
+            <li>
+              <a href="/returns">Shipping & Returns</a>
+            </li>
+            <li>
+              <a href="/size-guide">Size Guide</a>
+            </li>
           </ul>
         </div>
       </div>
 
       {/* Mobile: stacked layout — brand centered on top, nav columns in 3-col row, social at bottom */}
-        <div className="sf-footer-mobile">
-          {/* Brand + tagline */}
-          <div className="sf-footer-mobile-brand">
-            {config.logoImageUrl ? (
-              <a href="/"><img src={config.logoImageUrl} alt={config.logoText} style={{ height: 36, objectFit: "contain" }} /></a>
-            ) : (
-              <a href="/" className="sf-logo" style={{ color: "#4CAF82", fontSize: "1.4rem", display: "block", marginBottom: 8 }}>{config.logoText}</a>
-            )}
-            {config.footerAbout && (
-              <p className="sf-footer-mobile-tagline">{config.footerAbout}</p>
-            )}
-          </div>
-          {/* Newsletter */}
-          <div className="sf-footer-mobile-newsletter">
-            <p className="sf-footer-mobile-newsletter-label">Never miss out</p>
-            <p className="sf-footer-mobile-newsletter-sub">Sign up to our newsletter and be the first notified about new arrivals, offers and more.</p>
-            <form className="sf-footer-mobile-newsletter-form" onSubmit={e => e.preventDefault()}>
-              <input type="email" placeholder="E-mail" className="sf-footer-mobile-newsletter-input" />
-              <button type="submit" className="sf-footer-mobile-newsletter-btn" aria-label="Subscribe">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
-              </button>
-            </form>
-          </div>
-          {/* Nav links: 2-column grid */}
-          <div className="sf-footer-mobile-nav">
-            <div className="sf-footer-col">
-              <h4>Shop</h4>
-              <ul className="sf-footer-links">
-                <li><a href="/collections">Shop All</a></li>
-                <li><a href="/collections/new-arrivals">New Arrivals</a></li>
-                <li><a href="/collections/sale">Sale</a></li>
-              </ul>
-            </div>
-            <div className="sf-footer-col">
-              <h4>Support</h4>
-              <ul className="sf-footer-links">
-                <li><a href="/contact">Contact Us</a></li>
-                <li><a href="/returns">Returns</a></li>
-                <li><a href="/size-guide">Size Guide</a></li>
-                <li><a href="/shipping">Shipping Information</a></li>
-              </ul>
-            </div>
-          </div>
-          {/* Explore section — full width below the 2-col grid */}
-          <div className="sf-footer-mobile-explore">
-            <h4>Explore</h4>
+      <div className="sf-footer-mobile">
+        {/* Brand + tagline */}
+        <div className="sf-footer-mobile-brand">
+          {config.logoImageUrl ? (
+            <a href="/">
+              <img
+                src={config.logoImageUrl}
+                alt={config.logoText}
+                style={{ height: 36, objectFit: "contain" }}
+              />
+            </a>
+          ) : (
+            <a
+              href="/"
+              className="sf-logo"
+              style={{
+                color: "#4CAF82",
+                fontSize: "1.4rem",
+                display: "block",
+                marginBottom: 8,
+              }}
+            >
+              {config.logoText}
+            </a>
+          )}
+          {config.footerAbout && (
+            <p className="sf-footer-mobile-tagline">{config.footerAbout}</p>
+          )}
+        </div>
+        {/* Newsletter */}
+        <div className="sf-footer-mobile-newsletter">
+          <p className="sf-footer-mobile-newsletter-label">Never miss out</p>
+          <p className="sf-footer-mobile-newsletter-sub">
+            Sign up to our newsletter and be the first notified about new
+            arrivals, offers and more.
+          </p>
+          <form
+            className="sf-footer-mobile-newsletter-form"
+            onSubmit={e => e.preventDefault()}
+          >
+            <input
+              type="email"
+              placeholder="E-mail"
+              className="sf-footer-mobile-newsletter-input"
+            />
+            <button
+              type="submit"
+              className="sf-footer-mobile-newsletter-btn"
+              aria-label="Subscribe"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </form>
+        </div>
+        {/* Nav links: 2-column grid */}
+        <div className="sf-footer-mobile-nav">
+          <div className="sf-footer-col">
+            <h4>Shop</h4>
             <ul className="sf-footer-links">
-              <li><a href="/about">Our Story</a></li>
-              <li><a href="/blog">Blog</a></li>
-              <li><a href="/sustainability">Sustainability</a></li>
+              <li>
+                <a href="/collections">Shop All</a>
+              </li>
+              <li>
+                <a href="/collections/new-arrivals">New Arrivals</a>
+              </li>
+              <li>
+                <a href="/collections/sale">Sale</a>
+              </li>
             </ul>
           </div>
-          {/* Social icons */}
-          <div className="sf-footer-mobile-social">
-            {socialItems.filter(s => s.url).map(s => (
-              <a key={s.key} href={s.url} className="sf-social-link" title={s.label} target="_blank" rel="noopener noreferrer">
+          <div className="sf-footer-col">
+            <h4>Support</h4>
+            <ul className="sf-footer-links">
+              <li>
+                <a href="/contact">Contact Us</a>
+              </li>
+              <li>
+                <a href="/returns">Returns</a>
+              </li>
+              <li>
+                <a href="/size-guide">Size Guide</a>
+              </li>
+              <li>
+                <a href="/shipping">Shipping Information</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        {/* Explore section — full width below the 2-col grid */}
+        <div className="sf-footer-mobile-explore">
+          <h4>Explore</h4>
+          <ul className="sf-footer-links">
+            <li>
+              <a href="/about">Our Story</a>
+            </li>
+            <li>
+              <a href="/blog">Blog</a>
+            </li>
+            <li>
+              <a href="/sustainability">Sustainability</a>
+            </li>
+          </ul>
+        </div>
+        {/* Social icons */}
+        <div className="sf-footer-mobile-social">
+          {socialItems
+            .filter(s => s.url)
+            .map(s => (
+              <a
+                key={s.key}
+                href={s.url}
+                className="sf-social-link"
+                title={s.label}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {SOCIAL_ICON_MAP[s.key] || s.label}
               </a>
             ))}
-          </div>
         </div>
+      </div>
 
       <div className="sf-footer-bottom">
-        <p>{config.footerCopyright || `\u00A9 ${new Date().getFullYear()} ${config.logoText}. All rights reserved.`}</p>
+        <p>
+          {config.footerCopyright ||
+            `\u00A9 ${new Date().getFullYear()} ${config.logoText}. All rights reserved.`}
+        </p>
       </div>
     </footer>
   );

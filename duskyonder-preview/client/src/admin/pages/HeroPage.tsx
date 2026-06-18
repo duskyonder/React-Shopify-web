@@ -4,24 +4,48 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { GripVertical, Plus, Trash2, Save } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
 
 const POSITIONS = [
-  "top-left", "top-center", "top-right",
-  "middle-left", "middle-center", "middle-right",
-  "bottom-left", "bottom-center", "bottom-right",
+  "top-left",
+  "top-center",
+  "top-right",
+  "middle-left",
+  "middle-center",
+  "middle-right",
+  "bottom-left",
+  "bottom-center",
+  "bottom-right",
 ] as const;
 
 const POS_LABELS: Record<string, string> = {
-  "top-left": "左上", "top-center": "上中", "top-right": "右上",
-  "middle-left": "左中", "middle-center": "居中", "middle-right": "右中",
-  "bottom-left": "左下", "bottom-center": "下中", "bottom-right": "右下",
+  "top-left": "左上",
+  "top-center": "上中",
+  "top-right": "右上",
+  "middle-left": "左中",
+  "middle-center": "居中",
+  "middle-right": "右中",
+  "bottom-left": "左下",
+  "bottom-center": "下中",
+  "bottom-right": "右下",
 };
 
-function PositionGrid({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function PositionGrid({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div className="grid grid-cols-3 gap-1 w-28">
       {POSITIONS.map(pos => (
@@ -43,7 +67,8 @@ function PositionGrid({ value, onChange }: { value: string; onChange: (v: string
 }
 
 export default function HeroPage() {
-  const { config, updateConfig, updateSlide, addSlide, removeSlide } = useThemeConfig();
+  const { config, updateConfig, updateSlide, addSlide, removeSlide } =
+    useThemeConfig();
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const slides = config.slides ?? [];
 
@@ -84,7 +109,9 @@ export default function HeroPage() {
               <Input
                 type="number"
                 value={config.heroHeight ?? 600}
-                onChange={e => updateConfig({ heroHeight: Number(e.target.value) })}
+                onChange={e =>
+                  updateConfig({ heroHeight: Number(e.target.value) })
+                }
                 className="h-8"
               />
             </div>
@@ -93,7 +120,9 @@ export default function HeroPage() {
               <Input
                 type="number"
                 value={config.slideshowSpeed ?? 5}
-                onChange={e => updateConfig({ slideshowSpeed: Number(e.target.value) })}
+                onChange={e =>
+                  updateConfig({ slideshowSpeed: Number(e.target.value) })
+                }
                 className="h-8"
               />
             </div>
@@ -107,16 +136,19 @@ export default function HeroPage() {
             key={slide.id}
             draggable
             onDragStart={() => handleDragStart(index)}
-            onDragOver={(e) => handleDragOver(e, index)}
+            onDragOver={e => handleDragOver(e, index)}
             onDragEnd={handleDragEnd}
             className={`transition-all ${dragIndex === index ? "opacity-50 scale-[0.98]" : ""}`}
           >
             <CardHeader className="pb-3 pt-4 px-4">
               <div className="flex items-center gap-2">
                 <GripVertical className="w-5 h-5 text-muted-foreground cursor-move shrink-0" />
-                <CardTitle className="text-sm flex-1">Banner {index + 1}</CardTitle>
+                <CardTitle className="text-sm flex-1">
+                  Banner {index + 1}
+                </CardTitle>
                 <Button
-                  variant="ghost" size="sm"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => removeSlide(slide.id)}
                   className="text-destructive hover:text-destructive h-8 w-8 p-0"
                 >
@@ -132,7 +164,7 @@ export default function HeroPage() {
                     section="hero"
                     slot={`slide_${slide.id}_desktop`}
                     currentUrl={slide.imageUrl}
-                    onUploaded={(url) => updateSlide(slide.id, { imageUrl: url })}
+                    onUploaded={url => updateSlide(slide.id, { imageUrl: url })}
                     onClear={() => updateSlide(slide.id, { imageUrl: "" })}
                     aspectRatio="16/5"
                     label="上传桌面端图片"
@@ -144,8 +176,12 @@ export default function HeroPage() {
                     section="hero"
                     slot={`slide_${slide.id}_mobile`}
                     currentUrl={slide.mobileImageUrl}
-                    onUploaded={(url) => updateSlide(slide.id, { mobileImageUrl: url })}
-                    onClear={() => updateSlide(slide.id, { mobileImageUrl: "" })}
+                    onUploaded={url =>
+                      updateSlide(slide.id, { mobileImageUrl: url })
+                    }
+                    onClear={() =>
+                      updateSlide(slide.id, { mobileImageUrl: "" })
+                    }
                     aspectRatio="3/4"
                     label="上传移动端图片"
                   />
@@ -157,7 +193,9 @@ export default function HeroPage() {
                   <Label className="text-xs">标题</Label>
                   <Input
                     value={slide.title}
-                    onChange={e => updateSlide(slide.id, { title: e.target.value })}
+                    onChange={e =>
+                      updateSlide(slide.id, { title: e.target.value })
+                    }
                     placeholder="Banner 标题"
                     className="h-8"
                   />
@@ -166,7 +204,9 @@ export default function HeroPage() {
                   <Label className="text-xs">副标题</Label>
                   <Input
                     value={slide.subtitle}
-                    onChange={e => updateSlide(slide.id, { subtitle: e.target.value })}
+                    onChange={e =>
+                      updateSlide(slide.id, { subtitle: e.target.value })
+                    }
                     placeholder="Banner 副标题"
                     className="h-8"
                   />
@@ -178,7 +218,9 @@ export default function HeroPage() {
                   <Label className="text-xs">按钮文本</Label>
                   <Input
                     value={slide.buttonLabel}
-                    onChange={e => updateSlide(slide.id, { buttonLabel: e.target.value })}
+                    onChange={e =>
+                      updateSlide(slide.id, { buttonLabel: e.target.value })
+                    }
                     placeholder="如: Shop Now"
                     className="h-8"
                   />
@@ -187,7 +229,9 @@ export default function HeroPage() {
                   <Label className="text-xs">按钮链接</Label>
                   <Input
                     value={slide.buttonLink}
-                    onChange={e => updateSlide(slide.id, { buttonLink: e.target.value })}
+                    onChange={e =>
+                      updateSlide(slide.id, { buttonLink: e.target.value })
+                    }
                     placeholder="/collections/all"
                     className="h-8"
                   />
@@ -199,35 +243,47 @@ export default function HeroPage() {
                   <Label className="text-xs">Text Position (Desktop)</Label>
                   <PositionGrid
                     value={slide.contentPosition ?? "middle-center"}
-                    onChange={(v) => updateSlide(slide.id, { contentPosition: v })}
+                    onChange={v =>
+                      updateSlide(slide.id, { contentPosition: v })
+                    }
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Text Position (Mobile)</Label>
                   <PositionGrid
-                    value={slide.contentPositionMobile ?? slide.contentPosition ?? "middle-center"}
-                    onChange={(v) => updateSlide(slide.id, { contentPositionMobile: v })}
+                    value={
+                      slide.contentPositionMobile ??
+                      slide.contentPosition ??
+                      "middle-center"
+                    }
+                    onChange={v =>
+                      updateSlide(slide.id, { contentPositionMobile: v })
+                    }
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Text Color Mode</Label>
                   <div className="flex gap-2 mt-1">
                     <button
-                      onClick={() => updateSlide(slide.id, { textColorMode: 'light' })}
+                      onClick={() =>
+                        updateSlide(slide.id, { textColorMode: "light" })
+                      }
                       className={`px-3 py-1.5 rounded border text-xs font-medium transition-colors ${
-                        (slide.textColorMode ?? 'light') === 'light'
-                          ? 'bg-gray-900 text-white border-gray-900'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        (slide.textColorMode ?? "light") === "light"
+                          ? "bg-gray-900 text-white border-gray-900"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                       }`}
                     >
                       Light (White Text)
                     </button>
                     <button
-                      onClick={() => updateSlide(slide.id, { textColorMode: 'dark' })}
+                      onClick={() =>
+                        updateSlide(slide.id, { textColorMode: "dark" })
+                      }
                       className={`px-3 py-1.5 rounded border text-xs font-medium transition-colors ${
-                        slide.textColorMode === 'dark'
-                          ? 'bg-gray-900 text-white border-gray-900'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        slide.textColorMode === "dark"
+                          ? "bg-gray-900 text-white border-gray-900"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                       }`}
                     >
                       Dark (Black Text)

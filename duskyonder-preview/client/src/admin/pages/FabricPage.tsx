@@ -5,11 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 
 export default function FabricPage() {
-  const { config, updateConfig, updateFabric, addFabric, removeFabric } = useThemeConfig();
+  const { config, updateConfig, updateFabric, addFabric, removeFabric } =
+    useThemeConfig();
   const fabrics = config.fabrics ?? [];
 
   const handleAdd = () => {
@@ -21,7 +28,9 @@ export default function FabricPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold">面料板块</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">管理首页面料特性展示</p>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            管理首页面料特性展示
+          </p>
         </div>
         <Button onClick={handleAdd} size="sm" variant="outline">
           <Plus className="w-4 h-4 mr-1" /> 添加面料
@@ -47,10 +56,14 @@ export default function FabricPage() {
                 value={String(config.fabricsPerRow ?? 3)}
                 onValueChange={v => updateConfig({ fabricsPerRow: Number(v) })}
               >
-                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {[1, 2, 3, 4].map(n => (
-                    <SelectItem key={n} value={String(n)}>{n} 列</SelectItem>
+                    <SelectItem key={n} value={String(n)}>
+                      {n} 列
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -60,13 +73,16 @@ export default function FabricPage() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {fabrics.map((fabric) => (
+        {fabrics.map(fabric => (
           <Card key={fabric.id}>
             <CardContent className="pt-4 pb-4 px-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{fabric.title || "未命名"}</span>
+                <span className="text-sm font-medium">
+                  {fabric.title || "未命名"}
+                </span>
                 <Button
-                  variant="ghost" size="sm"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => removeFabric(fabric.id)}
                   className="text-destructive hover:text-destructive h-8 w-8 p-0"
                 >
@@ -77,7 +93,9 @@ export default function FabricPage() {
                 <Label className="text-xs">图标（Emoji 或文字）</Label>
                 <Input
                   value={fabric.icon}
-                  onChange={e => updateFabric(fabric.id, { icon: e.target.value })}
+                  onChange={e =>
+                    updateFabric(fabric.id, { icon: e.target.value })
+                  }
                   placeholder="✨"
                   className="h-8"
                 />
@@ -86,7 +104,9 @@ export default function FabricPage() {
                 <Label className="text-xs">标题</Label>
                 <Input
                   value={fabric.title}
-                  onChange={e => updateFabric(fabric.id, { title: e.target.value })}
+                  onChange={e =>
+                    updateFabric(fabric.id, { title: e.target.value })
+                  }
                   placeholder="面料名称"
                   className="h-8"
                 />
@@ -95,7 +115,9 @@ export default function FabricPage() {
                 <Label className="text-xs">描述</Label>
                 <Textarea
                   value={fabric.description}
-                  onChange={e => updateFabric(fabric.id, { description: e.target.value })}
+                  onChange={e =>
+                    updateFabric(fabric.id, { description: e.target.value })
+                  }
                   placeholder="面料特性描述"
                   rows={3}
                   className="text-sm resize-none"

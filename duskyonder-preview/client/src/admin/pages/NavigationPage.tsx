@@ -5,13 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GripVertical, Plus, Trash2, ChevronDown, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
+import {
+  GripVertical,
+  Plus,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  RefreshCw,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
 import ImageUploader from "@/components/ImageUploader";
 
 export default function NavigationPage() {
-  const { config, updateConfig, updateNavItem, addNavItem, removeNavItem, addNavChild, removeNavChild, updateNavChild } = useThemeConfig();
+  const {
+    config,
+    updateConfig,
+    updateNavItem,
+    addNavItem,
+    removeNavItem,
+    addNavChild,
+    removeNavChild,
+    updateNavChild,
+  } = useThemeConfig();
   const navItems = config.navItems ?? [];
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -32,11 +49,12 @@ export default function NavigationPage() {
           id: `nav_${item.id ?? Date.now()}_${Math.random().toString(36).slice(2)}`,
           label: item.title,
           link: item.url ?? "/",
-          children: item.items?.map((child: any) => ({
-            id: `nav_${child.id ?? Date.now()}_${Math.random().toString(36).slice(2)}`,
-            label: child.title,
-            link: child.url ?? "/",
-          })) ?? [],
+          children:
+            item.items?.map((child: any) => ({
+              id: `nav_${child.id ?? Date.now()}_${Math.random().toString(36).slice(2)}`,
+              label: child.title,
+              link: child.url ?? "/",
+            })) ?? [],
         }));
         updateConfig({ navItems: imported });
         toast.success(`已从 Shopify 导入 ${imported.length} 个导航项`);
@@ -69,7 +87,9 @@ export default function NavigationPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl font-semibold">导航栏</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">管理网站顶部导航菜单</p>
+        <p className="text-muted-foreground text-sm mt-0.5">
+          管理网站顶部导航菜单
+        </p>
       </div>
 
       {/* Logo Settings */}
@@ -85,7 +105,7 @@ export default function NavigationPage() {
                 section="logo"
                 slot="main"
                 currentUrl={config.logoImageUrl}
-                onUploaded={(url) => updateConfig({ logoImageUrl: url })}
+                onUploaded={url => updateConfig({ logoImageUrl: url })}
                 onClear={() => updateConfig({ logoImageUrl: undefined })}
                 aspectRatio="3/1"
                 label="Upload Logo"
@@ -97,7 +117,7 @@ export default function NavigationPage() {
                 section="logo"
                 slot="white"
                 currentUrl={config.logoImageUrlWhite}
-                onUploaded={(url) => updateConfig({ logoImageUrlWhite: url })}
+                onUploaded={url => updateConfig({ logoImageUrlWhite: url })}
                 onClear={() => updateConfig({ logoImageUrlWhite: undefined })}
                 aspectRatio="3/1"
                 label="Upload White Logo"
@@ -115,17 +135,25 @@ export default function NavigationPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs">桌面端 Logo 高度: {config.logoDesktopHeight ?? 40}px</Label>
+              <Label className="text-xs">
+                桌面端 Logo 高度: {config.logoDesktopHeight ?? 40}px
+              </Label>
               <Slider
-                min={20} max={100} step={2}
+                min={20}
+                max={100}
+                step={2}
                 value={[config.logoDesktopHeight ?? 40]}
                 onValueChange={([v]) => updateConfig({ logoDesktopHeight: v })}
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">移动端 Logo 高度: {config.logoMobileHeight ?? 32}px</Label>
+              <Label className="text-xs">
+                移动端 Logo 高度: {config.logoMobileHeight ?? 32}px
+              </Label>
               <Slider
-                min={16} max={80} step={2}
+                min={16}
+                max={80}
+                step={2}
                 value={[config.logoMobileHeight ?? 32]}
                 onValueChange={([v]) => updateConfig({ logoMobileHeight: v })}
               />
@@ -141,7 +169,8 @@ export default function NavigationPage() {
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-3">
           <p className="text-xs text-muted-foreground">
-            在 Shopify 后台 → 在线商店 → 导航 中找到菜单，复制其 handle（URL 中的最后一段）
+            在 Shopify 后台 → 在线商店 → 导航 中找到菜单，复制其 handle（URL
+            中的最后一段）
           </p>
           <div className="flex gap-2 flex-wrap">
             {["main-menu", "footer", "top-menu", "mobile-menu"].map(h => (
@@ -149,7 +178,9 @@ export default function NavigationPage() {
                 key={h}
                 onClick={() => setMenuHandle(h)}
                 className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                  menuHandle === h ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-accent"
+                  menuHandle === h
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border hover:bg-accent"
                 }`}
               >
                 {h}
@@ -168,10 +199,11 @@ export default function NavigationPage() {
               onClick={handleImportFromShopify}
               disabled={getMenuQuery.isFetching}
             >
-              {getMenuQuery.isFetching
-                ? <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                : <RefreshCw className="w-4 h-4 mr-1" />
-              }
+              {getMenuQuery.isFetching ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-1" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-1" />
+              )}
               导入
             </Button>
           </div>
@@ -180,7 +212,9 @@ export default function NavigationPage() {
 
       {/* Manual Edit */}
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium text-muted-foreground">当前导航项（可手动编辑）</h2>
+        <h2 className="text-sm font-medium text-muted-foreground">
+          当前导航项（可手动编辑）
+        </h2>
         <Button onClick={addNavItem} size="sm" variant="outline">
           <Plus className="w-4 h-4 mr-1" /> 添加导航项
         </Button>
@@ -192,7 +226,7 @@ export default function NavigationPage() {
             key={item.id}
             draggable
             onDragStart={() => handleDragStart(index)}
-            onDragOver={(e) => handleDragOver(e, index)}
+            onDragOver={e => handleDragOver(e, index)}
             onDragEnd={() => setDragIndex(null)}
             className={`transition-all ${dragIndex === index ? "opacity-50 scale-[0.98]" : ""}`}
           >
@@ -202,13 +236,17 @@ export default function NavigationPage() {
                 <GripVertical className="w-4 h-4 text-muted-foreground shrink-0 cursor-move" />
                 <Input
                   value={item.label}
-                  onChange={e => updateNavItem(item.id, { label: e.target.value })}
+                  onChange={e =>
+                    updateNavItem(item.id, { label: e.target.value })
+                  }
                   placeholder="导航文本"
                   className="h-7 text-sm flex-1"
                 />
                 <Input
                   value={item.link}
-                  onChange={e => updateNavItem(item.id, { link: e.target.value })}
+                  onChange={e =>
+                    updateNavItem(item.id, { link: e.target.value })
+                  }
                   placeholder="/path"
                   className="h-7 text-sm flex-1"
                 />
@@ -216,13 +254,15 @@ export default function NavigationPage() {
                   onClick={() => toggleExpand(item.id)}
                   className="h-7 w-7 flex items-center justify-center hover:bg-accent rounded transition-colors shrink-0"
                 >
-                  {expanded.has(item.id)
-                    ? <ChevronDown className="w-3.5 h-3.5" />
-                    : <ChevronRight className="w-3.5 h-3.5" />
-                  }
+                  {expanded.has(item.id) ? (
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  ) : (
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  )}
                 </button>
                 <Button
-                  variant="ghost" size="sm"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => removeNavItem(item.id)}
                   className="text-destructive hover:text-destructive h-7 w-7 p-0 shrink-0"
                 >
@@ -237,18 +277,27 @@ export default function NavigationPage() {
                     <div key={child.id} className="flex items-center gap-2">
                       <Input
                         value={child.label}
-                        onChange={e => updateNavChild(item.id, child.id, { label: e.target.value })}
+                        onChange={e =>
+                          updateNavChild(item.id, child.id, {
+                            label: e.target.value,
+                          })
+                        }
                         placeholder="子菜单文本"
                         className="h-7 text-xs flex-1"
                       />
                       <Input
                         value={child.link}
-                        onChange={e => updateNavChild(item.id, child.id, { link: e.target.value })}
+                        onChange={e =>
+                          updateNavChild(item.id, child.id, {
+                            link: e.target.value,
+                          })
+                        }
                         placeholder="/path"
                         className="h-7 text-xs flex-1"
                       />
                       <Button
-                        variant="ghost" size="sm"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => removeNavChild(item.id, child.id)}
                         className="text-destructive hover:text-destructive h-7 w-7 p-0 shrink-0"
                       >
@@ -257,7 +306,8 @@ export default function NavigationPage() {
                     </div>
                   ))}
                   <Button
-                    variant="ghost" size="sm"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => addNavChild(item.id)}
                     className="h-7 text-xs text-muted-foreground hover:text-foreground"
                   >

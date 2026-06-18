@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ThemeConfigProvider } from "./contexts/ThemeConfigContext";
@@ -20,7 +21,9 @@ const BlogIndex = lazy(() => import("./pages/BlogIndex"));
 const BlogArticle = lazy(() => import("./pages/BlogArticle"));
 const InfluencerPage = lazy(() => import("./pages/InfluencerPage"));
 const InfluencerApplyPage = lazy(() => import("./pages/InfluencerApplyPage"));
-const InfluencerCreatorPage = lazy(() => import("./pages/InfluencerCreatorPage"));
+const InfluencerCreatorPage = lazy(
+  () => import("./pages/InfluencerCreatorPage")
+);
 const PolicyPage = lazy(() => import("./pages/PolicyPage"));
 const ReturnsPage = lazy(() => import("./pages/ReturnsPage"));
 const FabricGuidePage = lazy(() => import("./pages/FabricGuidePage"));
@@ -48,9 +51,7 @@ const AdminNewsletterPage = lazy(() => import("./admin/pages/NewsletterPage"));
 
 // 页面加载中的骨架屏（轻量占位）
 function PageSkeleton() {
-  return (
-    <div style={{ minHeight: "100vh", background: "#faf9f7" }} />
-  );
+  return <div style={{ minHeight: "100vh", background: "#faf9f7" }} />;
 }
 
 function Router() {
@@ -65,12 +66,34 @@ function Router() {
         <Route path={"/pages/blog"} component={BlogIndex} />
         <Route path={"/pages/blog/:handle"} component={BlogArticle} />
         <Route path={"/pages/influencer"} component={InfluencerPage} />
-        <Route path={"/pages/influencer/apply"} component={InfluencerApplyPage} />
-        <Route path={"/pages/influencer/:handle"} component={InfluencerCreatorPage} />
-        <Route path={"/pages/return-policy"} component={() => <PolicyPage pageKey="returnPolicy" showFaqs showHighlights />} />
-        <Route path={"/pages/privacy-policy"} component={() => <PolicyPage pageKey="privacyPolicy" />} />
-        <Route path={"/pages/shipping"} component={() => <PolicyPage pageKey="shippingPolicy" showHighlights />} />
-        <Route path={"/pages/terms-of-service"} component={() => <PolicyPage pageKey="termsOfService" />} />
+        <Route
+          path={"/pages/influencer/apply"}
+          component={InfluencerApplyPage}
+        />
+        <Route
+          path={"/pages/influencer/:handle"}
+          component={InfluencerCreatorPage}
+        />
+        <Route
+          path={"/pages/return-policy"}
+          component={() => (
+            <PolicyPage pageKey="returnPolicy" showFaqs showHighlights />
+          )}
+        />
+        <Route
+          path={"/pages/privacy-policy"}
+          component={() => <PolicyPage pageKey="privacyPolicy" />}
+        />
+        <Route
+          path={"/pages/shipping"}
+          component={() => (
+            <PolicyPage pageKey="shippingPolicy" showHighlights />
+          )}
+        />
+        <Route
+          path={"/pages/terms-of-service"}
+          component={() => <PolicyPage pageKey="termsOfService" />}
+        />
         <Route path={"/pages/returns"} component={ReturnsPage} />
         <Route path={"/pages/fabric-guide"} component={FabricGuidePage} />
         <Route path={"/pages/size-guide"} component={SizeGuidePage} />
@@ -83,17 +106,94 @@ function Router() {
         <Route path={"/wishlist"} component={WishlistPage} />
         <Route path={"/search"} component={SearchPage} />
         {/* Admin routes */}
-        <Route path="/admin" component={() => <AdminLayout><AdminSectionsPage /></AdminLayout>} />
-        <Route path="/admin/hero" component={() => <AdminLayout><AdminHeroPage /></AdminLayout>} />
-        <Route path="/admin/promo" component={() => <AdminLayout><AdminPromoBarPage /></AdminLayout>} />
-        <Route path="/admin/categories" component={() => <AdminLayout><AdminCategoriesPage /></AdminLayout>} />
-        <Route path="/admin/products" component={() => <AdminLayout><AdminProductsPage /></AdminLayout>} />
-        <Route path="/admin/videos" component={() => <AdminLayout><AdminVideosPage /></AdminLayout>} />
-        <Route path="/admin/series" component={() => <AdminLayout><AdminSeriesPage /></AdminLayout>} />
-        <Route path="/admin/fabric" component={() => <AdminLayout><AdminFabricPage /></AdminLayout>} />
-        <Route path="/admin/footer" component={() => <AdminLayout><AdminFooterPage /></AdminLayout>} />
-        <Route path="/admin/navigation" component={() => <AdminLayout><AdminNavigationPage /></AdminLayout>} />
-        <Route path="/admin/newsletter" component={() => <AdminLayout><AdminNewsletterPage /></AdminLayout>} />
+        <Route
+          path="/admin"
+          component={() => (
+            <AdminLayout>
+              <AdminSectionsPage />
+            </AdminLayout>
+          )}
+        />
+        <Route
+          path="/admin/hero"
+          component={() => (
+            <AdminLayout>
+              <AdminHeroPage />
+            </AdminLayout>
+          )}
+        />
+        <Route
+          path="/admin/promo"
+          component={() => (
+            <AdminLayout>
+              <AdminPromoBarPage />
+            </AdminLayout>
+          )}
+        />
+        <Route
+          path="/admin/categories"
+          component={() => (
+            <AdminLayout>
+              <AdminCategoriesPage />
+            </AdminLayout>
+          )}
+        />
+        <Route
+          path="/admin/products"
+          component={() => (
+            <AdminLayout>
+              <AdminProductsPage />
+            </AdminLayout>
+          )}
+        />
+        <Route
+          path="/admin/videos"
+          component={() => (
+            <AdminLayout>
+              <AdminVideosPage />
+            </AdminLayout>
+          )}
+        />
+        <Route
+          path="/admin/series"
+          component={() => (
+            <AdminLayout>
+              <AdminSeriesPage />
+            </AdminLayout>
+          )}
+        />
+        <Route
+          path="/admin/fabric"
+          component={() => (
+            <AdminLayout>
+              <AdminFabricPage />
+            </AdminLayout>
+          )}
+        />
+        <Route
+          path="/admin/footer"
+          component={() => (
+            <AdminLayout>
+              <AdminFooterPage />
+            </AdminLayout>
+          )}
+        />
+        <Route
+          path="/admin/navigation"
+          component={() => (
+            <AdminLayout>
+              <AdminNavigationPage />
+            </AdminLayout>
+          )}
+        />
+        <Route
+          path="/admin/newsletter"
+          component={() => (
+            <AdminLayout>
+              <AdminNewsletterPage />
+            </AdminLayout>
+          )}
+        />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>
@@ -111,6 +211,7 @@ function App() {
               <Toaster />
               <CartDrawer />
               <Router />
+              <SpeedInsights />
             </CartProvider>
           </ThemeConfigProvider>
         </TooltipProvider>

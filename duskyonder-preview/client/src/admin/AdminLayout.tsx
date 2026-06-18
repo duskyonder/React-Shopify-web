@@ -1,16 +1,39 @@
 import React, { useState } from "react";
 import { useLocation } from "wouter";
 import {
-  Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  LayoutDashboard, Image, Megaphone, Grid3X3, ShoppingBag, Video,
-  Layers, Shirt, PanelBottom, Navigation, LogOut, PanelLeft, Loader2, Mail,
+  LayoutDashboard,
+  Image,
+  Megaphone,
+  Grid3X3,
+  ShoppingBag,
+  Video,
+  Layers,
+  Shirt,
+  PanelBottom,
+  Navigation,
+  LogOut,
+  PanelLeft,
+  Loader2,
+  Mail,
 } from "lucide-react";
 
 const menuItems = [
@@ -47,7 +70,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
         <div className="w-full max-w-sm p-8 rounded-xl border border-border bg-card shadow-sm">
           <h1 className="text-xl font-semibold mb-1 text-center">管理后台</h1>
-          <p className="text-muted-foreground text-sm mb-6 text-center">请输入管理员密码</p>
+          <p className="text-muted-foreground text-sm mb-6 text-center">
+            请输入管理员密码
+          </p>
           <form
             onSubmit={e => {
               e.preventDefault();
@@ -87,7 +112,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <SidebarProvider defaultOpen={!collapsed}>
       <div className="flex min-h-screen w-full bg-muted/30">
-        <Sidebar collapsible="icon" className="border-r border-border/50 bg-background">
+        <Sidebar
+          collapsible="icon"
+          className="border-r border-border/50 bg-background"
+        >
           <SidebarHeader className="h-14 flex items-center justify-between px-3">
             <div className="flex items-center gap-2 overflow-hidden">
               <button
@@ -114,7 +142,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       tooltip={item.label}
                       className="h-10 font-normal transition-all"
                     >
-                      <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
+                      <item.icon
+                        className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : ""}`}
+                      />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -133,14 +163,21 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-xs font-medium truncate">{user?.name ?? "Admin"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</p>
+                    <p className="text-xs font-medium truncate">
+                      {user?.name ?? "Admin"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user?.email ?? ""}
+                    </p>
                   </div>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem
-                  onClick={() => { sessionStorage.removeItem("admin_authed"); setLocation("/"); }}
+                  onClick={() => {
+                    sessionStorage.removeItem("admin_authed");
+                    setLocation("/");
+                  }}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />

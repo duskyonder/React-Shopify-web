@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { useThemeConfig, type FooterColumn, type FooterLink, type SocialLinks } from "@/contexts/ThemeConfigContext";
+import {
+  useThemeConfig,
+  type FooterColumn,
+  type FooterLink,
+  type SocialLinks,
+} from "@/contexts/ThemeConfigContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,13 +15,24 @@ import { GripVertical, Plus, Trash2 } from "lucide-react";
 export default function FooterPage() {
   const { config, updateConfig } = useThemeConfig();
   const columns: FooterColumn[] = config.footerColumns ?? [];
-  const socialLinks: SocialLinks = config.socialLinks ?? { youtube: "", facebook: "", instagram: "", pinterest: "", twitter: "", tiktok: "" };
+  const socialLinks: SocialLinks = config.socialLinks ?? {
+    youtube: "",
+    facebook: "",
+    instagram: "",
+    pinterest: "",
+    twitter: "",
+    tiktok: "",
+  };
 
-  const saveColumns = (updated: FooterColumn[]) => updateConfig({ footerColumns: updated });
+  const saveColumns = (updated: FooterColumn[]) =>
+    updateConfig({ footerColumns: updated });
 
   // ---- Column operations ----
   const addColumn = () => {
-    saveColumns([...columns, { id: `col_${Date.now()}`, title: "New Column", links: [] }]);
+    saveColumns([
+      ...columns,
+      { id: `col_${Date.now()}`, title: "New Column", links: [] },
+    ]);
   };
 
   const removeColumn = (colId: string) => {
@@ -24,46 +40,82 @@ export default function FooterPage() {
   };
 
   const updateColumnTitle = (colId: string, title: string) => {
-    saveColumns(columns.map(c => c.id === colId ? { ...c, title } : c));
+    saveColumns(columns.map(c => (c.id === colId ? { ...c, title } : c)));
   };
 
   // ---- Link operations ----
   const addLink = (colId: string) => {
-    saveColumns(columns.map(c => c.id === colId
-      ? { ...c, links: [...c.links, { id: `link_${Date.now()}`, label: "New Link", link: "/" }] }
-      : c
-    ));
+    saveColumns(
+      columns.map(c =>
+        c.id === colId
+          ? {
+              ...c,
+              links: [
+                ...c.links,
+                { id: `link_${Date.now()}`, label: "New Link", link: "/" },
+              ],
+            }
+          : c
+      )
+    );
   };
 
   const removeLink = (colId: string, linkId: string) => {
-    saveColumns(columns.map(c => c.id === colId
-      ? { ...c, links: c.links.filter(l => l.id !== linkId) }
-      : c
-    ));
+    saveColumns(
+      columns.map(c =>
+        c.id === colId
+          ? { ...c, links: c.links.filter(l => l.id !== linkId) }
+          : c
+      )
+    );
   };
 
-  const updateLink = (colId: string, linkId: string, field: keyof FooterLink, value: string) => {
-    saveColumns(columns.map(c => c.id === colId
-      ? { ...c, links: c.links.map(l => l.id === linkId ? { ...l, [field]: value } : l) }
-      : c
-    ));
+  const updateLink = (
+    colId: string,
+    linkId: string,
+    field: keyof FooterLink,
+    value: string
+  ) => {
+    saveColumns(
+      columns.map(c =>
+        c.id === colId
+          ? {
+              ...c,
+              links: c.links.map(l =>
+                l.id === linkId ? { ...l, [field]: value } : l
+              ),
+            }
+          : c
+      )
+    );
   };
 
   // ---- Drag-sort links within a column ----
-  const [dragState, setDragState] = useState<{ colId: string; index: number } | null>(null);
+  const [dragState, setDragState] = useState<{
+    colId: string;
+    index: number;
+  } | null>(null);
 
-  const handleLinkDragStart = (colId: string, index: number) => setDragState({ colId, index });
+  const handleLinkDragStart = (colId: string, index: number) =>
+    setDragState({ colId, index });
 
-  const handleLinkDragOver = (e: React.DragEvent, colId: string, index: number) => {
+  const handleLinkDragOver = (
+    e: React.DragEvent,
+    colId: string,
+    index: number
+  ) => {
     e.preventDefault();
-    if (!dragState || dragState.colId !== colId || dragState.index === index) return;
+    if (!dragState || dragState.colId !== colId || dragState.index === index)
+      return;
     const col = columns.find(c => c.id === colId);
     if (!col) return;
     const updated = [...col.links];
     const [moved] = updated.splice(dragState.index, 1);
     updated.splice(index, 0, moved);
     setDragState({ colId, index });
-    saveColumns(columns.map(c => c.id === colId ? { ...c, links: updated } : c));
+    saveColumns(
+      columns.map(c => (c.id === colId ? { ...c, links: updated } : c))
+    );
   };
 
   // ---- Social links ----
@@ -71,14 +123,23 @@ export default function FooterPage() {
     updateConfig({ socialLinks: { ...socialLinks, [platform]: value } });
   };
 
-  const socialPlatforms: (keyof SocialLinks)[] = ["instagram", "tiktok", "youtube", "facebook", "pinterest", "twitter"];
+  const socialPlatforms: (keyof SocialLinks)[] = [
+    "instagram",
+    "tiktok",
+    "youtube",
+    "facebook",
+    "pinterest",
+    "twitter",
+  ];
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">页脚</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">管理页脚导航列和社交链接</p>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            管理页脚导航列和社交链接
+          </p>
         </div>
         <Button onClick={addColumn} size="sm" variant="outline">
           <Plus className="w-4 h-4 mr-1" /> 添加导航列
@@ -101,7 +162,7 @@ export default function FooterPage() {
       </Card>
 
       {/* Navigation Columns */}
-      {columns.map((col) => (
+      {columns.map(col => (
         <Card key={col.id}>
           <CardHeader className="pb-3 pt-4 px-4">
             <div className="flex items-center gap-2">
@@ -114,7 +175,8 @@ export default function FooterPage() {
                 />
               </CardTitle>
               <Button
-                variant="ghost" size="sm"
+                variant="ghost"
+                size="sm"
                 onClick={() => removeColumn(col.id)}
                 className="text-destructive hover:text-destructive h-8 w-8 p-0"
               >
@@ -128,27 +190,34 @@ export default function FooterPage() {
                 key={link.id}
                 draggable
                 onDragStart={() => handleLinkDragStart(col.id, i)}
-                onDragOver={(e) => handleLinkDragOver(e, col.id, i)}
+                onDragOver={e => handleLinkDragOver(e, col.id, i)}
                 onDragEnd={() => setDragState(null)}
                 className={`flex items-center gap-2 p-2 rounded-lg border bg-background transition-all ${
-                  dragState?.colId === col.id && dragState.index === i ? "opacity-50" : ""
+                  dragState?.colId === col.id && dragState.index === i
+                    ? "opacity-50"
+                    : ""
                 }`}
               >
                 <GripVertical className="w-4 h-4 text-muted-foreground shrink-0 cursor-move" />
                 <Input
                   value={link.label}
-                  onChange={e => updateLink(col.id, link.id, "label", e.target.value)}
+                  onChange={e =>
+                    updateLink(col.id, link.id, "label", e.target.value)
+                  }
                   placeholder="链接文本"
                   className="h-7 text-sm flex-1"
                 />
                 <Input
                   value={link.link}
-                  onChange={e => updateLink(col.id, link.id, "link", e.target.value)}
+                  onChange={e =>
+                    updateLink(col.id, link.id, "link", e.target.value)
+                  }
                   placeholder="/path"
                   className="h-7 text-sm flex-1"
                 />
                 <Button
-                  variant="ghost" size="sm"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => removeLink(col.id, link.id)}
                   className="text-destructive hover:text-destructive h-7 w-7 p-0 shrink-0"
                 >
@@ -157,7 +226,8 @@ export default function FooterPage() {
               </div>
             ))}
             <Button
-              variant="ghost" size="sm"
+              variant="ghost"
+              size="sm"
               onClick={() => addLink(col.id)}
               className="h-8 w-full border border-dashed text-muted-foreground hover:text-foreground"
             >

@@ -32,9 +32,9 @@ export default function NewsletterPage() {
       updateConfig({ newsletterPages: ["all"] } as any);
       return;
     }
-    const current = newsletterPages.filter((p) => p !== "all");
+    const current = newsletterPages.filter(p => p !== "all");
     if (current.includes(page)) {
-      const next = current.filter((p) => p !== page);
+      const next = current.filter(p => p !== page);
       updateConfig({ newsletterPages: next.length ? next : ["home"] } as any);
     } else {
       updateConfig({ newsletterPages: [...current, page] } as any);
@@ -53,12 +53,14 @@ export default function NewsletterPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold">订阅弹框</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">邮件订阅弹窗设置</p>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            邮件订阅弹窗设置
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Switch
             checked={config.enableNewsletter}
-            onCheckedChange={(v) => updateConfig({ enableNewsletter: v })}
+            onCheckedChange={v => updateConfig({ enableNewsletter: v })}
           />
           <Label className="text-sm">启用弹框</Label>
         </div>
@@ -67,12 +69,14 @@ export default function NewsletterPage() {
       {/* 基本内容 */}
       <Card className="mb-4">
         <CardContent className="pt-4 pb-4 space-y-4">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">内容</h3>
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            内容
+          </h3>
           <div className="space-y-1.5">
             <Label className="text-xs">标题</Label>
             <Input
               value={config.newsletterTitle}
-              onChange={(e) => updateConfig({ newsletterTitle: e.target.value })}
+              onChange={e => updateConfig({ newsletterTitle: e.target.value })}
               placeholder="Join the Club"
               className="h-8"
             />
@@ -81,7 +85,7 @@ export default function NewsletterPage() {
             <Label className="text-xs">正文</Label>
             <Textarea
               value={config.newsletterText}
-              onChange={(e) => updateConfig({ newsletterText: e.target.value })}
+              onChange={e => updateConfig({ newsletterText: e.target.value })}
               placeholder="Subscribe to receive updates..."
               rows={3}
               className="text-sm resize-none"
@@ -91,7 +95,9 @@ export default function NewsletterPage() {
             <Label className="text-xs">社交证明文字（可选）</Label>
             <Input
               value={config.newsletterSocialProof ?? ""}
-              onChange={(e) => updateConfig({ newsletterSocialProof: e.target.value })}
+              onChange={e =>
+                updateConfig({ newsletterSocialProof: e.target.value })
+              }
               placeholder="Join 10,000+ members who move with purpose"
               className="h-8"
             />
@@ -102,7 +108,9 @@ export default function NewsletterPage() {
       {/* 外观设置 */}
       <Card className="mb-4">
         <CardContent className="pt-4 pb-4 space-y-4">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">外观</h3>
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            外观
+          </h3>
 
           {/* 配色切换 */}
           <div className="space-y-2">
@@ -114,7 +122,8 @@ export default function NewsletterPage() {
                   setPreviewTheme("dark-green");
                 }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${
-                  config.newsletterTheme === "dark-green" || !config.newsletterTheme
+                  config.newsletterTheme === "dark-green" ||
+                  !config.newsletterTheme
                     ? "border-primary bg-primary/5"
                     : "border-border hover:border-muted-foreground"
                 }`}
@@ -152,7 +161,7 @@ export default function NewsletterPage() {
               section="newsletter"
               slot="image"
               currentUrl={config.newsletterImageUrl}
-              onUploaded={(url) => updateConfig({ newsletterImageUrl: url })}
+              onUploaded={url => updateConfig({ newsletterImageUrl: url })}
               aspectRatio="3/4"
               label="上传图片"
             />
@@ -173,7 +182,9 @@ export default function NewsletterPage() {
       {/* 触发设置 */}
       <Card className="mb-4">
         <CardContent className="pt-4 pb-4 space-y-4">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">触发设置</h3>
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            触发设置
+          </h3>
 
           {/* 延迟时间 */}
           <div className="space-y-2">
@@ -201,11 +212,12 @@ export default function NewsletterPage() {
           <div className="space-y-2">
             <Label className="text-xs">在哪些页面显示</Label>
             <div className="flex flex-wrap gap-2">
-              {PAGE_OPTIONS.map((opt) => {
+              {PAGE_OPTIONS.map(opt => {
                 const isAll = opt.value === "all";
                 const checked = isAll
                   ? newsletterPages.includes("all")
-                  : !newsletterPages.includes("all") && newsletterPages.includes(opt.value);
+                  : !newsletterPages.includes("all") &&
+                    newsletterPages.includes(opt.value);
                 return (
                   <button
                     key={opt.value}
@@ -230,7 +242,9 @@ export default function NewsletterPage() {
         <CardContent className="pt-4 pb-4">
           <div className="flex items-center gap-2 mb-3">
             <Eye className="w-4 h-4 text-muted-foreground" />
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">预览</h3>
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              预览
+            </h3>
           </div>
           <div
             className="rounded-xl overflow-hidden shadow-lg"
@@ -246,7 +260,9 @@ export default function NewsletterPage() {
             <div
               style={{
                 width: "40%",
-                background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+                background: isDark
+                  ? "rgba(255,255,255,0.06)"
+                  : "rgba(0,0,0,0.06)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -262,12 +278,24 @@ export default function NewsletterPage() {
                 />
               ) : (
                 <Mail
-                  style={{ width: 32, height: 32, color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.2)" }}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.2)",
+                  }}
                 />
               )}
             </div>
             {/* Right content panel */}
-            <div style={{ flex: 1, padding: "20px 16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div
+              style={{
+                flex: 1,
+                padding: "20px 16px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
               <div
                 style={{
                   fontSize: "9px",
@@ -283,10 +311,19 @@ export default function NewsletterPage() {
               >
                 DUSKYONDER
               </div>
-              <div style={{ fontSize: "14px", fontWeight: 600, color: textColor, lineHeight: 1.3 }}>
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: textColor,
+                  lineHeight: 1.3,
+                }}
+              >
                 {config.newsletterTitle || "Join the Club"}
               </div>
-              <div style={{ fontSize: "10px", color: mutedColor, lineHeight: 1.5 }}>
+              <div
+                style={{ fontSize: "10px", color: mutedColor, lineHeight: 1.5 }}
+              >
                 {config.newsletterText || "Subscribe to receive updates..."}
               </div>
               <div
