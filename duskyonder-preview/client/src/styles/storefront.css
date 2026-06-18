@@ -184,10 +184,10 @@
   /* Mobile inline image: full-bleed, no side gaps */
   .sf-series-inline-img {
     position: relative;
+    /* Center a 100vw element regardless of container offset */
+    left: 50%;
+    transform: translateX(-50%);
     width: 100vw;
-    /* Pull out of any ancestor padding to reach screen edges */
-    margin-left: calc(-1 * var(--series-m-side-pad, 0px));
-    margin-right: calc(-1 * var(--series-m-side-pad, 0px));
     /* aspect-ratio controlled via inline style from config.seriesImageAspectRatio */
     overflow: hidden;
     border-radius: 0;
