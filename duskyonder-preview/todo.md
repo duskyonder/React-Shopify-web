@@ -547,3 +547,17 @@
   - settings.ts（71行）：settings_schema.json + settings_data.json
   - index.ts（59行）：统一入口，重新导出所有函数
 - [x] TypeScript 0 错误验证通过
+
+## Dead Code Cleanup — HomeVideos.tsx (2026-06-18)
+- [x] Removed `QuickViewModal` component (entire component, ~75 lines)
+- [x] Removed `isMobileModal` state and its `resize` useEffect
+- [x] Removed unused `videoRef` ref
+- [x] Removed outer `mobileVideoCardCount = 2` constant (replaced inline with literal `2`)
+- [x] TypeScript check: 0 errors
+- [x] Committed to main: d16deb5 — "refactor: remove dead code (QuickViewModal, isMobileModal, videoRef, mobileVideoCardCount)"
+- [x] Backup branch created: backup/before-dead-code-cleanup
+
+## Project Rule: Dead Code Policy
+After any feature overhaul, audit and remove all dead/unused code — including unused state,
+refs, effects, and unreachable components — before committing. Create a backup branch first
+for any destructive removal. This keeps the codebase lean and avoids confusion in future sessions.
