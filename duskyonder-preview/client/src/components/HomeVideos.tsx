@@ -282,12 +282,23 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             openCart();
           };
 
-          // Derive colors and sizes from Shopify product options (if available)
-          const derivedColors: string[] = shopifyProduct
-            ? (shopifyProduct.options.find((o: { name: string; values: string[] }) => o.name === 'Color')?.values || [])
-            : (activeVideo.linkedProductColors || []);
+          // Derive colors (with swatch hex) and sizes from Shopify product options
+          // Colors: find the Color option and map each value to { name, hex } using swatch.color
+          type ColorEntry = { name: string; hex: string | null };
+          const derivedColorEntries: ColorEntry[] = shopifyProduct
+            ? (shopifyProduct.options.find(o => o.name.toLowerCase() === 'color')?.optionValues || []).map(v => ({
+                name: v.name,
+                hex: v.swatch?.color ?? null,
+              }))
+            : (activeVideo.linkedProductColors || []).map((c: string) => ({
+                name: c,
+                hex: /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(c.trim()) ? c : null,
+              }));
+          // Sizes: show ALL non-Color options (handles 'Size', 'Inseam', 'Waist', etc.)
           const derivedSizes: string[] = shopifyProduct
-            ? (shopifyProduct.options.find((o: { name: string; values: string[] }) => o.name === 'Size')?.values || [])
+            ? shopifyProduct.options
+                .filter(o => o.name.toLowerCase() !== 'color')
+                .flatMap(o => o.optionValues.map(v => v.name))
             : (activeVideo.linkedProductSizes || []);
 
           if (isMobileModal) {
@@ -319,28 +330,33 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                     ><XIcon /></button>
                   </div>
 
-                  {/* Bottom 30%: Product panel — horizontal split */}
-                  <div style={{ flex: "0 0 30%", background: "#fff", display: "flex", flexDirection: "row", overflow: "hidden" }}>
-                    {/* Left: single product image (img[0] only) — 3:4 aspect ratio with padding */}
-                    {imgA && (
-                      <div style={{ flex: "0 0 auto", width: "32%", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", padding: "8px 6px 8px 10px" }}>
-                        <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 4, overflow: "hidden", background: "#f5f5f5" }}>
+                  {/* Bottom product panel — high-end two-column layout */}
+                  <div style={{ flex: "0 0 auto", background: "#fff", display: "flex", flexDirection: "row", overflow: "hidden", minHeight: 0 }}>
+                    {/* Left column: portrait product image, 40% width, white bg with padding for editorial feel */}
+                    <div style={{ flex: "0 0 40%", display: "flex", alignItems: "stretch", background: "#fafafa", padding: "10px 8px 10px 12px" }}>
+                      <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 3, overflow: "hidden", background: "#f0f0f0" }}>
+                        {imgA ? (
                           <img
                             loading="lazy"
                             src={imgA}
-                            alt={activeVideo.linkedProductName}
+                            alt={shopifyProduct?.title || activeVideo.linkedProductName}
                             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                           />
-                        </div>
+                        ) : (
+                          <div style={{ width: "100%", height: "100%", background: "#e8e8e8" }} />
+                        )}
                       </div>
-                    )}
-                    {/* Right: product info */}
-                    <div style={{ flex: 1, padding: "10px 12px 10px 8px", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
-                      {/* Product name — prefer Shopify title */}
+                    </div>
+
+                    {/* Right column: product details */}
+                    <div style={{ flex: 1, padding: "12px 14px 10px 10px", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0, gap: 0 }}>
+                      {/* Product name */}
                       {(shopifyProduct?.title || activeVideo.linkedProductName) && (
-                        <div style={{ fontWeight: 700, fontSize: 13, color: "#111", lineHeight: 1.3, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shopifyProduct?.title || activeVideo.linkedProductName}</div>
+                        <div style={{ fontWeight: 600, fontSize: 12, color: "#111", lineHeight: 1.35, marginBottom: 4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                          {shopifyProduct?.title || activeVideo.linkedProductName}
+                        </div>
                       )}
-                      {/* Price row — prefer Shopify first variant price */}
+                      {/* Price row */}
                       {(() => {
                         const price = shopifyProduct?.variants?.[0]?.price
                           ? `$${parseFloat(shopifyProduct.variants[0].price.amount).toFixed(2)}`
@@ -349,68 +365,69 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                           ? `$${parseFloat(shopifyProduct.variants[0].compareAtPrice.amount).toFixed(2)}`
                           : activeVideo.linkedProductComparePrice;
                         return (price || comparePrice) ? (
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginBottom: 7 }}>
                             {price && <span style={{ fontWeight: 700, fontSize: 13, color: "#111" }}>{price}</span>}
-                            {comparePrice && <span style={{ fontSize: 11, color: "#aaa", textDecoration: "line-through" }}>{comparePrice}</span>}
+                            {comparePrice && <span style={{ fontSize: 11, color: "#b0b0b0", textDecoration: "line-through" }}>{comparePrice}</span>}
                           </div>
                         ) : null;
                       })()}
-                      {/* Color swatches — compact */}
-                      {derivedColors.length > 0 && (
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 5, alignItems: "center" }}>
-                          {derivedColors.map((color: string) => {
-                            const isHexMobile = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(color.trim());
-                            const isSel = selectedVideoColor === color;
-                            return isHexMobile ? (
+                      {/* Color swatches */}
+                      {derivedColorEntries.length > 0 && (
+                        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 6, alignItems: "center" }}>
+                          {derivedColorEntries.map(({ name, hex }) => {
+                            const isSel = selectedVideoColor === name;
+                            return hex ? (
                               <button
-                                key={color}
-                                onClick={() => setSelectedVideoColor(isSel ? null : color)}
+                                key={name}
+                                onClick={() => setSelectedVideoColor(isSel ? null : name)}
+                                title={name}
                                 style={{
-                                  width: 18, height: 18, borderRadius: "50%", background: color, flexShrink: 0,
-                                  border: isSel ? "2px solid #111" : "1.5px solid #ddd",
+                                  width: 20, height: 20, borderRadius: "50%", background: hex, flexShrink: 0,
+                                  border: isSel ? "2px solid #111" : "1.5px solid #d0d0d0",
                                   cursor: "pointer", padding: 0,
                                   boxShadow: isSel ? "0 0 0 2px #fff inset" : "none",
+                                  transition: "border 0.15s",
                                 }}
-                                aria-label={color}
+                                aria-label={name}
                               />
                             ) : (
                               <button
-                                key={color}
-                                onClick={() => setSelectedVideoColor(isSel ? null : color)}
+                                key={name}
+                                onClick={() => setSelectedVideoColor(isSel ? null : name)}
                                 style={{
                                   padding: "2px 7px", borderRadius: 20, fontSize: 10, fontWeight: 600,
                                   border: isSel ? "1.5px solid #111" : "1px solid #ddd",
                                   background: isSel ? "#111" : "#fff",
-                                  color: isSel ? "#fff" : "#444",
+                                  color: isSel ? "#fff" : "#555",
                                   cursor: "pointer", whiteSpace: "nowrap",
                                 }}
-                              >{color}</button>
+                              >{name}</button>
                             );
                           })}
                         </div>
                       )}
-                      {/* Size buttons — compact */}
+                      {/* Size buttons */}
                       {derivedSizes.length > 0 && (
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
                           {derivedSizes.map((size: string) => (
                             <button
                               key={size}
                               onClick={() => setSelectedVideoSize(selectedVideoSize === size ? null : size)}
                               style={{
-                                minWidth: 28, height: 24, padding: "0 5px", borderRadius: 3, fontSize: 11, fontWeight: 600,
-                                border: selectedVideoSize === size ? "1.5px solid #111" : "1px solid #ddd",
+                                minWidth: 28, height: 24, padding: "0 5px", borderRadius: 2, fontSize: 11, fontWeight: 500,
+                                border: selectedVideoSize === size ? "1.5px solid #111" : "1px solid #d8d8d8",
                                 background: selectedVideoSize === size ? "#111" : "#fff",
-                                color: selectedVideoSize === size ? "#fff" : "#333",
-                                cursor: "pointer",
+                                color: selectedVideoSize === size ? "#fff" : "#444",
+                                cursor: "pointer", letterSpacing: "0.03em",
                               }}
                             >{size}</button>
                           ))}
                         </div>
                       )}
-                      {/* ADD TO CART button */}
+                      {/* ADD TO CART */}
                       <button
                         onClick={handleAddToCart}
-                        style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "8px 10px", borderRadius: 4, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", border: "none", cursor: "pointer", textTransform: "uppercase", marginTop: "auto" }}
+                        style={{ display: "block", width: "100%", background: "#111", color: "#fff", textAlign: "center", padding: "9px 10px", borderRadius: 3, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", border: "none", cursor: "pointer", textTransform: "uppercase", marginTop: "auto" }}
                       >ADD TO CART</button>
                     </div>
                   </div>
@@ -431,37 +448,34 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
           };
           const discountLabel = computeDiscountLabel();
 
-          // Helper: detect if a string is a CSS color (hex, rgb, named CSS color)
-          const isHexColor = (s: string) => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s.trim());
-
           // Shared product info panel (used in both desktop and mobile)
-          const renderColorSwatches = (size = 26) => (
-            derivedColors.length > 0 ? (
+          const renderColorSwatches = (swatchSize = 26) => (
+            derivedColorEntries.length > 0 ? (
               <div style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>Color</div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                  {derivedColors.map((color: string) => {
-                    const isHex = isHexColor(color);
-                    const isSelected = selectedVideoColor === color;
-                    return isHex ? (
-                      // Hex color: render as circular swatch
+                  {derivedColorEntries.map(({ name, hex }) => {
+                    const isSelected = selectedVideoColor === name;
+                    return hex ? (
+                      // Has Shopify swatch hex → render as circular color swatch
                       <button
-                        key={color}
-                        onClick={() => setSelectedVideoColor(isSelected ? null : color)}
+                        key={name}
+                        onClick={() => setSelectedVideoColor(isSelected ? null : name)}
+                        title={name}
                         style={{
-                          width: size, height: size, borderRadius: "50%", background: color,
-                          border: isSelected ? "2px solid #111" : "2px solid #ddd",
+                          width: swatchSize, height: swatchSize, borderRadius: "50%", background: hex,
+                          border: isSelected ? "2px solid #111" : "2px solid #e0e0e0",
                           cursor: "pointer", padding: 0, flexShrink: 0,
                           boxShadow: isSelected ? "0 0 0 2px #fff inset" : "none",
                           transition: "border 0.15s, box-shadow 0.15s",
                         }}
-                        aria-label={color}
+                        aria-label={name}
                       />
                     ) : (
-                      // Color name string (from Shopify): render as text pill
+                      // No swatch hex → render as text pill
                       <button
-                        key={color}
-                        onClick={() => setSelectedVideoColor(isSelected ? null : color)}
+                        key={name}
+                        onClick={() => setSelectedVideoColor(isSelected ? null : name)}
                         style={{
                           padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600,
                           border: isSelected ? "1.5px solid #111" : "1.5px solid #ddd",
@@ -471,7 +485,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                           transition: "all 0.15s",
                           whiteSpace: "nowrap",
                         }}
-                      >{color}</button>
+                      >{name}</button>
                     );
                   })}
                 </div>

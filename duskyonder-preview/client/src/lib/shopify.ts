@@ -135,8 +135,15 @@ export const GET_PRODUCT_BY_HANDLE = `
       productType
       tags
       options {
+        id
         name
-        values
+        optionValues {
+          id
+          name
+          swatch {
+            color
+          }
+        }
       }
       variants(first: 100) {
         nodes {
@@ -183,6 +190,20 @@ export interface ShopifyProductVariant {
   image?: { url: string; altText?: string } | null;
 }
 
+export interface ShopifyProductOptionValue {
+  id: string;
+  name: string;
+  swatch?: { color?: string | null } | null;
+}
+
+export interface ShopifyProductOption {
+  id: string;
+  name: string;
+  optionValues: ShopifyProductOptionValue[];
+  /** @deprecated use optionValues */
+  values: string[];
+}
+
 export interface ShopifyProduct {
   id: string;
   title: string;
@@ -192,7 +213,7 @@ export interface ShopifyProduct {
   vendor: string;
   productType: string;
   tags: string[];
-  options: { name: string; values: string[] }[];
+  options: ShopifyProductOption[];
   variants: ShopifyProductVariant[];
   images: { url: string; altText?: string }[];
 }
@@ -221,7 +242,17 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
       vendor: product.vendor,
       productType: product.productType,
       tags: product.tags,
-      options: product.options,
+      options: product.options.map((opt: any) => ({
+        id: opt.id,
+        name: opt.name,
+        // Keep legacy `values` for backwards compat
+        values: (opt.optionValues ?? []).map((v: any) => v.name),
+        optionValues: (opt.optionValues ?? []).map((v: any) => ({
+          id: v.id,
+          name: v.name,
+          swatch: v.swatch ?? null,
+        })),
+      })),
       variants: product.variants.nodes,
       images: product.images.nodes,
     };
