@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import { useCart } from "@/contexts/CartContext";
+import { trpc } from "@/lib/trpc";
 
 // ==================== ICONS ====================
 const SearchIcon = () => (
@@ -615,6 +616,18 @@ const SOCIAL_ICON_MAP: Record<string, React.ReactElement> = {
 export function SFFooter() {
   const { config } = useThemeConfig();
   const { socialLinks } = config;
+  const [footerEmail, setFooterEmail] = useState("");
+  const [footerStatus, setFooterStatus] = useState<"idle" | "pending" | "success" | "error">("idle");
+  const footerSubscribe = trpc.newsletter.subscribe.useMutation({
+    onSuccess: (data) => { setFooterStatus(data.alreadySubscribed ? "success" : "success"); setFooterEmail(""); },
+    onError: () => setFooterStatus("error"),
+  });
+  const handleFooterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!footerEmail) return;
+    setFooterStatus("pending");
+    footerSubscribe.mutate({ email: footerEmail, source: "footer" });
+  };
   const socialItems = [
     { key: "youtube", label: "YouTube", url: socialLinks.youtube },
     { key: "facebook", label: "Facebook", url: socialLinks.facebook },
@@ -693,12 +706,32 @@ export function SFFooter() {
           <div className="sf-footer-mobile-newsletter">
             <p className="sf-footer-mobile-newsletter-label">Never miss out</p>
             <p className="sf-footer-mobile-newsletter-sub">Sign up to our newsletter and be the first notified about new arrivals, offers and more.</p>
-            <form className="sf-footer-mobile-newsletter-form" onSubmit={e => e.preventDefault()}>
-              <input type="email" placeholder="E-mail" className="sf-footer-mobile-newsletter-input" />
-              <button type="submit" className="sf-footer-mobile-newsletter-btn" aria-label="Subscribe">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
-              </button>
-            </form>
+            {footerStatus === "success" ? (
+              <p className="sf-footer-mobile-newsletter-success">✓ You're subscribed!</p>
+            ) : (
+              <form className="sf-footer-mobile-newsletter-form" onSubmit={handleFooterSubmit}>
+                <input
+                  type="email"
+                  placeholder="E-mail"
+                  className="sf-footer-mobile-newsletter-input"
+                  value={footerEmail}
+                  onChange={e => setFooterEmail(e.target.value)}
+                  disabled={footerStatus === "pending"}
+                />
+                <button
+                  type="submit"
+                  className="sf-footer-mobile-newsletter-btn"
+                  aria-label="Subscribe"
+                  disabled={footerStatus === "pending"}
+                >
+                  {footerStatus === "pending"
+                    ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: 'spin 1s linear infinite' }}><circle cx="12" cy="12" r="10" strokeOpacity="0.3" /><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                    : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+                  }
+                </button>
+              </form>
+            )}
+            {footerStatus === "error" && <p className="sf-footer-mobile-newsletter-error">Something went wrong. Please try again.</p>}
           </div>
           {/* Nav links: 2-column grid */}
           <div className="sf-footer-mobile-nav">

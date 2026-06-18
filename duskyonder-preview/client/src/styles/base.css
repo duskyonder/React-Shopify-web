@@ -1104,12 +1104,28 @@
     background: rgba(255,255,255,0.15);
     border: none;
     border-left: 1px solid rgba(255,255,255,0.2);
-    padding: 0 14px;
+    padding: 0 20px;
+    min-width: 52px;
+    min-height: 48px;
     cursor: pointer;
-    color: rgba(255,255,255,0.8);
+    color: rgba(255,255,255,0.9);
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background 0.15s;
+  }
+  .sf-footer-mobile-newsletter-btn:hover { background: rgba(255,255,255,0.25); }
+  .sf-footer-mobile-newsletter-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .sf-footer-mobile-newsletter-success {
+    font-size: 0.85rem;
+    color: #7ECBA8;
+    font-weight: 600;
+    padding: 10px 0;
+  }
+  .sf-footer-mobile-newsletter-error {
+    font-size: 0.78rem;
+    color: #f08080;
+    margin-top: 6px;
   }
   /* Nav grid: 2 columns */
   .sf-footer-mobile-nav {

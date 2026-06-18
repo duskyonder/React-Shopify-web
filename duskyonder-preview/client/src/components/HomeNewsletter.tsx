@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { useLocation } from "wouter";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
+import { trpc } from "@/lib/trpc";
 
 /**
  * Map a URL pathname to a page key used in newsletterPages config.
@@ -23,7 +24,17 @@ function SFNewsletter() {
   const [visible, setVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
   const shown = useRef(false);
+  const subscribeMutation = trpc.newsletter.subscribe.useMutation({
+    onSuccess: () => { setSubmitted(true); setError(""); },
+    onError: () => { setError("Something went wrong. Please try again."); },
+  });
+  const handleSubscribe = () => {
+    if (!email) return;
+    setError("");
+    subscribeMutation.mutate({ email, source: "popup" });
+  };
 
   // Determine if newsletter should show on current page
   const pageKey = getPageKey(location);
@@ -121,19 +132,21 @@ function SFNewsletter() {
               placeholder="Your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && email) setSubmitted(true); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && email) handleSubscribe(); }}
               style={{
                 background: inputBg,
                 border: `1.5px solid ${inputBorder}`,
                 color: inputColor,
               }}
             />
+            {error && <p style={{ color: '#e55', fontSize: '0.78rem', marginTop: 4 }}>{error}</p>}
             <button
               className="sf-nl-btn"
-              style={{ background: btnBg, color: btnColor }}
-              onClick={() => { if (email) setSubmitted(true); }}
+              style={{ background: btnBg, color: btnColor, opacity: subscribeMutation.isPending ? 0.7 : 1 }}
+              onClick={handleSubscribe}
+              disabled={subscribeMutation.isPending}
             >
-              Join the Club &rarr;
+              {subscribeMutation.isPending ? 'Subscribing…' : 'Join the Club →'}
             </button>
           </div>
         )}

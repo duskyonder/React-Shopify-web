@@ -4,7 +4,8 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
-import { getAllThemeConfigs, setThemeConfig, getAllUploadedImages, upsertUploadedImage } from "./db";
+import { getAllThemeConfigs, setThemeConfig, getAllUploadedImages, upsertUploadedImage, addNewsletterSubscriber } from "./db";
+import { notifyOwner } from "./_core/notification";
 import { storagePut } from "./storage";
 import { getShopifyConfig, setShopifyConfig, getAllShopifyConfigs, uploadToShopifyFiles, listShopifyFiles } from "./shopifyConfig";
 
@@ -133,7 +134,21 @@ export const appRouter = router({
         }
         return json.data?.menu ?? null;
       }),
+    }),
+  newsletter: router({
+    subscribe: publicProcedure
+      .input(z.object({ email: z.string().email(), source: z.enum(["popup", "footer"]).default("footer") }))
+      .mutation(async ({ input }) => {
+        const isNew = await addNewsletterSubscriber(input.email, input.source);
+        if (isNew) {
+          // Notify owner of new subscriber (fire-and-forget)
+          notifyOwner({
+            title: "New Newsletter Subscriber",
+            content: `${input.email} subscribed via ${input.source}.`,
+          }).catch(() => {});
+        }
+        return { success: true, alreadySubscribed: !isNew };
+      }),
   }),
 });
-
 export type AppRouter = typeof appRouter;

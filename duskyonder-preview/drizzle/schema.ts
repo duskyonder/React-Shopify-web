@@ -39,3 +39,12 @@ export const uploadedImages = mysqlTable("uploaded_images", {
 
 export type UploadedImage = typeof uploadedImages.$inferSelect;
 export type InsertUploadedImage = typeof uploadedImages.$inferInsert;
+
+// Newsletter subscribers
+export const newsletterSubscribers = mysqlTable("newsletter_subscribers", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  source: varchar("source", { length: 32 }).default("footer").notNull(), // 'popup' | 'footer'
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;

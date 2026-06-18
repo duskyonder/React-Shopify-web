@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, themeConfig, uploadedImages, InsertUploadedImage } from "../drizzle/schema";
+import { InsertUser, users, themeConfig, uploadedImages, InsertUploadedImage, newsletterSubscribers } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -115,4 +115,17 @@ export async function getAllUploadedImages(): Promise<Record<string, Record<stri
     result[row.section][row.slot] = row.url;
   }
   return result;
+}
+
+/** Insert a newsletter subscriber; returns false if the email is already subscribed. */
+export async function addNewsletterSubscriber(email: string, source: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    await db.insert(newsletterSubscribers).values({ email, source });
+    return true;
+  } catch {
+    // Duplicate entry → already subscribed
+    return false;
+  }
 }
