@@ -631,9 +631,21 @@
   inset: 0;
   z-index: 5;
 }
+/* Desktop image click overlay: sits above img layers (z-index 0/1) but below action buttons (z-index 3) */
+.sf-product-desktop-link {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: pointer;
+}
 @media (max-width: 768px) {
   .sf-product-mobile-link {
     display: block;
+  }
+  /* On mobile the full-card overlay handles taps; hide desktop link to avoid double-tap */
+  .sf-product-desktop-link {
+    display: none;
   }
   .sf-product-hover-actions {
     display: none !important;

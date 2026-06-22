@@ -11,6 +11,7 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
   const [imgIdx, setImgIdx] = useState(0);
   const [wishlist, setWishlist] = useState(false);
   const sizes = ["XS", "S", "M", "L", "XL"];
+  const { addItem, openCart } = useCart();
 
   const selectedColor = product.colors[selectedColorIdx];
   // Determine displayed image: colorImages mapping → fallback to imageUrl
@@ -109,7 +110,19 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
               <button
                 className="sf-drawer-add-btn"
                 style={{ flex: 1, minWidth: 0, padding: "14px 12px", whiteSpace: "nowrap" }}
-                onClick={() => onClose()}
+                onClick={() => {
+                  addItem({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    imageUrl: product.imageUrl,
+                    productUrl: product.detailUrl,
+                    selectedColor: product.colors[selectedColorIdx] || undefined,
+                    selectedSize,
+                  });
+                  openCart();
+                  onClose();
+                }}
               >
                 ADD TO CART
               </button>
@@ -331,8 +344,13 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
           className="sf-product-mobile-link"
           aria-label={product.name}
         />
-        <a href={product.detailUrl || "#"} className="sf-product-image-link" aria-label={product.name} style={{ aspectRatio: productAspectRatio, display: "block" }}>
         <div className="sf-product-image" style={{ aspectRatio: productAspectRatio }}>
+          {/* Desktop: clickable overlay that sits above images but below action buttons */}
+          <a
+            href={product.detailUrl || "#"}
+            className="sf-product-desktop-link"
+            aria-label={product.name}
+          />
           <div className={"sf-product-img-primary"}>
             {displayImg ? <img loading="lazy" src={displayImg} alt={product.name} /> : <ImgPlaceholder label="产品图片" />}
           </div>
@@ -345,7 +363,7 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
           <div className="sf-product-hover-actions">
             <button
               className="sf-product-action-btn sf-quickadd-btn"
-              onClick={(e) => { e.preventDefault(); setQuickViewProduct(product); }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(product); }}
               aria-label="Quick Add"
               title="Quick Add to Cart"
             >
@@ -360,7 +378,6 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
             </button>
           </div>
         </div>
-        </a>
         <div className="sf-product-info">
           <div className="sf-product-name">{product.name}</div>
           <div className="sf-product-price">{product.price}</div>

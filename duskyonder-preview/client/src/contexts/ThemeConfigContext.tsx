@@ -1130,7 +1130,7 @@ const defaultConfig: ThemeConfig = {
   featuredTitle: "Best Sellers",
   productAspectRatio: "3/4",
   productsPerRow: 4,
-  productsDesktopGap: 0,
+  productsDesktopGap: 20,
   productsMobileGap: 12,
   productsCardWidth: 0,
   productsMobileCardWidth: 0,
