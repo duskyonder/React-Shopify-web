@@ -106,6 +106,11 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
+}
+@media (max-width: 430px) {
+  .sf-logo-center { padding: 0 8px; font-size: 1.2rem; }
+  .sf-header-mobile { padding: 0 10px; }
 }
 
 /* --- Category Focus Zoom --- */
@@ -184,9 +189,9 @@
   /* Mobile inline image: full-bleed, no side gaps */
   .sf-series-inline-img {
     position: relative;
-    /* Center a 100vw element regardless of container offset */
-    left: 50%;
-    transform: translateX(-50%);
+    /* Align left edge to viewport left regardless of container offset */
+    left: 50vw;
+    transform: translateX(-50vw);
     width: 100vw;
     /* aspect-ratio controlled via inline style from config.seriesImageAspectRatio */
     overflow: hidden;
@@ -227,6 +232,12 @@
 @keyframes seriesFadeIn {
   from { opacity: 0; transform: scale(1.03); }
   to { opacity: 1; transform: scale(1); }
+}
+@media (max-width: 900px) {
+  @keyframes seriesFadeIn {
+    from { opacity: 0; transform: translateX(-50vw) scale(1.03); }
+    to   { opacity: 1; transform: translateX(-50vw) scale(1); }
+  }
 }
 .sf-series-content {
   display: flex;
