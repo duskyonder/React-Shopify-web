@@ -331,6 +331,7 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
           className="sf-product-mobile-link"
           aria-label={product.name}
         />
+        <a href={product.detailUrl || "#"} className="sf-product-image-link" aria-label={product.name} style={{ aspectRatio: productAspectRatio, display: "block" }}>
         <div className="sf-product-image" style={{ aspectRatio: productAspectRatio }}>
           <div className={"sf-product-img-primary"}>
             {displayImg ? <img loading="lazy" src={displayImg} alt={product.name} /> : <ImgPlaceholder label="产品图片" />}
@@ -359,6 +360,7 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
             </button>
           </div>
         </div>
+        </a>
         <div className="sf-product-info">
           <div className="sf-product-name">{product.name}</div>
           <div className="sf-product-price">{product.price}</div>

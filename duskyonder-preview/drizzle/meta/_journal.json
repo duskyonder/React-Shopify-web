@@ -15,6 +15,13 @@
       "when": 1780562049977,
       "tag": "0001_curvy_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1781775790820,
+      "tag": "0002_sad_umar",
+      "breakpoints": true
     }
   ]
 }
