@@ -212,7 +212,7 @@ function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAli
 
   return (
     <section className="sf-section sf-categories">
-      <div style={{ width: "95%", maxWidth: 1600, margin: "0 auto" }}>
+      <div style={{ width: "95%", margin: "0 auto" }}>
         <div className="sf-section-header" style={{ textAlign: titleAlign }}><h2>{config.categoriesTitle}</h2></div>
       </div>
       <div
@@ -221,7 +221,6 @@ function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAli
           ["--cat-overlay-opacity" as string]: overlayOpacity,
           ["--cat-label-font-size" as string]: isMobile ? `${labelFontSizeMobile}px` : `${labelFontSizeDesktop}px`,
           width: "95%",
-          maxWidth: 1600,
           margin: "0 auto",
         } as React.CSSProperties}
       >
@@ -358,9 +357,6 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
     <section className="sf-section sf-series-section" style={{ background: sectionBg, color: contentColor }}>
       <div className="sf-series-inner" style={{
         width: "95%",
-        maxWidth: isMobile
-          ? (config.seriesMobileMaxWidth ? `${config.seriesMobileMaxWidth}px` : '1600px')
-          : `${config.seriesMaxWidth ?? 1600}px`,
         ["--series-min-height" as string]: isMobile
           ? (config.seriesMobileMinHeight ? `${config.seriesMobileMinHeight}px` : `${config.seriesImageHeight ?? 520}px`)
           : `${config.seriesImageHeight ?? 520}px`,

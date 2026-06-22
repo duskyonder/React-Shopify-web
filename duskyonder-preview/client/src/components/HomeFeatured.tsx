@@ -184,7 +184,7 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
 }
 
 // ==================== DESKTOP PRODUCT PAGER (shows exactly N products, arrow-only navigation) ====================
-function DesktopProductPager({ products, productsPerRow, renderCard, gap = 0, cardWidth: fixedCardWidth = 0, maxWidth = 1680, cardHeight = 380 }: {
+function DesktopProductPager({ products, productsPerRow, renderCard, gap = 0, cardWidth: fixedCardWidth = 0, maxWidth = 0, cardHeight = 380 }: {
   products: Product[];
   productsPerRow: number;
   renderCard: (p: Product, prefix?: string) => React.ReactNode;
@@ -208,7 +208,7 @@ function DesktopProductPager({ products, productsPerRow, renderCard, gap = 0, ca
 
   return (
     <>
-    <div className="sf-scroll-section-wrapper" style={{ width: "95%", maxWidth: `${maxWidth}px`, ['--product-card-height' as string]: cardHeight > 0 ? `${cardHeight}px` : 'auto' } as React.CSSProperties}>
+    <div className="sf-scroll-section-wrapper" style={{ width: "95%", ...(maxWidth > 0 ? { maxWidth: `${maxWidth}px` } : {}), ['--product-card-height' as string]: cardHeight > 0 ? `${cardHeight}px` : 'auto' } as React.CSSProperties}>
       <button
         className="sf-cat-arrow prev"
         onClick={() => setPage(p => Math.max(0, p - 1))}
@@ -483,7 +483,7 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
             renderCard={renderProductCard}
             gap={desktopGap}
             cardWidth={desktopCardWidth}
-            maxWidth={config.productsMaxWidth ?? 1600}
+            maxWidth={config.productsMaxWidth ?? 0}
             cardHeight={config.productCardHeight ?? 0}
           />
         )}
