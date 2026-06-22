@@ -165,8 +165,6 @@
   margin-top: -1px;
 }
 .sf-series-section {
-  background: #0D3D2B;
-  color: white;
   padding: 80px 0;
 }
 .sf-series-inner {
@@ -182,20 +180,20 @@
   min-height: var(--series-min-height, 520px);
 }
 @media (max-width: 900px) {
-  .sf-series-section { overflow-x: hidden; padding: 48px 0; }
-  .sf-series-inner { grid-template-columns: 1fr; gap: 32px; min-height: unset; padding: 0; }
+  /* Section carries the equal side padding; inner fills 100% width */
+  .sf-series-section { overflow-x: hidden; padding: 48px 16px; }
+  .sf-series-inner { grid-template-columns: 1fr; gap: 32px; min-height: unset; padding: 0; width: 100% !important; max-width: 100% !important; }
   /* Mobile: hide the left image block (it will be shown inline in the list) */
   .sf-series-image.sf-series-image--desktop { display: none; }
-  /* Mobile inline image: full-bleed, no side gaps */
+  /* Mobile inline image: 100% of container, equal margins from section padding */
   .sf-series-inline-img {
     position: relative;
-    /* Align left edge to viewport left regardless of container offset */
-    left: 50vw;
-    transform: translateX(-50vw);
-    width: 100vw;
+    left: auto;
+    transform: none;
+    width: 100%;
     /* aspect-ratio controlled via inline style from config.seriesImageAspectRatio */
     overflow: hidden;
-    border-radius: 0;
+    border-radius: 4px;
     background: #1a4d35;
     margin-top: 8px;
     margin-bottom: 4px;
@@ -233,10 +231,11 @@
   from { opacity: 0; transform: scale(1.03); }
   to { opacity: 1; transform: scale(1); }
 }
+/* Mobile seriesFadeIn: simple opacity+scale, no translate needed */
 @media (max-width: 900px) {
   @keyframes seriesFadeIn {
-    from { opacity: 0; transform: translateX(-50vw) scale(1.03); }
-    to   { opacity: 1; transform: translateX(-50vw) scale(1); }
+    from { opacity: 0; transform: scale(1.03); }
+    to   { opacity: 1; transform: scale(1); }
   }
 }
 .sf-series-content {
