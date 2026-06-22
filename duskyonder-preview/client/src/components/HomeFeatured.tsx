@@ -3,6 +3,7 @@ import { useThemeConfig, Product } from "@/contexts/ThemeConfigContext";
 import { useCart } from "@/contexts/CartContext";
 import { ColorSwatch } from "@/components/StorefrontShell";
 import { HeartIcon, PlusIcon, XIcon, ImageIcon, ImgPlaceholder } from "@/components/HomeIcons";
+import { fetchProductByHandle, ShopifyProduct } from "@/lib/shopify";
 
 // ==================== QUICK VIEW MODAL ====================
 function QuickViewModal({ product, onClose }: { product: Product; onClose: () => void }) {
@@ -10,8 +11,16 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
   const [selectedSize, setSelectedSize] = useState("S");
   const [imgIdx, setImgIdx] = useState(0);
   const [wishlist, setWishlist] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [shopifyProduct, setShopifyProduct] = useState<ShopifyProduct | null>(null);
   const sizes = ["XS", "S", "M", "L", "XL"];
   const { addItem, openCart } = useCart();
+  // Derive Shopify handle from detailUrl, e.g. "/products/horizon-bra" → "horizon-bra"
+  const shopifyHandle = product.detailUrl?.split("/products/")[1]?.split("?")[0] || null;
+  useEffect(() => {
+    if (!shopifyHandle) return;
+    fetchProductByHandle(shopifyHandle).then(p => setShopifyProduct(p));
+  }, [shopifyHandle]);
 
   const selectedColor = product.colors[selectedColorIdx];
   // Determine displayed image: colorImages mapping → fallback to imageUrl
@@ -110,21 +119,45 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
               <button
                 className="sf-drawer-add-btn"
                 style={{ flex: 1, minWidth: 0, padding: "14px 12px", whiteSpace: "nowrap" }}
-                onClick={() => {
-                  addItem({
-                    id: product.id,
+                disabled={addingToCart}
+                onClick={async () => {
+                  setAddingToCart(true);
+                  // Resolve variantId from live Shopify product data
+                  let variantId: string | undefined;
+                  if (shopifyProduct?.variants?.length) {
+                    const colorVal = product.colors[selectedColorIdx];
+                    const matched =
+                      // Best match: size + color + available
+                      shopifyProduct.variants.find(v => {
+                        const sizeOk = v.selectedOptions.some(o => o.name.toLowerCase() === "size" && o.value === selectedSize);
+                        const colorOpt = v.selectedOptions.find(o => o.name.toLowerCase() === "color");
+                        const colorOk = !colorOpt || (colorVal && colorOpt.value === colorVal);
+                        return sizeOk && colorOk && v.availableForSale;
+                      }) ||
+                      // Fallback: size only + available
+                      shopifyProduct.variants.find(v =>
+                        v.selectedOptions.some(o => o.name.toLowerCase() === "size" && o.value === selectedSize) && v.availableForSale
+                      ) ||
+                      // Last resort: first available
+                      shopifyProduct.variants.find(v => v.availableForSale);
+                    variantId = matched?.id;
+                  }
+                  await addItem({
+                    id: variantId || product.id,
                     name: product.name,
                     price: product.price,
                     imageUrl: product.imageUrl,
                     productUrl: product.detailUrl,
+                    variantId,
                     selectedColor: product.colors[selectedColorIdx] || undefined,
                     selectedSize,
                   });
                   openCart();
-                  onClose();
+                  setAddingToCart(false);
+                  // Keep modal open — cart drawer shows confirmation
                 }}
               >
-                ADD TO CART
+                {addingToCart ? "Adding..." : "ADD TO CART"}
               </button>
               <button
                 className="sf-drawer-add-btn sf-drawer-wishlist-btn"
