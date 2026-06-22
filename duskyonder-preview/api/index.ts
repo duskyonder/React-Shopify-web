@@ -85,10 +85,10 @@ async function getAllConfigs(): Promise<Record<string, unknown>> {
   const conn = await getDbConn();
   if (!conn) return {};
   try {
-    const [rows] = await conn.execute("SELECT config_key, config_value FROM theme_config") as any;
+    const [rows] = await conn.execute("SELECT configKey, configValue FROM theme_config") as any;
     const result: Record<string, unknown> = {};
-    for (const row of rows as Array<{ config_key: string; config_value: string }>) {
-      try { result[row.config_key] = JSON.parse(row.config_value); } catch { result[row.config_key] = row.config_value; }
+    for (const row of rows as Array<{ configKey: string; configValue: string }>) {
+      try { result[row.configKey] = JSON.parse(row.configValue); } catch { result[row.configKey] = row.configValue; }
     }
     return result;
   } finally {
@@ -100,9 +100,9 @@ async function getConfig<T = unknown>(key: string): Promise<T | null> {
   const conn = await getDbConn();
   if (!conn) return null;
   try {
-    const [rows] = await conn.execute("SELECT config_value FROM theme_config WHERE config_key = ? LIMIT 1", [key]) as any;
+    const [rows] = await conn.execute("SELECT configValue FROM theme_config WHERE configKey = ? LIMIT 1", [key]) as any;
     if (!rows.length) return null;
-    try { return JSON.parse(rows[0].config_value) as T; } catch { return rows[0].config_value as T; }
+    try { return JSON.parse(rows[0].configValue) as T; } catch { return rows[0].configValue as T; }
   } finally {
     await conn.end();
   }
@@ -113,7 +113,7 @@ async function setConfig(key: string, value: unknown): Promise<void> {
   if (!conn) throw new Error("DATABASE_URL is not configured.");
   try {
     await conn.execute(
-      "INSERT INTO theme_config (config_key, config_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE config_value = VALUES(config_value)",
+      "INSERT INTO theme_config (configKey, configValue) VALUES (?, ?) ON DUPLICATE KEY UPDATE configValue = VALUES(configValue)",
       [key, JSON.stringify(value)]
     );
   } finally {
