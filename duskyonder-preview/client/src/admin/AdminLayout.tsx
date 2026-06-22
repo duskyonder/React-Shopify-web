@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useLocation } from "wouter";
+import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
@@ -36,6 +37,7 @@ const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "duskyonder2024";
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [location, setLocation] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const { isSaving } = useThemeConfig();
   const [authed, setAuthed] = useState(() => {
     return sessionStorage.getItem("admin_authed") === "1";
   });
@@ -152,11 +154,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </Sidebar>
 
         <SidebarInset className="flex-1 overflow-auto">
-          <div className="sticky top-0 z-10 flex h-12 items-center gap-2 border-b border-border/50 bg-background/95 px-4 backdrop-blur md:hidden">
-            <SidebarTrigger className="h-8 w-8" />
-            <span className="text-sm font-medium">
-              {menuItems.find(m => m.path === location)?.label ?? "管理后台"}
-            </span>
+          <div className="sticky top-0 z-10 flex h-12 items-center justify-between gap-2 border-b border-border/50 bg-background/95 px-4 backdrop-blur">
+            <div className="flex items-center gap-2 md:hidden">
+              <SidebarTrigger className="h-8 w-8" />
+              <span className="text-sm font-medium">
+                {menuItems.find(m => m.path === location)?.label ?? "管理后台"}
+              </span>
+            </div>
+            <div className="hidden md:flex" />
+            {isSaving && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span>保存中...</span>
+              </div>
+            )}
           </div>
           <main className="p-5">{children}</main>
         </SidebarInset>

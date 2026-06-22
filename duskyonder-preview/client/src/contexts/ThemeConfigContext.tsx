@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { fetchHomepageBanners } from "@/lib/shopify";
+import { toast } from "sonner";
 
 export interface SlideTextBlock {
   id: string;
@@ -1637,6 +1638,10 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
       setIsSaving(true);
       try {
         await setConfigMutation.mutateAsync({ key: "themeConfig", value: newConfig });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("[ThemeConfig] save failed:", msg);
+        toast.error("保存失败，请重试", { description: msg.slice(0, 120) });
       } finally {
         setIsSaving(false);
       }

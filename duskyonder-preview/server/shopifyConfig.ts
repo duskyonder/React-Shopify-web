@@ -121,7 +121,7 @@ export async function setShopifyConfig(key: string, value: unknown): Promise<voi
 
   if (existing) {
     // Update existing Metaobject
-    await shopifyAdminGraphQL(
+    const updateData = await shopifyAdminGraphQL(
       `mutation UpdateConfig($id: ID!, $metaobject: MetaobjectUpdateInput!) {
         metaobjectUpdate(id: $id, metaobject: $metaobject) {
           metaobject { id }
@@ -138,9 +138,13 @@ export async function setShopifyConfig(key: string, value: unknown): Promise<voi
         },
       }
     );
+    const updateErrors = (updateData as any)?.metaobjectUpdate?.userErrors;
+    if (updateErrors && updateErrors.length > 0) {
+      throw new Error(`Shopify metaobjectUpdate userErrors: ${JSON.stringify(updateErrors)}`);
+    }
   } else {
     // Create new Metaobject
-    await shopifyAdminGraphQL(
+    const createData = await shopifyAdminGraphQL(
       `mutation CreateConfig($metaobject: MetaobjectCreateInput!) {
         metaobjectCreate(metaobject: $metaobject) {
           metaobject { id }
@@ -157,6 +161,10 @@ export async function setShopifyConfig(key: string, value: unknown): Promise<voi
         },
       }
     );
+    const createErrors = (createData as any)?.metaobjectCreate?.userErrors;
+    if (createErrors && createErrors.length > 0) {
+      throw new Error(`Shopify metaobjectCreate userErrors: ${JSON.stringify(createErrors)}`);
+    }
   }
 }
 
