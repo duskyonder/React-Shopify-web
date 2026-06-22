@@ -4,10 +4,10 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
-import { getAllThemeConfigs, setThemeConfig, getAllUploadedImages, upsertUploadedImage, addNewsletterSubscriber } from "./db";
+import { getAllThemeConfigs, setThemeConfig, getThemeConfig, getAllUploadedImages, upsertUploadedImage, addNewsletterSubscriber } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { storagePut } from "./storage";
-import { getShopifyConfig, setShopifyConfig, getAllShopifyConfigs, uploadToShopifyFiles, listShopifyFiles } from "./shopifyConfig";
+import { uploadToShopifyFiles, listShopifyFiles } from "./shopifyConfig";
 
 export const appRouter = router({
   system: systemRouter,
@@ -73,25 +73,32 @@ export const appRouter = router({
       }),
   }),
 
-  // Site configuration via Shopify Metaobjects
+  // Site configuration — stored in MySQL theme_config table
   siteConfig: router({
     // Get all config sections at once (used by storefront)
     getAll: publicProcedure.query(async () => {
-      return await getAllShopifyConfigs();
+      const rows = await getAllThemeConfigs();
+      const result: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(rows)) {
+        try { result[key] = JSON.parse(value); } catch { result[key] = value; }
+      }
+      return result;
     }),
 
     // Get a single config section by key
     get: publicProcedure
       .input(z.object({ key: z.string() }))
       .query(async ({ input }) => {
-        return await getShopifyConfig(input.key);
+        const raw = await getThemeConfig(input.key);
+        if (!raw) return null;
+        try { return JSON.parse(raw); } catch { return raw; }
       }),
 
     // Save a config section (used by admin editor)
     set: publicProcedure
       .input(z.object({ key: z.string(), value: z.unknown() }))
       .mutation(async ({ input }) => {
-        await setShopifyConfig(input.key, input.value);
+        await setThemeConfig(input.key, JSON.stringify(input.value));
         return { success: true };
       }),
   }),

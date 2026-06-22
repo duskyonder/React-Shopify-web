@@ -73,91 +73,51 @@ async function shopifyAdminGraphQL(
   return json.data as Record<string, unknown>;
 }
 
-// ── Shopify Metaobjects helpers ────────────────────────────────────────────────
+// ── MySQL site-config helpers (replaces Shopify Metaobjects for config storage) ─
+async function getDbConn() {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) return null;
+  const mysql2 = await import("mysql2/promise");
+  return mysql2.createConnection(dbUrl);
+}
+
 async function getAllConfigs(): Promise<Record<string, unknown>> {
-  const data = await shopifyAdminGraphQL(
-    `query GetAllConfigs($type: String!) {
-      metaobjects(type: $type, first: 250) {
-        nodes {
-          fields { key value }
-        }
-      }
-    }`,
-    { type: METAOBJECT_TYPE }
-  );
-  const nodes = (data as any)?.metaobjects?.nodes as Array<{
-    fields: Array<{ key: string; value: string }>;
-  }>;
-  if (!nodes) return {};
-  const result: Record<string, unknown> = {};
-  for (const node of nodes) {
-    const k = node.fields.find((f) => f.key === "config_key");
-    const v = node.fields.find((f) => f.key === "config_value");
-    if (k?.value && v?.value) {
-      try { result[k.value] = JSON.parse(v.value); } catch { result[k.value] = v.value; }
+  const conn = await getDbConn();
+  if (!conn) return {};
+  try {
+    const [rows] = await conn.execute("SELECT config_key, config_value FROM theme_config") as any;
+    const result: Record<string, unknown> = {};
+    for (const row of rows as Array<{ config_key: string; config_value: string }>) {
+      try { result[row.config_key] = JSON.parse(row.config_value); } catch { result[row.config_key] = row.config_value; }
     }
+    return result;
+  } finally {
+    await conn.end();
   }
-  return result;
 }
 
 async function getConfig<T = unknown>(key: string): Promise<T | null> {
-  const all = await getAllConfigs();
-  return (all[key] as T) ?? null;
+  const conn = await getDbConn();
+  if (!conn) return null;
+  try {
+    const [rows] = await conn.execute("SELECT config_value FROM theme_config WHERE config_key = ? LIMIT 1", [key]) as any;
+    if (!rows.length) return null;
+    try { return JSON.parse(rows[0].config_value) as T; } catch { return rows[0].config_value as T; }
+  } finally {
+    await conn.end();
+  }
 }
 
 async function setConfig(key: string, value: unknown): Promise<void> {
-  const jsonValue = JSON.stringify(value);
-  const data = await shopifyAdminGraphQL(
-    `query FindConfig($type: String!) {
-      metaobjects(type: $type, first: 250) {
-        nodes { id fields { key value } }
-      }
-    }`,
-    { type: METAOBJECT_TYPE }
-  );
-  const nodes = (data as any)?.metaobjects?.nodes as Array<{
-    id: string;
-    fields: Array<{ key: string; value: string }>;
-  }>;
-  const existing = nodes?.find((n) =>
-    n.fields.find((f) => f.key === "config_key")?.value === key
-  );
-  if (existing) {
-    await shopifyAdminGraphQL(
-      `mutation UpdateConfig($id: ID!, $metaobject: MetaobjectUpdateInput!) {
-        metaobjectUpdate(id: $id, metaobject: $metaobject) {
-          metaobject { id }
-          userErrors { field message }
-        }
-      }`,
-      {
-        id: existing.id,
-        metaobject: {
-          fields: [
-            { key: "config_key", value: key },
-            { key: "config_value", value: jsonValue },
-          ],
-        },
-      }
+  const conn = await getDbConn();
+  if (!conn) throw new Error("DATABASE_URL is not configured.");
+  try {
+    await conn.execute(
+      "INSERT INTO theme_config (config_key, config_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE config_value = VALUES(config_value)",
+      [key, JSON.stringify(value)]
     );
-  } else {
-    await shopifyAdminGraphQL(
-      `mutation CreateConfig($metaobject: MetaobjectCreateInput!) {
-        metaobjectCreate(metaobject: $metaobject) {
-          metaobject { id }
-          userErrors { field message }
-        }
-      }`,
-      {
-        metaobject: {
-          type: METAOBJECT_TYPE,
-          fields: [
-            { key: "config_key", value: key },
-            { key: "config_value", value: jsonValue },
-          ],
-        },
-      }
-    );
+  } finally {
+    await conn.end();
   }
 }
 
