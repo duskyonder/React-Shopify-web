@@ -237,9 +237,9 @@ export function ProductInfoPanel({
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
           </span>
           <div className="pdp-info-module-content">
-            <span className="pdp-info-module-title">{shippingModuleTitle}</span>
+            <div className="pdp-info-module-title">{shippingModuleTitle}</div>
             {shippingModuleBlocks.map((block, i) => (
-              <span key={i} className="pdp-info-module-text">{block}</span>
+              <div key={i} className="pdp-info-module-text">{block}</div>
             ))}
           </div>
         </div>
@@ -248,9 +248,9 @@ export function ProductInfoPanel({
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
           </span>
           <div className="pdp-info-module-content">
-            <span className="pdp-info-module-title">{returnModuleTitle}</span>
+            <div className="pdp-info-module-title">{returnModuleTitle}</div>
             {returnModuleBlocks.map((block, i) => (
-              <span key={i} className="pdp-info-module-text">{block}</span>
+              <div key={i} className="pdp-info-module-text">{block}</div>
             ))}
           </div>
         </div>
@@ -284,11 +284,11 @@ export function ProductInfoPanel({
           {(block as any).isHtml ? (
             <div
               className="pdp-shopify-description"
-              style={{ fontSize: "var(--pdp-body-font-size-desktop, 14px)", color: "#555", lineHeight: 1.8 }}
+              style={{ fontSize: "var(--pdp-body-font-size-desktop, 14px)", color: "#555", lineHeight: 1.8, overflowX: "hidden", maxWidth: "100%", wordBreak: "break-word" }}
               dangerouslySetInnerHTML={{ __html: block.content }}
             />
           ) : (
-            <div style={{ fontSize: "var(--pdp-body-font-size-desktop, 14px)", color: "#555", lineHeight: 1.8, whiteSpace: "pre-line" }}>{block.content}</div>
+            <div style={{ fontSize: "var(--pdp-body-font-size-desktop, 14px)", color: "#555", lineHeight: 1.8, whiteSpace: "pre-line", overflowX: "hidden", maxWidth: "100%", wordBreak: "break-word" }}>{block.content}</div>
           )}
         </CollapsibleSection>
       ))}

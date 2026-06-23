@@ -535,8 +535,8 @@
   .pdp-thumb { flex-shrink: 0; }
   .pdp-main-image { width: 100%; flex: none; min-height: 0; aspect-ratio: 3/4; }
   .pdp-product-name { font-size: var(--pdp-title-font-size-mobile, 1.6rem); }
-  /* padding-top accounts for fixed promo bar (36px mobile) + fixed header (56px mobile) */
-  .pdp-page { padding: calc(36px + 56px) 16px 100px; box-sizing: border-box; max-width: 100%; width: 100%; }
+  /* padding-top accounts for fixed promo bar (36px mobile) + fixed header (64px) */
+  .pdp-page { padding: calc(36px + 64px) 16px 100px; box-sizing: border-box; max-width: 100%; width: 100%; }
   /* Ensure info panel and its children don't overflow on mobile */
   /* overflow-x: hidden removed — replaced by overflow: visible below to allow swatches to show */
   .pdp-shopify-description { overflow-wrap: break-word; word-break: break-word; }
@@ -545,7 +545,8 @@
   .pdp-collapsible-header { overflow-wrap: break-word; }
   .pdp-collapsible-body div { overflow-wrap: break-word; word-break: break-word; }
   /* Issue 3: info panel must not clip swatches; swatches wrap freely */
-  .pdp-info-panel { overflow: visible; }
+  /* Issue 5: info panel clips horizontal overflow from text/cards */
+  .pdp-info-panel { overflow: visible; overflow-x: hidden; }
   .pdp-option-group { overflow: visible; }
   .pdp-option-label { flex-wrap: wrap; row-gap: 6px; }
   .pdp-color-swatches { padding-left: 0; overflow: visible; }
@@ -554,9 +555,10 @@
   .pdp-info-module { min-width: 0; width: 100%; }
   .pdp-info-module-text { overflow-wrap: break-word; word-break: break-word; white-space: normal; }
   .pdp-collapsible { width: 100%; max-width: 100%; overflow: hidden; }
-  .pdp-collapsible-body { overflow: hidden; }
-  .pdp-collapsible-body * { max-width: 100%; overflow-wrap: break-word; word-break: break-word; }
-  .pdp-shopify-description * { max-width: 100%; overflow-wrap: break-word; word-break: break-word; }
+  .pdp-collapsible-body { overflow: hidden; overflow-x: hidden; }
+  .pdp-collapsible-body * { max-width: 100%; overflow-wrap: break-word; word-break: break-word; overflow-x: hidden; }
+  .pdp-shopify-description { overflow-x: hidden; max-width: 100%; word-break: break-word; }
+  .pdp-shopify-description * { max-width: 100%; overflow-wrap: break-word; word-break: break-word; overflow-x: hidden; }
 }
 
 /* Size Guide slide-in animation */
