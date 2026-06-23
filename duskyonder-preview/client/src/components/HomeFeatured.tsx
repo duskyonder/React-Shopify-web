@@ -208,7 +208,7 @@ function DesktopProductPager({ products, productsPerRow, renderCard, gap = 0, ca
 
   return (
     <>
-    <div className="sf-scroll-section-wrapper" style={{ width: "95%", ...(maxWidth > 0 ? { maxWidth: `${maxWidth}px` } : {}), ['--product-card-height' as string]: cardHeight > 0 ? `${cardHeight}px` : 'auto' } as React.CSSProperties}>
+    <div className="sf-scroll-section-wrapper" style={{ width: "100%", ...(maxWidth > 0 ? { maxWidth: `${maxWidth}px` } : {}), ['--product-card-height' as string]: cardHeight > 0 ? `${cardHeight}px` : 'auto' } as React.CSSProperties}>
       <button
         className="sf-cat-arrow prev"
         onClick={() => setPage(p => Math.max(0, p - 1))}

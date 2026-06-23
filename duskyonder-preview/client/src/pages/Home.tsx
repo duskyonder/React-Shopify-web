@@ -220,7 +220,7 @@ function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAli
         style={{
           ["--cat-overlay-opacity" as string]: overlayOpacity,
           ["--cat-label-font-size" as string]: isMobile ? `${labelFontSizeMobile}px` : `${labelFontSizeDesktop}px`,
-          width: isMobile ? "100%" : "95%",
+          width: "100%",
           margin: "0 auto",
         } as React.CSSProperties}
       >
@@ -356,7 +356,7 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
     <>
     <section className="sf-section sf-series-section" style={{ background: sectionBg, color: contentColor }}>
       <div className="sf-series-inner" style={{
-        width: "95%",
+        width: "100%",
         ["--series-min-height" as string]: isMobile
           ? (config.seriesMobileMinHeight ? `${config.seriesMobileMinHeight}px` : `${config.seriesImageHeight ?? 520}px`)
           : `${config.seriesImageHeight ?? 520}px`,
@@ -364,7 +364,6 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
       } as React.CSSProperties}>
         {/* Desktop: left image block */}
         <div className={"sf-series-image sf-series-image--desktop"} style={{
-          aspectRatio: config.seriesImageAspectRatio || "4/5",
           ...(config.seriesImageWidth && config.seriesImageWidth > 0 ? { width: `${config.seriesImageWidth}px`, flex: `0 0 ${config.seriesImageWidth}px` } : {}),
           ["--series-m-img-width" as string]: config.seriesMobileImageWidth && config.seriesMobileImageWidth > 0 ? `${config.seriesMobileImageWidth}px` : "100%",
         }}>
