@@ -184,10 +184,10 @@
 .pdp-compare-price {
   font-family: var(--font-sans);
   font-size: 1rem;
-  color: #175C40;
+  color: #999;
   text-decoration: line-through;
   font-weight: 400;
-  opacity: 0.7;
+  opacity: 1;
 }
 
 /* Option groups */
@@ -539,6 +539,16 @@
   .pdp-add-to-cart { min-width: 0; }
   .pdp-collapsible-header { overflow-wrap: break-word; }
   .pdp-collapsible-body div { overflow-wrap: break-word; word-break: break-word; }
+  /* Issue 2: mobile main image should fill width without overflow */
+  .pdp-main-image { width: 100%; flex: none; }
+  /* Issue 3: color swatches fully visible on mobile */
+  .pdp-option-group { overflow: visible; }
+  .pdp-option-label { flex-wrap: wrap; }
+  .pdp-color-swatches { padding-left: 0; }
+  /* Issue 5: info modules and collapsibles fit within screen */
+  .pdp-info-modules { width: 100%; box-sizing: border-box; }
+  .pdp-info-module { min-width: 0; width: 100%; box-sizing: border-box; }
+  .pdp-collapsible { width: 100%; box-sizing: border-box; max-width: 100%; }
 }
 
 /* Size Guide slide-in animation */
