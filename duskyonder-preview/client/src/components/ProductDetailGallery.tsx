@@ -86,7 +86,7 @@ export function CollapsibleSection({ title, children, defaultOpen = false }: { t
         </span>
       </button>
       <div className="pdp-collapsible-body" style={{ maxHeight: open ? 600 : 0, overflow: "hidden", transition: "max-height 0.3s cubic-bezier(0.23,1,0.32,1)" }}>
-        <div style={{ padding: "12px 0 16px" }}>{children}</div>
+        <div style={{ padding: "12px 0 16px", maxWidth: "100%", overflow: "hidden", boxSizing: "border-box" }}>{children}</div>
       </div>
     </div>
   );

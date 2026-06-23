@@ -314,6 +314,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+  overflow: hidden;
 }
 .pdp-info-module-title {
   font-family: var(--font-sans);
@@ -329,6 +331,9 @@
   font-size: 11px;
   color: #888;
   line-height: 1.55;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
 }
 @media (max-width: 480px) {
   .pdp-info-modules { flex-direction: column; gap: 8px; }
@@ -526,9 +531,10 @@
 
 /* ---- Responsive adjustments ---- */
 @media (max-width: 768px) {
-  .pdp-gallery { flex-direction: column-reverse; }
+  .pdp-gallery { flex-direction: column-reverse; width: 100%; }
   .pdp-thumbs { flex-direction: row; width: 100%; overflow-x: auto; }
   .pdp-thumb { flex-shrink: 0; }
+  .pdp-main-image { width: 100%; flex: none; min-height: 0; aspect-ratio: 3/4; }
   .pdp-product-name { font-size: var(--pdp-title-font-size-mobile, 1.6rem); }
   /* padding-top accounts for fixed promo bar (36px mobile) + fixed header (56px mobile) */
   .pdp-page { padding: calc(36px + 56px) 16px 100px; }
@@ -541,7 +547,6 @@
   .pdp-collapsible-body div { overflow-wrap: break-word; word-break: break-word; }
   /* Issue 2: gallery not sticky on mobile; main image fills full column width */
   .pdp-gallery { position: static; }
-  .pdp-main-image { width: 100%; flex: none; min-height: 0; }
   /* Issue 3: info panel must not clip swatches; swatches wrap freely */
   .pdp-info-panel { overflow: visible; }
   .pdp-option-group { overflow: visible; }
