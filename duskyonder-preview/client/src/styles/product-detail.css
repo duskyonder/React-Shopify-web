@@ -33,9 +33,7 @@
   margin-top: 16px;
   align-items: start;
 }
-@media (max-width: 768px) {
-  .pdp-main-layout { grid-template-columns: 1fr; gap: 24px; }
-}
+/* NOTE: pdp-main-layout mobile rule is in the main @media (max-width: 768px) block below */
 
 /* ---- Gallery ---- */
 .pdp-gallery {
@@ -531,13 +529,14 @@
 
 /* ---- Responsive adjustments ---- */
 @media (max-width: 768px) {
-  .pdp-gallery { flex-direction: column-reverse; width: 100%; }
+  .pdp-main-layout { grid-template-columns: 1fr; gap: 24px; }
+  .pdp-gallery { flex-direction: column-reverse; width: 100%; position: static; }
   .pdp-thumbs { flex-direction: row; width: 100%; overflow-x: auto; }
   .pdp-thumb { flex-shrink: 0; }
   .pdp-main-image { width: 100%; flex: none; min-height: 0; aspect-ratio: 3/4; }
   .pdp-product-name { font-size: var(--pdp-title-font-size-mobile, 1.6rem); }
   /* padding-top accounts for fixed promo bar (36px mobile) + fixed header (56px mobile) */
-  .pdp-page { padding: calc(36px + 56px) 16px 100px; }
+  .pdp-page { padding: calc(36px + 56px) 16px 100px; box-sizing: border-box; max-width: 100%; width: 100%; }
   /* Ensure info panel and its children don't overflow on mobile */
   /* overflow-x: hidden removed — replaced by overflow: visible below to allow swatches to show */
   .pdp-shopify-description { overflow-wrap: break-word; word-break: break-word; }
@@ -545,8 +544,6 @@
   .pdp-add-to-cart { min-width: 0; }
   .pdp-collapsible-header { overflow-wrap: break-word; }
   .pdp-collapsible-body div { overflow-wrap: break-word; word-break: break-word; }
-  /* Issue 2: gallery not sticky on mobile; main image fills full column width */
-  .pdp-gallery { position: static; }
   /* Issue 3: info panel must not clip swatches; swatches wrap freely */
   .pdp-info-panel { overflow: visible; }
   .pdp-option-group { overflow: visible; }
