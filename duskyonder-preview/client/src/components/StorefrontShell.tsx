@@ -210,8 +210,8 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
   }, [searchQuery, config]);
 
   const navItems = config.navItems || [];
-  const navLeft = navItems.slice(0, Math.ceil(navItems.length / 2));
-  const navRight = navItems.slice(Math.ceil(navItems.length / 2));
+  const navLeft = navItems.filter(item => !/influenc|blog/i.test(item.title || ""));
+  const navRight = navItems.filter(item => /influenc|blog/i.test(item.title || ""));
 
   // Logo 双色切换：透明导航栏时用白色 Logo，白色底时用绿色 Logo
   const isTransparent = !scrolled && !darkMode;
