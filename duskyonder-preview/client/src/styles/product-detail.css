@@ -6,7 +6,8 @@
 .pdp-page {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 24px 80px;
+  /* padding-top accounts for fixed promo bar (40px) + fixed header (64px) */
+  padding: calc(40px + 64px) 24px 80px;
 }
 
 /* Back bar */
@@ -183,9 +184,10 @@
 .pdp-compare-price {
   font-family: var(--font-sans);
   font-size: 1rem;
-  color: #aaa;
+  color: #175C40;
   text-decoration: line-through;
   font-weight: 400;
+  opacity: 0.7;
 }
 
 /* Option groups */
@@ -528,7 +530,15 @@
   .pdp-thumbs { flex-direction: row; width: 100%; overflow-x: auto; }
   .pdp-thumb { flex-shrink: 0; }
   .pdp-product-name { font-size: var(--pdp-title-font-size-mobile, 1.6rem); }
-  .pdp-page { padding: 0 16px 100px; }
+  /* padding-top accounts for fixed promo bar (36px mobile) + fixed header (56px mobile) */
+  .pdp-page { padding: calc(36px + 56px) 16px 100px; }
+  /* Ensure info panel and its children don't overflow on mobile */
+  .pdp-info-panel { overflow-x: hidden; }
+  .pdp-shopify-description { overflow-wrap: break-word; word-break: break-word; }
+  .pdp-cta-row { width: 100%; }
+  .pdp-add-to-cart { min-width: 0; }
+  .pdp-collapsible-header { overflow-wrap: break-word; }
+  .pdp-collapsible-body div { overflow-wrap: break-word; word-break: break-word; }
 }
 
 /* Size Guide slide-in animation */

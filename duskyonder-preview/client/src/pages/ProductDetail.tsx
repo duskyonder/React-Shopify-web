@@ -13,6 +13,7 @@ export default function ProductDetail() {
   const { config } = useThemeConfig();
   const [location] = useLocation();
   const { addItem, openCart } = useCart();
+  const isMobile = useIsMobile();
 
   // Extract handle from URL: /products/:handle
   const handle = location.replace(/^\/products\//, "");
@@ -161,7 +162,7 @@ export default function ProductDetail() {
         )}
       </div>
 
-      <InlineNewsletterStrip />
+      {!isMobile && <InlineNewsletterStrip />}
       <SFFooter />
       <BackToTop />
       {product && <MobileStickyCart productName={product.name} price={product.price} shopifyProduct={shopifyProduct} />}

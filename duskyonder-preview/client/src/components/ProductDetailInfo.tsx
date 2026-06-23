@@ -38,12 +38,22 @@ export function ProductInfoPanel({
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Use Shopify product sizes if available, otherwise fall back to config
+  // Use Shopify color + size options if available, otherwise fall back to config
+  const shopifyColorOption = shopifyProduct?.options?.find(o => o.name.toLowerCase() === "color");
+  const colorChoices = shopifyColorOption?.optionValues?.length
+    ? shopifyColorOption.optionValues.map(optionValue => ({
+        label: optionValue.name,
+        swatch: optionValue.swatch?.color || optionValue.name,
+      }))
+    : product.colors.map(color => ({
+        label: color.startsWith("#") || color.includes("+") ? colorLabel(color) : color,
+        swatch: color,
+      }));
   const shopifySizeOption = shopifyProduct?.options?.find(o => o.name.toLowerCase() === "size");
   const sizes = shopifySizeOption
     ? shopifySizeOption.values.map(s => {
         // Check if this size has any available variant
-        const selectedColor = product.colors?.[selectedColorIdx];
+        const selectedColor = colorChoices[selectedColorIdx]?.label;
         const available = shopifyProduct!.variants.some(v => {
           const sizeMatch = v.selectedOptions.some(o => o.name.toLowerCase() === "size" && o.value === s);
           const colorMatch = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === "color" && o.value === selectedColor);
@@ -118,16 +128,16 @@ export function ProductInfoPanel({
       </div>
 
       {/* Color selection */}
-      {product.colors.length > 0 && (
+      {colorChoices.length > 0 && (
         <div className="pdp-option-group">
           <div className="pdp-option-label">
-            Color: <strong>{colorLabel(product.colors[selectedColorIdx] || "")}</strong>
+            Color: <strong>{colorChoices[selectedColorIdx]?.label || ""}</strong>
           </div>
           <div className="pdp-color-swatches">
-            {product.colors.map((color, i) => (
+            {colorChoices.map((colorChoice, i) => (
               <ColorSwatch
-                key={i}
-                value={color}
+                key={`${colorChoice.label}-${i}`}
+                value={colorChoice.swatch}
                 active={selectedColorIdx === i}
                 onClick={() => onColorChange(i)}
                 size={28}
