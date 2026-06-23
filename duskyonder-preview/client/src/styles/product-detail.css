@@ -533,8 +533,10 @@
   .pdp-gallery { flex-direction: column-reverse; width: 100%; position: static; }
   .pdp-thumbs { flex-direction: row; width: 100%; overflow-x: auto; }
   .pdp-thumb { flex-shrink: 0; }
-  /* Change 1: scale image proportionally — width fills container, height auto via aspect-ratio */
+  /* Change 1: scale image proportionally — width fills container, height driven by aspect-ratio */
   .pdp-main-image { width: 100%; height: auto; flex: none; flex-shrink: 0; flex-grow: 0; flex-basis: auto; min-height: 0; aspect-ratio: 3/4; }
+  /* Break circular height dependency: img height:auto lets aspect-ratio on container take effect */
+  .pdp-main-image img { width: 100%; height: auto; display: block; }
   .pdp-product-name { font-size: var(--pdp-title-font-size-mobile, 1.6rem); }
   /* padding-top accounts for fixed promo bar (36px mobile) + fixed header (64px) */
   .pdp-page { padding: calc(36px + 64px) 16px 100px; box-sizing: border-box; max-width: 100%; width: 100%; }
