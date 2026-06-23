@@ -8,16 +8,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  font-size: var(--promo-font-size, 13px);
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-size: var(--promo-font-size, 11px);
+  font-weight: 400;
+  letter-spacing: 0.08em;
   min-height: var(--promo-height, 40px);
   height: var(--promo-height, 40px);
   /* position/z-index handled by V3 block below */
 }
 @media (max-width: 768px) {
   .sf-promo-bar {
-    font-size: var(--promo-m-font-size, 12px);
+    font-size: var(--promo-m-font-size, 11px);
     min-height: var(--promo-m-height, 36px);
     height: var(--promo-m-height, 36px);
   }
@@ -68,11 +68,11 @@
 }
 .sf-nav-right { justify-content: flex-end; }
 .sf-nav-link {
-  font-size: var(--nav-font-size, 0.85rem);
-  font-weight: 500;
+  font-size: var(--nav-font-size, 0.8rem);
+  font-weight: 400;
   color: var(--nav-text-color, #333);
   text-decoration: none;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   transition: color 0.2s;
   white-space: nowrap;
 }
@@ -84,9 +84,9 @@
 .sf-header.scrolled .sf-nav-link:hover { color: var(--nav-hover-color, #175C40); }
 .sf-logo-center {
   font-size: 1.5rem;
-  font-weight: 900;
+  font-weight: 500;
   color: #175C40;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   text-decoration: none;
   white-space: nowrap;
@@ -140,8 +140,8 @@
 }
 .sf-marquee-content {
   display: inline-block;
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 400;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   padding-right: 60px;
@@ -245,19 +245,19 @@
   justify-content: center;
 }
 .sf-series-label {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.68rem;
+  font-weight: 400;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.5);
   margin-bottom: 20px;
 }
 .sf-series-headline {
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
-  font-family: 'Playfair Display', 'Georgia', serif;
-  line-height: 1.15;
-  letter-spacing: 0.02em;
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 300;
+  font-family: var(--font-display);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   margin-bottom: 40px;
   color: white;
 }
@@ -283,27 +283,28 @@
   padding-left: 8px;
 }
 .sf-series-num {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.68rem;
+  font-weight: 400;
   color: rgba(255,255,255,0.4);
   min-width: 28px;
   padding-top: 2px;
 }
 .sf-series-item.active .sf-series-num { color: #4CAF82; }
 .sf-series-name {
-  font-size: 1.05rem;
-  font-weight: 700;
-  font-family: 'Playfair Display', 'Georgia', serif;
+  font-size: 0.9rem;
+  font-weight: 400;
+  font-family: var(--font-display);
   color: rgba(255,255,255,0.7);
   transition: color 0.25s;
 }
-.sf-series-item.active .sf-series-name { color: white; font-size: 1.15rem; }
+.sf-series-item.active .sf-series-name { color: white; font-size: 1rem; }
 .sf-series-item:hover .sf-series-name { color: white; }
 .sf-series-desc {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 300;
   color: rgba(255,255,255,0.5);
   margin-top: 6px;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 .sf-series-divider {
   height: 1px;
@@ -415,18 +416,20 @@
   z-index: 3;
 }
 .sf-hero-title {
-  font-size: var(--hero-title-fs, clamp(2rem, 5vw, 3.5rem));
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  margin-bottom: 16px;
-  line-height: 1.15;
+  font-size: var(--hero-title-fs, clamp(1.5rem, 3.2vw, 2.4rem));
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  line-height: 1.1;
   color: white;
 }
 .sf-hero-subtitle {
-  font-size: var(--hero-sub-fs, clamp(0.95rem, 2vw, 1.15rem));
-  opacity: 0.9;
-  margin-bottom: 32px;
-  line-height: 1.7;
+  font-size: var(--hero-sub-fs, clamp(0.75rem, 1vw, 0.875rem));
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+  margin-bottom: 20px;
+  line-height: 1.45;
   color: white;
 }
 /* Text block mobile font size override */
@@ -435,10 +438,10 @@
     font-size: var(--tb-m-font-size, var(--tb-font-size, inherit)) !important;
   }
   .sf-hero-title {
-    font-size: var(--hero-title-m-fs, var(--hero-title-fs, clamp(1.5rem, 5vw, 3.5rem))) !important;
+    font-size: var(--hero-title-m-fs, var(--hero-title-fs, clamp(1.25rem, 4vw, 2rem))) !important;
   }
   .sf-hero-subtitle {
-    font-size: var(--hero-sub-m-fs, var(--hero-sub-fs, clamp(0.85rem, 2vw, 1.15rem))) !important;
+    font-size: var(--hero-sub-m-fs, var(--hero-sub-fs, clamp(0.72rem, 2vw, 0.875rem))) !important;
   }
 }
 
@@ -591,8 +594,8 @@
 .sf-marquee-item--text {
   display: inline-flex;
   align-items: center;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 400;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   white-space: nowrap;
