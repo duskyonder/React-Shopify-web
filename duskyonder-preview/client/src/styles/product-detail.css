@@ -533,7 +533,8 @@
   .pdp-gallery { flex-direction: column-reverse; width: 100%; position: static; }
   .pdp-thumbs { flex-direction: row; width: 100%; overflow-x: auto; }
   .pdp-thumb { flex-shrink: 0; }
-  .pdp-main-image { width: 100%; flex: none; min-height: 0; aspect-ratio: 3/4; }
+  /* Change 1: scale image proportionally — width fills container, height auto via aspect-ratio */
+  .pdp-main-image { width: 100%; height: auto; flex: none; flex-shrink: 0; flex-grow: 0; flex-basis: auto; min-height: 0; aspect-ratio: 3/4; }
   .pdp-product-name { font-size: var(--pdp-title-font-size-mobile, 1.6rem); }
   /* padding-top accounts for fixed promo bar (36px mobile) + fixed header (64px) */
   .pdp-page { padding: calc(36px + 64px) 16px 100px; box-sizing: border-box; max-width: 100%; width: 100%; }
@@ -549,9 +550,11 @@
   .pdp-info-panel { overflow: visible; overflow-x: hidden; }
   .pdp-option-group { overflow: visible; }
   .pdp-option-label { flex-wrap: wrap; row-gap: 6px; }
-  .pdp-color-swatches { padding-left: 0; overflow: visible; }
+  /* Change 3: shift swatches 8px right so first swatch is not clipped */
+  .pdp-color-swatches { padding-left: 0; margin-left: 8px; overflow: visible; }
   /* Issue 5: info modules, text, and collapsibles must not overflow screen */
-  .pdp-info-modules { width: 100%; flex-direction: column; gap: 0; }
+  /* Change 2: info modules box at 98% width, centered */
+  .pdp-info-modules { width: 98%; max-width: 98%; margin-left: auto; margin-right: auto; flex-direction: column; gap: 0; }
   .pdp-info-module { min-width: 0; width: 100%; }
   .pdp-info-module-text { overflow-wrap: break-word; word-break: break-word; white-space: normal; }
   .pdp-collapsible { width: 100%; max-width: 100%; overflow: hidden; }
