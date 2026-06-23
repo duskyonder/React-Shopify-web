@@ -220,7 +220,7 @@ function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAli
         style={{
           ["--cat-overlay-opacity" as string]: overlayOpacity,
           ["--cat-label-font-size" as string]: isMobile ? `${labelFontSizeMobile}px` : `${labelFontSizeDesktop}px`,
-          width: "95%",
+          width: isMobile ? "100%" : "95%",
           margin: "0 auto",
         } as React.CSSProperties}
       >

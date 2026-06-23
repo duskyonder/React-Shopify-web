@@ -554,7 +554,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
         <div className="sf-section-header" style={{ textAlign: titleAlign }}><h2>{config.videosTitle}</h2></div>
         {!videoSectionVisible && <div style={{ minHeight: 300 }} />}
         {videoSectionVisible && <div className="sf-scroll-section-wrapper" style={{
-            width: "95%",
+            width: isMobileVideos ? "100%" : "95%",
             ...(isMobileVideos && config.videosMobileMaxWidth ? { maxWidth: `${config.videosMobileMaxWidth}px` } : !isMobileVideos && config.videosMaxWidth ? { maxWidth: `${config.videosMaxWidth}px` } : {}),
             ['--video-card-height' as string]: isMobileVideos
               ? (config.videosMobileCardHeight ? `${config.videosMobileCardHeight}px` : undefined)

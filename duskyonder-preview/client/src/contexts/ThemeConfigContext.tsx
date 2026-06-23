@@ -1175,7 +1175,7 @@ const defaultConfig: ThemeConfig = {
     { id: "fab_3", title: "SculptFlex", description: "Compressive, high-support fabric designed to sculpt and shape. Ideal for yoga, pilates, and daily wear.", icon: "✨" },
   ],
 
-  enableNewsletter: true,
+  enableNewsletter: false,
   newsletterTitle: "Join the Club",
   newsletterText: "Subscribe to receive updates on new arrivals, special offers, and exclusive events.",
   newsletterDelay: 3,

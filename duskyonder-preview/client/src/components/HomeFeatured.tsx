@@ -446,6 +446,7 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
         {isMobile ? (
           /* Mobile: paginated scroll with dot indicators */
           <div className="sf-products-mobile-outer" style={{
+            width: "100%",
             ...(config.productsMobileMaxWidth ? { maxWidth: `${config.productsMobileMaxWidth}px`, margin: "0 auto" } : {}),
             ["--product-card-height" as string]: config.productsMobileCardHeight ? `${config.productsMobileCardHeight}px` : undefined,
           } as React.CSSProperties}>
