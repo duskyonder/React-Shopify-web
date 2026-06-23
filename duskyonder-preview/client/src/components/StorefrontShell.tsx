@@ -210,11 +210,8 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
   }, [searchQuery, config]);
 
   const navItems = config.navItems || [];
-  // Items named "Influencer" or "Blog" (case-insensitive) are always pinned to the right nav.
-  // All other items go to the left nav, so newly added items appear on the left automatically.
-  const RIGHT_PINNED = ["influencer", "blog"];
-  const navLeft = navItems.filter(item => !RIGHT_PINNED.includes((item.label || "").toLowerCase().trim()));
-  const navRight = navItems.filter(item => RIGHT_PINNED.includes((item.label || "").toLowerCase().trim()));
+  const navLeft = navItems.slice(0, Math.ceil(navItems.length / 2));
+  const navRight = navItems.slice(Math.ceil(navItems.length / 2));
 
   // Logo 双色切换：透明导航栏时用白色 Logo，白色底时用绿色 Logo
   const isTransparent = !scrolled && !darkMode;

@@ -45,11 +45,11 @@
   display: flex;
   align-items: center;
   height: 64px;
-  width: 100%;
-  padding: 0 5%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
   gap: 0;
   position: relative;
-  box-sizing: border-box;
 }
 .sf-header-mobile {
   display: none;
@@ -177,11 +177,11 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: 0;
+  max-width: var(--series-max-width, 1280px);
+  margin: 0 auto;
+  padding: 0 60px;
   box-sizing: border-box;
-  gap: 0;
+  gap: 60px;
   align-items: stretch;
   min-height: var(--series-min-height, 520px);
 }
@@ -189,7 +189,6 @@
   /* Section carries the equal side padding; inner fills 100% width */
   .sf-series-section { overflow-x: hidden; padding: 48px 16px; }
   .sf-series-inner { grid-template-columns: 1fr; gap: 32px; min-height: unset; padding: 0; width: 100% !important; max-width: 100% !important; }
-  .sf-series-content { padding: 0; }
   /* Mobile: hide the left image block (it will be shown inline in the list) */
   .sf-series-image.sf-series-image--desktop { display: none; }
   /* Mobile inline image: 100% of container, equal margins from section padding */
@@ -249,7 +248,6 @@
   flex-direction: column;
   gap: 0;
   justify-content: center;
-  padding: 60px 8% 60px 6%;
 }
 .sf-series-label {
   font-size: 0.68rem;
