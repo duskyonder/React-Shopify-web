@@ -302,6 +302,10 @@
   z-index: 2;
   color: white;
   padding: 0 24px;
+  /* Force full width on mobile to prevent text column collapse */
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
   /* Use CSS custom properties set inline by React for desktop */
   top: var(--hero-top, auto);
   left: var(--hero-left, auto);
@@ -327,6 +331,7 @@
 }
 @media (min-width: 768px) {
   .sf-hero-content {
+    max-width: 540px !important;
     transform: var(--hero-transform, none) translate(var(--offset-x-d, 0%), var(--offset-y-d, 0%));
   }
 }
@@ -372,6 +377,7 @@
   align-items: center !important;
   justify-content: center !important;
   height: auto !important;
+  min-height: 0 !important;
   line-height: 1 !important;
   box-sizing: border-box !important;
   gap: 6px;
@@ -381,9 +387,8 @@
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
-  /* Mobile padding (default) — overridden at desktop breakpoint */
-  padding: var(--btn-pad-y-m, 0px) var(--btn-pad-x-m, 0px);
-  padding-bottom: 2px;
+  /* Mobile padding — defaults to 12px/24px so button is visible even without editor values */
+  padding: var(--btn-pad-y-m, 12px) var(--btn-pad-x-m, 24px) !important;
   border: none;
   background: transparent;
   border-bottom: 1px solid transparent;
@@ -397,8 +402,7 @@
 @media (max-width: 767px) {
   .sf-hero-cta-btn {
     font-size: var(--btn-fs-m, 11px);
-    padding: var(--btn-pad-y-m, 0px) var(--btn-pad-x-m, 0px);
-    padding-bottom: 2px;
+    padding: var(--btn-pad-y-m, 12px) var(--btn-pad-x-m, 24px) !important;
     align-self: var(--hero-btn-m-self, var(--hero-btn-self, center));
   }
 }

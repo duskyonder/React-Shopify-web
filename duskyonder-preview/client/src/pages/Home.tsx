@@ -74,8 +74,13 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
         // Backward-compat: legacy universal offsets fall back to desktop
         const offXD = slide.horizontalOffsetDesktop ?? slide.horizontalOffset;
         const offYD = slide.verticalOffsetDesktop   ?? slide.verticalOffset;
-        const offXM = slide.horizontalOffsetMobile;
-        const offYM = slide.verticalOffsetMobile;
+        // Explicit number coercion so string values from JSON storage don't slip through
+        const offXM = slide.horizontalOffsetMobile != null ? Number(slide.horizontalOffsetMobile) : undefined;
+        const offYM = slide.verticalOffsetMobile   != null ? Number(slide.verticalOffsetMobile)   : undefined;
+        const btnPadXD = slide.buttonPaddingX        != null ? Number(slide.buttonPaddingX)        : undefined;
+        const btnPadYD = slide.buttonPaddingY        != null ? Number(slide.buttonPaddingY)        : undefined;
+        const btnPadXM = slide.buttonPaddingXMobile  != null ? Number(slide.buttonPaddingXMobile)  : undefined;
+        const btnPadYM = slide.buttonPaddingYMobile  != null ? Number(slide.buttonPaddingYMobile)  : undefined;
 
         // CSS variable dictionary injected on the slide wrapper
         const slideCssVars = {
@@ -91,12 +96,12 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
           '--v-gap-m':     getVar(vGapM),
           '--btn-fs-d':    getVar(bFsD),
           '--btn-fs-m':    getVar(bFsM),
-          '--btn-pad-x-d': getVar(slide.buttonPaddingX),
-          '--btn-pad-y-d': getVar(slide.buttonPaddingY),
-          '--btn-pad-x-m': getVar(slide.buttonPaddingXMobile),
-          '--btn-pad-y-m': getVar(slide.buttonPaddingYMobile),
-          '--offset-x-d':  getVar(offXD, '%'),
-          '--offset-y-d':  getVar(offYD, '%'),
+          '--btn-pad-x-d': getVar(btnPadXD),
+          '--btn-pad-y-d': getVar(btnPadYD),
+          '--btn-pad-x-m': getVar(btnPadXM),
+          '--btn-pad-y-m': getVar(btnPadYM),
+          '--offset-x-d':  getVar(offXD != null ? Number(offXD) : undefined, '%'),
+          '--offset-y-d':  getVar(offYD != null ? Number(offYD) : undefined, '%'),
           '--offset-x-m':  getVar(offXM, '%'),
           '--offset-y-m':  getVar(offYM, '%'),
           // Global hero title/subtitle color & weight
@@ -232,9 +237,18 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                       ...(config.heroTitleWeight ? { fontWeight: config.heroTitleWeight } : {}),
                     }}
                   >{slide.title}</h1>
-                  <p className="sf-hero-subtitle"
-                    style={{ ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}) }}
-                  >{slide.subtitle}</p>
+                  {slide.subtitle && (
+                    <p className="sf-hero-subtitle"
+                      style={{ ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}) }}
+                    >
+                      {slide.subtitle.split('|').map((text, idx, arr) => (
+                        <React.Fragment key={idx}>
+                          {text}
+                          {idx < arr.length - 1 && <br />}
+                        </React.Fragment>
+                      ))}
+                    </p>
+                  )}
                 </>
               )}
               <a
