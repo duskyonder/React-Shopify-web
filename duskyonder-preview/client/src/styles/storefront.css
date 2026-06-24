@@ -423,22 +423,24 @@
   gap: 8px;
   z-index: 3;
 }
+/* Mobile-first: use --title-fs-m if set, else CSS default */
 .sf-hero-title {
-  font-size: var(--hero-title-fs, clamp(1.5rem, 3.2vw, 2.4rem));
+  font-size: var(--title-fs-m, clamp(1.25rem, 4vw, 2rem));
+  letter-spacing: var(--title-ls-m, -0.02em);
+  margin-bottom: var(--v-gap-m, 8px);
   font-weight: 300;
-  letter-spacing: -0.02em;
-  margin-bottom: 8px;
   line-height: 1.1;
-  color: white;
+  color: var(--hero-title-color, white);
+  font-weight: var(--hero-title-weight, 300);
 }
 .sf-hero-subtitle {
-  font-size: var(--hero-sub-fs, clamp(0.75rem, 1vw, 0.875rem));
+  font-size: var(--sub-fs-m, clamp(0.72rem, 2vw, 0.875rem));
+  letter-spacing: var(--sub-ls-m, 0.04em);
+  margin-bottom: var(--v-gap-m, 20px);
   font-weight: 300;
-  letter-spacing: 0.04em;
   opacity: 0.7;
-  margin-bottom: 20px;
   line-height: 1.45;
-  color: white;
+  color: var(--hero-sub-color, white);
 }
 /* Text block mobile font size override */
 @media (max-width: 767px) {
@@ -446,11 +448,26 @@
     font-size: var(--tb-m-font-size, var(--tb-font-size, inherit)) !important;
   }
   .sf-hero-title {
-    /* No !important — inline style from editor must win */
-    font-size: var(--hero-title-m-fs, var(--hero-title-fs, clamp(1.25rem, 4vw, 2rem)));
+    /* Mobile overrides already set in base rule via --title-fs-m */
   }
   .sf-hero-subtitle {
-    font-size: var(--hero-sub-m-fs, var(--hero-sub-fs, clamp(0.72rem, 2vw, 0.875rem)));
+    /* Mobile overrides already set in base rule via --sub-fs-m */
+  }
+}
+/* Desktop: switch to desktop vars */
+@media (min-width: 768px) {
+  .sf-hero-title {
+    font-size: var(--title-fs-d, clamp(1.5rem, 3.2vw, 2.4rem));
+    letter-spacing: var(--title-ls-d, -0.02em);
+    margin-bottom: var(--v-gap-d, 8px);
+  }
+  .sf-hero-subtitle {
+    font-size: var(--sub-fs-d, clamp(0.75rem, 1vw, 0.875rem));
+    letter-spacing: var(--sub-ls-d, 0.04em);
+    margin-bottom: var(--v-gap-d, 20px);
+  }
+  .sf-hero-cta-btn {
+    font-size: var(--btn-fs-d, 11px);
   }
 }
 

@@ -49,46 +49,49 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
     <section className="sf-hero" style={{ height: isMobileHero ? '100svh' : heroHeight }}>
       {config.slides.map((slide, i) => {
         // ── Resolve alignment: per-slide editorial controls take priority over nine-grid ──
-        // getStyle: converts any stored value (number, numeric string, 'default', null, undefined)
-        // to a CSS string, or undefined if the value is absent/zero/default.
-        const getStyle = (val: unknown, unit = 'px'): string | undefined => {
+        // getVar: returns a CSS-ready string or undefined (no var injected when absent/zero/default)
+        const getVar = (val: unknown, unit = 'px'): string | undefined => {
           if (val == null || val === '' || val === 'default' || val === 0) return undefined;
           const n = parseFloat(String(val));
           if (isNaN(n) || n === 0) return undefined;
           return `${n}${unit}`;
         };
 
-        // Debug: confirm values reaching component (remove after verifying)
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[SFHero] slide config =>', {
-            id: slide.id,
-            titleFontSize: slide.titleFontSize,
-            titleLetterSpacing: slide.titleLetterSpacing,
-            subtitleFontSize: slide.subtitleFontSize,
-            subtitleLetterSpacing: slide.subtitleLetterSpacing,
-            buttonFontSize: slide.buttonFontSize,
-            buttonPaddingX: slide.buttonPaddingX,
-            buttonPaddingY: slide.buttonPaddingY,
-            verticalSpacing: slide.verticalSpacing,
-          });
-        }
+        // Backward-compat: if only the old single-value fields are set, use them as desktop fallback
+        const tFsD = slide.titleFontSizeDesktop ?? slide.titleFontSize;
+        const tFsM = slide.titleFontSizeMobile;
+        const tLsD = slide.titleLetterSpacingDesktop ?? slide.titleLetterSpacing;
+        const tLsM = slide.titleLetterSpacingMobile;
+        const ssFsD = slide.subtitleFontSizeDesktop ?? slide.subtitleFontSize;
+        const ssFsM = slide.subtitleFontSizeMobile;
+        const ssLsD = slide.subtitleLetterSpacingDesktop ?? slide.subtitleLetterSpacing;
+        const ssLsM = slide.subtitleLetterSpacingMobile;
+        const vGapD = slide.verticalSpacingDesktop ?? slide.verticalSpacing;
+        const vGapM = slide.verticalSpacingMobile;
+        const bFsD  = slide.buttonFontSizeDesktop ?? slide.buttonFontSize;
+        const bFsM  = slide.buttonFontSizeMobile;
 
-        // Explicit style objects — only set a property when a real numeric value is present
-        const titleStyle: React.CSSProperties = {
-          fontSize:      getStyle(slide.titleFontSize)
-                           ?? (config.heroTitleFontSize ? `${config.heroTitleFontSize}px` : undefined),
-          letterSpacing: getStyle(slide.titleLetterSpacing, 'em'),
-          marginBottom:  getStyle(slide.verticalSpacing),
-          ...(config.heroTitleColor  ? { color: config.heroTitleColor }       : {}),
-          ...(config.heroTitleWeight ? { fontWeight: config.heroTitleWeight } : {}),
-        };
-        const subtitleStyle: React.CSSProperties = {
-          fontSize:      getStyle(slide.subtitleFontSize)
-                           ?? (config.heroSubtitleFontSize ? `${config.heroSubtitleFontSize}px` : undefined),
-          letterSpacing: getStyle(slide.subtitleLetterSpacing, 'em'),
-          marginBottom:  getStyle(slide.verticalSpacing),
-          ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}),
-        };
+        // CSS variable dictionary injected on the slide wrapper
+        const slideCssVars = {
+          '--title-fs-d':  getVar(tFsD),
+          '--title-fs-m':  getVar(tFsM),
+          '--title-ls-d':  getVar(tLsD, 'em'),
+          '--title-ls-m':  getVar(tLsM, 'em'),
+          '--sub-fs-d':    getVar(ssFsD),
+          '--sub-fs-m':    getVar(ssFsM),
+          '--sub-ls-d':    getVar(ssLsD, 'em'),
+          '--sub-ls-m':    getVar(ssLsM, 'em'),
+          '--v-gap-d':     getVar(vGapD),
+          '--v-gap-m':     getVar(vGapM),
+          '--btn-fs-d':    getVar(bFsD),
+          '--btn-fs-m':    getVar(bFsM),
+          // Global hero title/subtitle color & weight (not responsive, same on all breakpoints)
+          ...(config.heroTitleColor  ? { '--hero-title-color': config.heroTitleColor }   : {}),
+          ...(config.heroTitleWeight ? { '--hero-title-weight': config.heroTitleWeight } : {}),
+          ...(config.heroSubtitleColor ? { '--hero-sub-color': config.heroSubtitleColor } : {}),
+        } as React.CSSProperties;
+
+        // Button style (non-typographic properties remain as inline styles)
         const buttonPaddingX = parseFloat(String(slide.buttonPaddingX ?? config.heroBtnPaddingX ?? 28)) || 28;
         const buttonPaddingY = parseFloat(String(slide.buttonPaddingY ?? config.heroBtnPaddingY ?? 12)) || 12;
         const buttonStyle: React.CSSProperties = {
@@ -96,10 +99,10 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
           background:   config.heroBtnStyle === 'solid' ? (config.heroBtnBg || '#175C40') : 'transparent',
           border:       `2px solid ${config.heroBtnBorderColor || 'rgba(255,255,255,0.9)'}`,
           color:        config.heroBtnTextColor || '#ffffff',
-          fontSize:     getStyle(slide.buttonFontSize) ?? `${config.heroBtnFontSize || 14}px`,
           fontWeight:   config.heroBtnFontWeight || '600',
           letterSpacing: `${(config.heroBtnLetterSpacing ?? 8) / 100}em`,
           padding:      `${buttonPaddingY}px ${buttonPaddingX}px`,
+          // fontSize handled by CSS var --btn-fs-d / --btn-fs-m in the stylesheet
         };
 
         const hasEditorialLayout = slide.justifyContent || slide.alignItems;
@@ -164,7 +167,7 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
         // 移动端优先使用 mobileImageUrl，未设置则回退到 imageUrl
         const activeImgUrl = isMobileHero ? (slide.mobileImageUrl || slide.imageUrl) : slide.imageUrl;
         return (
-          <div key={slide.id} className={`sf-hero-slide${i === current ? " active" : ""}`}>
+          <div key={slide.id} className={`sf-hero-slide${i === current ? " active" : ""}`} style={slideCssVars}>
             {activeImgUrl ? (
               <img src={activeImgUrl} alt={slide.title} className="sf-hero-img" fetchPriority="high" />
             ) : (
@@ -213,8 +216,15 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                 ))
               ) : (
                 <>
-                  <h1 className="sf-hero-title" style={titleStyle}>{slide.title}</h1>
-                  <p  className="sf-hero-subtitle" style={subtitleStyle}>{slide.subtitle}</p>
+                  <h1 className="sf-hero-title"
+                    style={{
+                      ...(config.heroTitleColor  ? { color: config.heroTitleColor }       : {}),
+                      ...(config.heroTitleWeight ? { fontWeight: config.heroTitleWeight } : {}),
+                    }}
+                  >{slide.title}</h1>
+                  <p className="sf-hero-subtitle"
+                    style={{ ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}) }}
+                  >{slide.subtitle}</p>
                 </>
               )}
               <a

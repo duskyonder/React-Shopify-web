@@ -30,17 +30,29 @@ export interface Slide {
   alignItems?: 'flex-start' | 'center' | 'flex-end';
   horizontalOffset?: number; // % nudge
   verticalOffset?: number;   // % nudge
-  // Per-banner typography overrides
-  titleFontSize?: number;       // px
-  titleLetterSpacing?: number;  // em * 100
-  subtitleFontSize?: number;    // px
-  subtitleLetterSpacing?: number; // em * 100
+  // Per-banner typography overrides — separate desktop / mobile values
+  titleFontSizeDesktop?: number;       // px
+  titleFontSizeMobile?: number;        // px
+  titleLetterSpacingDesktop?: number;  // em (raw, e.g. 0.05)
+  titleLetterSpacingMobile?: number;   // em
+  subtitleFontSizeDesktop?: number;    // px
+  subtitleFontSizeMobile?: number;     // px
+  subtitleLetterSpacingDesktop?: number;
+  subtitleLetterSpacingMobile?: number;
+  verticalSpacingDesktop?: number;     // px — margin-bottom on title + subtitle
+  verticalSpacingMobile?: number;      // px
   // Button size
   buttonPaddingX?: number; // px
   buttonPaddingY?: number; // px
-  buttonFontSize?: number; // px — per-banner button font size override
-  // Spacing
-  verticalSpacing?: number; // px — margin-bottom applied to title and subtitle
+  buttonFontSizeDesktop?: number; // px
+  buttonFontSizeMobile?: number;  // px
+  // Legacy single-value fields kept for backward compat (mapped to desktop if present)
+  titleFontSize?: number;
+  titleLetterSpacing?: number;
+  subtitleFontSize?: number;
+  subtitleLetterSpacing?: number;
+  buttonFontSize?: number;
+  verticalSpacing?: number;
 }
 
 export interface Category {

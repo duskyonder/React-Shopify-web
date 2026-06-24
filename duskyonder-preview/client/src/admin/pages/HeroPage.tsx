@@ -322,80 +322,89 @@ export default function HeroPage() {
               {/* ── Typography Overrides ── */}
               <div className="rounded-lg border border-dashed border-border p-4 space-y-4">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Typography Overrides</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <NumInput
-                    label="Title Font Size"
-                    unit="px"
-                    value={slide.titleFontSize}
-                    onChange={(v) => updateSlide(slide.id, { titleFontSize: v })}
-                    min={8} max={200} step={1}
-                    placeholder="default"
-                  />
-                  <NumInput
-                    label="Title Letter Spacing"
-                    unit="×0.01em"
-                    value={slide.titleLetterSpacing}
-                    onChange={(v) => updateSlide(slide.id, { titleLetterSpacing: v })}
-                    min={-10} max={50} step={1}
-                    placeholder="default"
-                  />
-                  <NumInput
-                    label="Subtitle Font Size"
-                    unit="px"
-                    value={slide.subtitleFontSize}
-                    onChange={(v) => updateSlide(slide.id, { subtitleFontSize: v })}
-                    min={8} max={100} step={1}
-                    placeholder="default"
-                  />
-                  <NumInput
-                    label="Subtitle Letter Spacing"
-                    unit="×0.01em"
-                    value={slide.subtitleLetterSpacing}
-                    onChange={(v) => updateSlide(slide.id, { subtitleLetterSpacing: v })}
-                    min={-10} max={50} step={1}
-                    placeholder="default"
-                  />
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <NumInput
-                    label="Vertical Spacing"
-                    unit="px"
-                    value={slide.verticalSpacing}
-                    onChange={(v) => updateSlide(slide.id, { verticalSpacing: v })}
-                    min={0} max={120} step={2}
-                    placeholder="default"
-                  />
+
+                {/* Two-column: Desktop | Mobile */}
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Desktop column */}
+                  <div className="space-y-3">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Desktop</p>
+                    <NumInput label="Title Font Size" unit="px"
+                      value={slide.titleFontSizeDesktop}
+                      onChange={(v) => updateSlide(slide.id, { titleFontSizeDesktop: v })}
+                      min={8} max={200} step={1} placeholder="default" />
+                    <NumInput label="Title Letter Spacing" unit="em"
+                      value={slide.titleLetterSpacingDesktop}
+                      onChange={(v) => updateSlide(slide.id, { titleLetterSpacingDesktop: v })}
+                      min={-0.1} max={0.5} step={0.01} placeholder="default" />
+                    <NumInput label="Subtitle Font Size" unit="px"
+                      value={slide.subtitleFontSizeDesktop}
+                      onChange={(v) => updateSlide(slide.id, { subtitleFontSizeDesktop: v })}
+                      min={8} max={100} step={1} placeholder="default" />
+                    <NumInput label="Subtitle Letter Spacing" unit="em"
+                      value={slide.subtitleLetterSpacingDesktop}
+                      onChange={(v) => updateSlide(slide.id, { subtitleLetterSpacingDesktop: v })}
+                      min={-0.1} max={0.5} step={0.01} placeholder="default" />
+                    <NumInput label="Vertical Spacing" unit="px"
+                      value={slide.verticalSpacingDesktop}
+                      onChange={(v) => updateSlide(slide.id, { verticalSpacingDesktop: v })}
+                      min={0} max={120} step={2} placeholder="default" />
+                  </div>
+
+                  {/* Mobile column */}
+                  <div className="space-y-3">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Mobile</p>
+                    <NumInput label="Title Font Size" unit="px"
+                      value={slide.titleFontSizeMobile}
+                      onChange={(v) => updateSlide(slide.id, { titleFontSizeMobile: v })}
+                      min={8} max={120} step={1} placeholder="default" />
+                    <NumInput label="Title Letter Spacing" unit="em"
+                      value={slide.titleLetterSpacingMobile}
+                      onChange={(v) => updateSlide(slide.id, { titleLetterSpacingMobile: v })}
+                      min={-0.1} max={0.5} step={0.01} placeholder="default" />
+                    <NumInput label="Subtitle Font Size" unit="px"
+                      value={slide.subtitleFontSizeMobile}
+                      onChange={(v) => updateSlide(slide.id, { subtitleFontSizeMobile: v })}
+                      min={8} max={80} step={1} placeholder="default" />
+                    <NumInput label="Subtitle Letter Spacing" unit="em"
+                      value={slide.subtitleLetterSpacingMobile}
+                      onChange={(v) => updateSlide(slide.id, { subtitleLetterSpacingMobile: v })}
+                      min={-0.1} max={0.5} step={0.01} placeholder="default" />
+                    <NumInput label="Vertical Spacing" unit="px"
+                      value={slide.verticalSpacingMobile}
+                      onChange={(v) => updateSlide(slide.id, { verticalSpacingMobile: v })}
+                      min={0} max={80} step={2} placeholder="default" />
+                  </div>
                 </div>
               </div>
 
               {/* ── Button Size ── */}
               <div className="rounded-lg border border-dashed border-border p-4 space-y-4">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Button Size</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <NumInput
-                    label="Button Horizontal Padding"
-                    unit="px"
-                    value={slide.buttonPaddingX}
-                    onChange={(v) => updateSlide(slide.id, { buttonPaddingX: v })}
-                    min={0} max={120} step={2}
-                    placeholder="default"
-                  />
-                  <NumInput
-                    label="Button Vertical Padding"
-                    unit="px"
-                    value={slide.buttonPaddingY}
-                    onChange={(v) => updateSlide(slide.id, { buttonPaddingY: v })}
-                    min={0} max={60} step={2}
-                    placeholder="default"
-                  />
-                  <NumInput
-                    label="Button Font Size"
-                    unit="px"
-                    value={slide.buttonFontSize}
-                    onChange={(v) => updateSlide(slide.id, { buttonFontSize: v })}
-                    min={8} max={48} step={1}
-                    placeholder="default"
-                  />
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Desktop column */}
+                  <div className="space-y-3">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Desktop</p>
+                    <NumInput label="Font Size" unit="px"
+                      value={slide.buttonFontSizeDesktop}
+                      onChange={(v) => updateSlide(slide.id, { buttonFontSizeDesktop: v })}
+                      min={8} max={48} step={1} placeholder="default" />
+                    <NumInput label="Horizontal Padding" unit="px"
+                      value={slide.buttonPaddingX}
+                      onChange={(v) => updateSlide(slide.id, { buttonPaddingX: v })}
+                      min={0} max={120} step={2} placeholder="default" />
+                    <NumInput label="Vertical Padding" unit="px"
+                      value={slide.buttonPaddingY}
+                      onChange={(v) => updateSlide(slide.id, { buttonPaddingY: v })}
+                      min={0} max={60} step={2} placeholder="default" />
+                  </div>
+                  {/* Mobile column */}
+                  <div className="space-y-3">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Mobile</p>
+                    <NumInput label="Font Size" unit="px"
+                      value={slide.buttonFontSizeMobile}
+                      onChange={(v) => updateSlide(slide.id, { buttonFontSizeMobile: v })}
+                      min={8} max={36} step={1} placeholder="default" />
+                  </div>
                 </div>
               </div>
 

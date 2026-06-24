@@ -384,8 +384,7 @@
 .sf-hero-cta-btn:active { transform: scale(0.97); }
 @media (max-width: 767px) {
   .sf-hero-cta-btn {
-    /* Remove !important so inline padding from editor can override */
-    font-size: var(--hero-btn-m-font-size, 11px);
+    font-size: var(--btn-fs-m, 11px);
     padding: var(--hero-btn-m-pad-y, 0px) var(--hero-btn-m-pad-x, 0px);
     padding-bottom: 2px;
     align-self: var(--hero-btn-m-self, var(--hero-btn-self, center));
