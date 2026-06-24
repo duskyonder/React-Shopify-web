@@ -233,29 +233,25 @@ export const appRouter = router({
         try {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 8000);
-          const res = await fetch(`https://${shopifyDomain}/admin/api/2024-10/graphql.json`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Shopify-Access-Token": adminToken,
-            },
-            body: JSON.stringify({ query: `{
-              shop {
-                privacyPolicy   { title body url }
-                termsOfService  { title body url }
-                refundPolicy    { title body url }
-                shippingPolicy  { title body url }
-              }
-            }` }),
+          // Use REST /policies.json — GraphQL shop.privacyPolicy etc. are not available in API 2024-10
+          const res = await fetch(`https://${shopifyDomain}/admin/api/2024-10/policies.json`, {
+            method: "GET",
+            headers: { "X-Shopify-Access-Token": adminToken },
             signal: controller.signal,
           }).finally(() => clearTimeout(timeout));
           if (!res.ok) {
             console.error(`[getPolicies] Admin API HTTP ${res.status}`);
             return null;
           }
-          const json = await res.json() as any;
-          if (json.errors?.length) console.error("[getPolicies] GraphQL errors:", JSON.stringify(json.errors));
-          return json.data?.shop ?? null;
+          const json = await res.json() as { policies?: Array<{ handle: string; title: string; body: string; url: string }> };
+          const policies = json.policies ?? [];
+          // Map REST array to keyed object: "privacy-policy" -> privacyPolicy
+          const result: Record<string, { title: string; body: string; url: string }> = {};
+          for (const p of policies) {
+            const key = p.handle.replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase());
+            result[key] = { title: p.title, body: p.body, url: p.url };
+          }
+          return result;
         } catch (err) {
           console.error("[getPolicies] fetch error:", err instanceof Error ? err.message : err);
           return null;

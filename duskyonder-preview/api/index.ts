@@ -489,8 +489,9 @@ const vercelRouter = router({
 
     getPolicies: publicProcedure
       .query(async () => {
-        // shop.policies fields (privacyPolicy, termsOfService, etc.) are ONLY available
-        // on the Admin API — the Storefront API returns 503 for these fields.
+        // Use REST Admin API /policies.json — more reliable than GraphQL shop.policies
+        // which has inconsistent field availability across API versions.
+        // REST response: { policies: [{ handle, title, body, url }] }
         const token = getAdminToken();
         console.log(`[getPolicies] token present: ${!!token}, length: ${token.length}, prefix: ${token.slice(0, 6)}...`);
         if (!token) {
@@ -499,34 +500,28 @@ const vercelRouter = router({
         }
         try {
           const res = await fetch(
-            `https://${SHOPIFY_DOMAIN}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
+            `https://${SHOPIFY_DOMAIN}/admin/api/${SHOPIFY_API_VERSION}/policies.json`,
             {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Shopify-Access-Token": token,
-              },
-              body: JSON.stringify({ query: `{
-                shop {
-                  privacyPolicy   { title body url }
-                  termsOfService  { title body url }
-                  refundPolicy    { title body url }
-                  shippingPolicy  { title body url }
-                }
-              }` }),
+              method: "GET",
+              headers: { "X-Shopify-Access-Token": token },
             }
           );
           const rawText = await res.text();
-          console.log(`[getPolicies] Shopify HTTP ${res.status}, body[:200]: ${rawText.slice(0, 200)}`);
+          console.log(`[getPolicies] Shopify HTTP ${res.status}, body[:300]: ${rawText.slice(0, 300)}`);
           if (!res.ok) {
             console.error(`[getPolicies] Shopify Admin API HTTP ${res.status} ${res.statusText}: ${rawText.slice(0, 300)}`);
             return null;
           }
-          const json = JSON.parse(rawText) as { data?: { shop?: unknown }; errors?: unknown[] };
-          if (json.errors?.length) {
-            console.error("[getPolicies] GraphQL errors:", JSON.stringify(json.errors));
+          const json = JSON.parse(rawText) as { policies?: Array<{ handle: string; title: string; body: string; url: string }> };
+          const policies = json.policies ?? [];
+          console.log(`[getPolicies] received ${policies.length} policies:`, policies.map((p: { handle: string }) => p.handle));
+          // Map REST array to keyed object: "privacy-policy" -> privacyPolicy
+          const result: Record<string, { title: string; body: string; url: string }> = {};
+          for (const p of policies) {
+            const key = p.handle.replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase());
+            result[key] = { title: p.title, body: p.body, url: p.url };
           }
-          return (json.data?.shop as any) ?? null;
+          return result;
         } catch (err) {
           console.error("[getPolicies] fetch threw:", err instanceof Error ? `${err.name}: ${err.message}` : err);
           return null;
