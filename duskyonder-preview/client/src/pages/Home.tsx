@@ -48,12 +48,66 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
   return (
     <section className="sf-hero" style={{ height: isMobileHero ? '100svh' : heroHeight }}>
       {config.slides.map((slide, i) => {
+        // ── Resolve alignment: per-slide editorial controls take priority over nine-grid ──
+        const hasEditorialLayout = slide.justifyContent || slide.alignItems;
         const desktopPos = slide.contentPosition || "middle-center";
         const mobilePos = slide.contentPositionMobile || desktopPos;
         const dStyle = POSITION_MAP[desktopPos] || POSITION_MAP["middle-center"];
         const mStyle = POSITION_MAP[mobilePos] || POSITION_MAP["middle-center"];
         const { alignItems: dAlign, textAlign: dText, top: dTop, left: dLeft, right: dRight, bottom: dBottom, transform: dTransform } = dStyle as any;
         const { alignItems: mAlign, textAlign: mText, top: mTop, left: mLeft, right: mRight, bottom: mBottom, transform: mTransform } = mStyle as any;
+
+        // Per-slide editorial overrides
+        const slideJustify = slide.justifyContent ?? (hasEditorialLayout ? "center" : undefined);
+        const slideAlign   = slide.alignItems   ?? (hasEditorialLayout ? "center" : undefined);
+        const hOffset = slide.horizontalOffset ?? 0;
+        const vOffset = slide.verticalOffset   ?? 0;
+
+        // Build content container style
+        // If editorial controls are set, use a full-inset absolute container with flex
+        // so justify-content/align-items position the text block inside it.
+        const contentStyle: React.CSSProperties = hasEditorialLayout ? {
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: slideJustify,
+          alignItems: slideAlign,
+          // Padding offsets nudge the text away from the edge
+          paddingTop:    slideJustify === "flex-start" ? `${vOffset}%` : undefined,
+          paddingBottom: slideJustify === "flex-end"   ? `${vOffset}%` : undefined,
+          paddingLeft:   slideAlign   === "flex-start" ? `${hOffset}%` : undefined,
+          paddingRight:  slideAlign   === "flex-end"   ? `${hOffset}%` : undefined,
+          // Text align follows horizontal alignment
+          textAlign: slideAlign === "flex-start" ? "left" : slideAlign === "flex-end" ? "right" : "center",
+        } : {
+          position: "absolute",
+          display: "flex", flexDirection: "column",
+          maxWidth: "min(560px, 90%)", gap: 12,
+          // Legacy nine-grid CSS vars
+          "--hero-top": dTop ?? "auto",
+          "--hero-left": dLeft ?? "auto",
+          "--hero-right": dRight ?? "auto",
+          "--hero-bottom": dBottom ?? "auto",
+          "--hero-transform": dTransform ?? "none",
+          "--hero-align": dAlign ?? "center",
+          "--hero-text": dText ?? "center",
+          "--hero-m-top": mTop ?? "auto",
+          "--hero-m-left": mLeft ?? "auto",
+          "--hero-m-right": mRight ?? "auto",
+          "--hero-m-bottom": mBottom ?? "auto",
+          "--hero-m-transform": mTransform ?? "none",
+          "--hero-m-align": mAlign ?? "center",
+          "--hero-m-text": mText ?? "center",
+        } as React.CSSProperties;
+
+        // Inner text wrapper (only needed in editorial mode to constrain max-width)
+        const innerStyle: React.CSSProperties = hasEditorialLayout ? {
+          display: "flex", flexDirection: "column", gap: 12,
+          maxWidth: "min(560px, 90%)",
+          alignItems: slideAlign === "flex-start" ? "flex-start" : slideAlign === "flex-end" ? "flex-end" : "center",
+        } : {};
+
         // 移动端优先使用 mobileImageUrl，未设置则回退到 imageUrl
         const activeImgUrl = isMobileHero ? (slide.mobileImageUrl || slide.imageUrl) : slide.imageUrl;
         return (
@@ -65,28 +119,10 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
             )}
             <div
               className={`sf-hero-content${slide.textColorMode === 'dark' ? ' sf-hero-dark-text' : ''}`}
-              style={{
-                position: "absolute",
-                display: "flex", flexDirection: "column",
-                maxWidth: "min(560px, 90%)", gap: 12,
-                // Desktop CSS vars
-                "--hero-top": dTop ?? "auto",
-                "--hero-left": dLeft ?? "auto",
-                "--hero-right": dRight ?? "auto",
-                "--hero-bottom": dBottom ?? "auto",
-                "--hero-transform": dTransform ?? "none",
-                "--hero-align": dAlign ?? "center",
-                "--hero-text": dText ?? "center",
-                // Mobile CSS vars
-                "--hero-m-top": mTop ?? "auto",
-                "--hero-m-left": mLeft ?? "auto",
-                "--hero-m-right": mRight ?? "auto",
-                "--hero-m-bottom": mBottom ?? "auto",
-                "--hero-m-transform": mTransform ?? "none",
-                "--hero-m-align": mAlign ?? "center",
-                "--hero-m-text": mText ?? "center",
-              } as React.CSSProperties}
+              style={contentStyle}
             >
+              {/* Inner wrapper for editorial mode */}
+              <div style={innerStyle}>
               {/* Custom text blocks take priority over legacy title/subtitle */}
               {slide.textBlocks && slide.textBlocks.length > 0 ? (
                 slide.textBlocks.map(block => (
@@ -127,22 +163,30 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                   <h1
                     className="sf-hero-title"
                     style={{
-                      // CSS vars control font-size via .sf-hero-title { font-size: var(--hero-title-fs) }
-                      ["--hero-title-fs" as string]: config.heroTitleFontSize ? `${config.heroTitleFontSize}px` : undefined,
-                      ["--hero-title-m-fs" as string]: config.heroTitleMobileFontSize ? `${config.heroTitleMobileFontSize}px` : (config.heroTitleFontSize ? `${config.heroTitleFontSize}px` : undefined),
-                      // Direct inline for color and weight (no CSS var needed)
+                      // Per-slide font size overrides global config
+                      ["--hero-title-fs" as string]: slide.titleFontSize
+                        ? `${slide.titleFontSize}px`
+                        : (config.heroTitleFontSize ? `${config.heroTitleFontSize}px` : undefined),
+                      ["--hero-title-m-fs" as string]: slide.titleFontSize
+                        ? `${slide.titleFontSize}px`
+                        : (config.heroTitleMobileFontSize ? `${config.heroTitleMobileFontSize}px` : (config.heroTitleFontSize ? `${config.heroTitleFontSize}px` : undefined)),
                       ...(config.heroTitleColor ? { color: config.heroTitleColor } : {}),
                       ...(config.heroTitleWeight ? { fontWeight: config.heroTitleWeight } : {}),
+                      // Per-slide letter spacing (stored as em*100, e.g. 5 → 0.05em)
+                      ...(slide.titleLetterSpacing != null ? { letterSpacing: `${slide.titleLetterSpacing / 100}em` } : {}),
                     } as React.CSSProperties}
                   >{slide.title}</h1>
                   <p
                     className="sf-hero-subtitle"
                     style={{
-                      // CSS vars control font-size via .sf-hero-subtitle { font-size: var(--hero-sub-fs) }
-                      ["--hero-sub-fs" as string]: config.heroSubtitleFontSize ? `${config.heroSubtitleFontSize}px` : undefined,
-                      ["--hero-sub-m-fs" as string]: config.heroSubtitleMobileFontSize ? `${config.heroSubtitleMobileFontSize}px` : (config.heroSubtitleFontSize ? `${config.heroSubtitleFontSize}px` : undefined),
-                      // Direct inline for color
+                      ["--hero-sub-fs" as string]: slide.subtitleFontSize
+                        ? `${slide.subtitleFontSize}px`
+                        : (config.heroSubtitleFontSize ? `${config.heroSubtitleFontSize}px` : undefined),
+                      ["--hero-sub-m-fs" as string]: slide.subtitleFontSize
+                        ? `${slide.subtitleFontSize}px`
+                        : (config.heroSubtitleMobileFontSize ? `${config.heroSubtitleMobileFontSize}px` : (config.heroSubtitleFontSize ? `${config.heroSubtitleFontSize}px` : undefined)),
                       ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}),
+                      ...(slide.subtitleLetterSpacing != null ? { letterSpacing: `${slide.subtitleLetterSpacing / 100}em` } : {}),
                     } as React.CSSProperties}
                   >{slide.subtitle}</p>
                 </>
@@ -158,21 +202,22 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                   fontSize: `var(--hero-btn-font-size, ${config.heroBtnFontSize || 14}px)`,
                   fontWeight: config.heroBtnFontWeight || "600",
                   letterSpacing: `${(config.heroBtnLetterSpacing ?? 8) / 100}em`,
-                  padding: `var(--hero-btn-pad-y, ${config.heroBtnPaddingY || 12}px) var(--hero-btn-pad-x, ${config.heroBtnPaddingX || 28}px)`,
-                  // Mobile: use mAlign for alignSelf; desktop: use dAlign
-                  // We use a CSS variable so the mobile media query can override
+                  // Per-slide button padding overrides global config
+                  padding: `${slide.buttonPaddingY ?? config.heroBtnPaddingY ?? 12}px ${slide.buttonPaddingX ?? config.heroBtnPaddingX ?? 28}px`,
+                  alignSelf: hasEditorialLayout
+                    ? (slideAlign === "flex-start" ? "flex-start" : slideAlign === "flex-end" ? "flex-end" : "center")
+                    : ("var(--hero-btn-self, center)" as any),
                   ["--hero-btn-self" as string]: dAlign === "flex-start" ? "flex-start" : dAlign === "flex-end" ? "flex-end" : "center",
                   ["--hero-btn-m-self" as string]: mAlign === "flex-start" ? "flex-start" : mAlign === "flex-end" ? "flex-end" : "center",
-                  alignSelf: "var(--hero-btn-self, center)" as any,
-                  // CSS vars for mobile override
                   ["--hero-btn-font-size" as string]: `${config.heroBtnFontSize || 14}px`,
                   ["--hero-btn-m-font-size" as string]: `${config.heroBtnMobileFontSize ?? config.heroBtnFontSize ?? 14}px`,
-                  ["--hero-btn-pad-x" as string]: `${config.heroBtnPaddingX || 28}px`,
-                  ["--hero-btn-pad-y" as string]: `${config.heroBtnPaddingY || 12}px`,
-                  ["--hero-btn-m-pad-x" as string]: `${config.heroBtnMobilePaddingX ?? config.heroBtnPaddingX ?? 28}px`,
-                  ["--hero-btn-m-pad-y" as string]: `${config.heroBtnMobilePaddingY ?? config.heroBtnPaddingY ?? 12}px`,
+                  ["--hero-btn-pad-x" as string]: `${slide.buttonPaddingX ?? config.heroBtnPaddingX ?? 28}px`,
+                  ["--hero-btn-pad-y" as string]: `${slide.buttonPaddingY ?? config.heroBtnPaddingY ?? 12}px`,
+                  ["--hero-btn-m-pad-x" as string]: `${slide.buttonPaddingX ?? config.heroBtnMobilePaddingX ?? config.heroBtnPaddingX ?? 28}px`,
+                  ["--hero-btn-m-pad-y" as string]: `${slide.buttonPaddingY ?? config.heroBtnMobilePaddingY ?? config.heroBtnPaddingY ?? 12}px`,
                 }}
               >{slide.buttonLabel}</a>
+              </div>
             </div>
           </div>
         );

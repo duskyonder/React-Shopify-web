@@ -25,6 +25,19 @@ export interface Slide {
   contentPositionMobile?: string; // 移动端独立内容位置
   textColorMode?: 'light' | 'dark'; // 文本颜色模式：light=白色文字, dark=深色文字
   textBlocks?: SlideTextBlock[];
+  // Editorial layout controls (per-banner overrides)
+  justifyContent?: 'flex-start' | 'center' | 'flex-end';
+  alignItems?: 'flex-start' | 'center' | 'flex-end';
+  horizontalOffset?: number; // % nudge
+  verticalOffset?: number;   // % nudge
+  // Per-banner typography overrides
+  titleFontSize?: number;       // px
+  titleLetterSpacing?: number;  // em * 100
+  subtitleFontSize?: number;    // px
+  subtitleLetterSpacing?: number; // em * 100
+  // Button size
+  buttonPaddingX?: number; // px
+  buttonPaddingY?: number; // px
 }
 
 export interface Category {
