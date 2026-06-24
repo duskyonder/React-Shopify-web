@@ -489,34 +489,24 @@ const vercelRouter = router({
 
     getPolicies: publicProcedure
       .query(async () => {
-        const storefrontToken =
-          process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
-          process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
-          "";
-        const gql = `
-          {
-            shop {
-              privacyPolicy   { title body url }
-              termsOfService  { title body url }
-              refundPolicy    { title body url }
-              shippingPolicy  { title body url }
+        // shop.policies fields (privacyPolicy, termsOfService, etc.) are ONLY available
+        // on the Admin API — the Storefront API returns 503 for these fields.
+        try {
+          const data = await shopifyAdminGraphQL(`
+            {
+              shop {
+                privacyPolicy   { title body url }
+                termsOfService  { title body url }
+                refundPolicy    { title body url }
+                shippingPolicy  { title body url }
+              }
             }
-          }
-        `;
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (storefrontToken) headers["X-Shopify-Storefront-Access-Token"] = storefrontToken;
-        const res = await fetch(`https://${SHOPIFY_DOMAIN}/api/${SHOPIFY_API_VERSION}/graphql.json`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ query: gql }),
-        });
-        if (!res.ok) {
-          console.error(`[getPolicies] Shopify HTTP ${res.status}`);
+          `);
+          return (data.shop as any) ?? null;
+        } catch (err) {
+          console.error("[getPolicies] Admin API error:", err instanceof Error ? err.message : err);
           return null;
         }
-        const json = (await res.json()) as { data?: { shop?: unknown }; errors?: unknown[] };
-        if (json.errors?.length) console.error("[getPolicies] GraphQL errors:", JSON.stringify(json.errors));
-        return (json.data?.shop as any) ?? null;
       }),
   }),
 

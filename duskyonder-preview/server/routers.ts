@@ -222,33 +222,44 @@ export const appRouter = router({
 
     getPolicies: publicProcedure
       .query(async () => {
+        // shop.policies fields are ONLY available on the Admin API — not the Storefront API.
+        // The Storefront API returns 503 for these fields, causing the request to hang.
+        const adminToken = ENV.shopifyAdminToken;
         const shopifyDomain = ENV.shopifyStoreDomain;
-        const storefrontToken = ENV.shopifyStorefrontToken;
-        if (!shopifyDomain) return null;
-        const gql = `
-          {
-            shop {
-              privacyPolicy   { title body url }
-              termsOfService  { title body url }
-              refundPolicy    { title body url }
-              shippingPolicy  { title body url }
-            }
-          }
-        `;
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (storefrontToken) headers["X-Shopify-Storefront-Access-Token"] = storefrontToken;
-        const res = await fetch(`https://${shopifyDomain}/api/2024-10/graphql.json`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ query: gql }),
-        });
-        if (!res.ok) {
-          console.error(`[getPolicies] Shopify HTTP ${res.status}`);
+        if (!adminToken || !shopifyDomain) {
+          console.warn("[getPolicies] SHOPIFY_ADMIN_TOKEN or domain not configured");
           return null;
         }
-        const json = await res.json() as any;
-        if (json.errors?.length) console.error("[getPolicies] GraphQL errors:", JSON.stringify(json.errors));
-        return json.data?.shop ?? null;
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+          const res = await fetch(`https://${shopifyDomain}/admin/api/2024-10/graphql.json`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Shopify-Access-Token": adminToken,
+            },
+            body: JSON.stringify({ query: `{
+              shop {
+                privacyPolicy   { title body url }
+                termsOfService  { title body url }
+                refundPolicy    { title body url }
+                shippingPolicy  { title body url }
+              }
+            }` }),
+            signal: controller.signal,
+          }).finally(() => clearTimeout(timeout));
+          if (!res.ok) {
+            console.error(`[getPolicies] Admin API HTTP ${res.status}`);
+            return null;
+          }
+          const json = await res.json() as any;
+          if (json.errors?.length) console.error("[getPolicies] GraphQL errors:", JSON.stringify(json.errors));
+          return json.data?.shop ?? null;
+        } catch (err) {
+          console.error("[getPolicies] fetch error:", err instanceof Error ? err.message : err);
+          return null;
+        }
       }),
   }),
   newsletter: router({
