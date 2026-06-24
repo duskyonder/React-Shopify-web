@@ -86,18 +86,18 @@ function Router() {
         {/* Policy pages — canonical /policies/:handle route */}
         <Route path={"/policies/:handle"} component={DynamicPolicyPage} />
         {/* Legacy bare-handle aliases — redirect to canonical */}
-        <Route path={"/privacy-policy"} component={() => { window.location.replace("/policies/privacy-policy"); return null; }} />
-        <Route path={"/return-policy"} component={() => { window.location.replace("/policies/return-policy"); return null; }} />
-        <Route path={"/refund-policy"} component={() => { window.location.replace("/policies/refund-policy"); return null; }} />
-        <Route path={"/shipping-policy"} component={() => { window.location.replace("/policies/shipping-policy"); return null; }} />
-        <Route path={"/terms-of-service"} component={() => { window.location.replace("/policies/terms-of-service"); return null; }} />
+        <Route path={"/privacy-policy"}><Redirect to="/policies/privacy-policy" /></Route>
+        <Route path={"/return-policy"}><Redirect to="/policies/return-policy" /></Route>
+        <Route path={"/refund-policy"}><Redirect to="/policies/refund-policy" /></Route>
+        <Route path={"/shipping-policy"}><Redirect to="/policies/shipping-policy" /></Route>
+        <Route path={"/terms-of-service"}><Redirect to="/policies/terms-of-service" /></Route>
         {/* Legacy /pages/* aliases — redirect to canonical */}
-        <Route path={"/pages/privacy-policy"} component={() => { window.location.replace("/policies/privacy-policy"); return null; }} />
-        <Route path={"/pages/return-policy"} component={() => { window.location.replace("/policies/return-policy"); return null; }} />
-        <Route path={"/pages/refund-policy"} component={() => { window.location.replace("/policies/refund-policy"); return null; }} />
-        <Route path={"/pages/shipping-policy"} component={() => { window.location.replace("/policies/shipping-policy"); return null; }} />
-        <Route path={"/pages/shipping"} component={() => { window.location.replace("/policies/shipping-policy"); return null; }} />
-        <Route path={"/pages/terms-of-service"} component={() => { window.location.replace("/policies/terms-of-service"); return null; }} />
+        <Route path={"/pages/privacy-policy"}><Redirect to="/policies/privacy-policy" /></Route>
+        <Route path={"/pages/return-policy"}><Redirect to="/policies/return-policy" /></Route>
+        <Route path={"/pages/refund-policy"}><Redirect to="/policies/refund-policy" /></Route>
+        <Route path={"/pages/shipping-policy"}><Redirect to="/policies/shipping-policy" /></Route>
+        <Route path={"/pages/shipping"}><Redirect to="/policies/shipping-policy" /></Route>
+        <Route path={"/pages/terms-of-service"}><Redirect to="/policies/terms-of-service" /></Route>
         <Route path={"/pages/returns"} component={ReturnsPage} />
         <Route path={"/pages/fabric-guide"} component={FabricGuidePage} />
         <Route path={"/pages/size-guide"} component={SizeGuidePage} />
