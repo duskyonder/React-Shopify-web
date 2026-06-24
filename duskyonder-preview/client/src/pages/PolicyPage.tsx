@@ -117,7 +117,7 @@ function ShopifyPolicyPage({ handle }: { handle: string }) {
               dangerouslySetInnerHTML={{ __html: bodyWithIds }}
             />
             {page.updatedAt && (
-              <p style={{ marginTop: 32, fontSize: "0.8rem", color: "#999" }}>
+              <p className="policy-last-updated">
                 Last updated: {new Date(page.updatedAt).toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" })}
               </p>
             )}
