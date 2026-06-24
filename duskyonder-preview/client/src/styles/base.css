@@ -1059,10 +1059,8 @@
   .sf-footer-mobile { display: block; }
   .sf-footer {
     padding: var(--footer-m-pad-y, 32px) 0 20px;
-    min-height: 100svh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
   }
   /* Brand section */
   .sf-footer-mobile-brand {
