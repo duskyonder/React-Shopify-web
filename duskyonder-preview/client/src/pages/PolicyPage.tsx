@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Link, useLocation, useParams } from "wouter";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import type { PolicyPagesConfig, PolicyPageConfig } from "@/contexts/ThemeConfigContext";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
@@ -22,6 +22,36 @@ function extractHeadings(html: string): { id: string; text: string; level: numbe
 // Policy key → field name in shop.policies response
 type ShopPolicyKey = "privacyPolicy" | "termsOfService" | "refundPolicy" | "shippingPolicy";
 
+// Map URL handle → ShopPolicyKey
+const HANDLE_TO_KEY: Record<string, ShopPolicyKey> = {
+  "privacy-policy":   "privacyPolicy",
+  "terms-of-service": "termsOfService",
+  "refund-policy":    "refundPolicy",
+  "return-policy":    "refundPolicy",
+  "shipping-policy":  "shippingPolicy",
+  "shipping":         "shippingPolicy",
+};
+
+// ---- Scrollspy hook ----
+function useScrollspy(ids: string[], offset = 80): string {
+  const [active, setActive] = useState("");
+  useEffect(() => {
+    if (!ids.length) return;
+    const handler = () => {
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= offset + 4) current = id;
+      }
+      setActive(current);
+    };
+    window.addEventListener("scroll", handler, { passive: true });
+    handler();
+    return () => window.removeEventListener("scroll", handler);
+  }, [ids, offset]);
+  return active;
+}
+
 // ---- Shopify Shop Policy Page ----
 // Fetches all policies in one call via shop { privacyPolicy, termsOfService, ... }
 // This reads from Shopify Admin > Settings > Policies — not the Pages list.
@@ -30,15 +60,14 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
     undefined,
     { staleTime: 10 * 60_000 }
   );
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   if (isLoading) {
     return (
       <div className="policy-page">
         <SFPromoBar />
         <SFHeader darkMode={false} />
-        <div style={{ padding: "80px 40px", textAlign: "center", color: "#888" }}>
-          <p>Loading&hellip;</p>
-        </div>
+        <div className="policy-loading"><span>Loading&hellip;</span></div>
         <SFFooter />
       </div>
     );
@@ -51,13 +80,13 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
       <div className="policy-page">
         <SFPromoBar />
         <SFHeader darkMode={false} />
-        <div style={{ padding: "80px 40px", textAlign: "center", color: "#888", maxWidth: 600, margin: "0 auto" }}>
-          <p style={{ fontWeight: 600, marginBottom: 8 }}>Policy not found</p>
-          <p style={{ fontSize: "0.9rem", marginBottom: 16 }}>
+        <div className="policy-not-found">
+          <p className="policy-not-found__title">Policy not found</p>
+          <p className="policy-not-found__body">
             No content for <strong>{policyKey}</strong> was found.<br />
             Add it in <strong>Shopify Admin &rarr; Settings &rarr; Policies</strong>.
           </p>
-          <Link href="/" style={{ color: "#175C40", textDecoration: "underline" }}>Return home</Link>
+          <Link href="/" className="policy-not-found__link">Return home</Link>
         </div>
         <SFFooter />
       </div>
@@ -66,13 +95,11 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
 
   const bodyHtml: string = policy.body ?? "";
   const headings = extractHeadings(bodyHtml);
+  const headingIds = headings.map(h => h.id);
   let _hIdx = 0;
   const bodyWithIds = bodyHtml.replace(
     /<h([2-4])([^>]*)>(.*?)<\/h[2-4]>/gi,
-    (_, level, attrs, text) => {
-      const idx = _hIdx++;
-      return `<h${level}${attrs} id="heading-${idx}">${text}</h${level}>`;
-    }
+    (_, level, attrs, text) => `<h${level}${attrs} id="heading-${_hIdx++}">${text}</h${level}>`
   );
 
   return (
@@ -81,11 +108,13 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
       <SFHeader darkMode={false} />
 
       {/* Hero */}
-      <section className="policy-hero" style={{ background: "#f7f5f2", color: "#1a1a1a" }}>
+      <section className="policy-hero policy-hero--light">
         <div className="policy-hero-inner">
-          <nav className="policy-breadcrumb" style={{ color: "#888" }}>
+          <nav className="policy-breadcrumb">
             <Link href="/">Home</Link>
-            <span> / </span>
+            <span className="policy-breadcrumb__sep">/</span>
+            <span>Policies</span>
+            <span className="policy-breadcrumb__sep">/</span>
             <span>{policy.title}</span>
           </nav>
           <h1 className="policy-hero-title">{policy.title}</h1>
@@ -94,38 +123,83 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
 
       {/* Body */}
       <section className="policy-body-section">
-        <div className={`policy-body-inner${headings.length > 0 ? " policy-body-inner--with-toc" : ""}`}>
+        <div className="policy-body-container">
+
+          {/* Desktop sticky sidebar */}
           {headings.length > 0 && (
-            <aside className="policy-toc">
-              <h3 className="policy-toc-title">Contents</h3>
-              <ul className="policy-toc-list">
-                {headings.map(h => (
-                  <li key={h.id} className={`policy-toc-item policy-toc-item--h${h.level}`}>
-                    <a
-                      href={`#${h.id}`}
-                      onClick={e => {
-                        e.preventDefault();
-                        document.getElementById(h.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }}
-                    >
-                      {h.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </aside>
+            <PolicySidebar headings={headings} headingIds={headingIds} />
           )}
+
+          {/* Main content */}
           <div className="policy-content">
-            <div
-              className="policy-body-html"
-              dangerouslySetInnerHTML={{ __html: bodyWithIds }}
-            />
+            {/* Mobile sticky TOC accordion */}
+            {headings.length > 0 && (
+              <div className="policy-mobile-toc">
+                <button
+                  className={`policy-mobile-toc__toggle${mobileOpen ? " open" : ""}`}
+                  onClick={() => setMobileOpen(v => !v)}
+                  aria-expanded={mobileOpen}
+                >
+                  <span>Table of Contents</span>
+                  <svg className="policy-mobile-toc__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                {mobileOpen && (
+                  <ul className="policy-mobile-toc__list">
+                    {headings.map(h => (
+                      <li key={h.id} className={`policy-mobile-toc__item policy-mobile-toc__item--h${h.level}`}>
+                        <a
+                          href={`#${h.id}`}
+                          onClick={e => {
+                            e.preventDefault();
+                            setMobileOpen(false);
+                            setTimeout(() => {
+                              document.getElementById(h.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                            }, 80);
+                          }}
+                        >{h.text}</a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            <div className="policy-body-html" dangerouslySetInnerHTML={{ __html: bodyWithIds }} />
           </div>
         </div>
       </section>
 
       <SFFooter />
     </div>
+  );
+}
+
+// ---- Desktop Sidebar with Scrollspy ----
+function PolicySidebar({ headings, headingIds }: { headings: { id: string; text: string; level: number }[]; headingIds: string[] }) {
+  const activeId = useScrollspy(headingIds, 100);
+  return (
+    <aside className="policy-sidebar">
+      <div className="policy-sidebar__inner">
+        <p className="policy-sidebar__label">Contents</p>
+        <nav>
+          <ul className="policy-sidebar__list">
+            {headings.map(h => (
+              <li key={h.id} className={`policy-sidebar__item policy-sidebar__item--h${h.level}${activeId === h.id ? " active" : ""}`}>
+                <a
+                  href={`#${h.id}`}
+                  onClick={e => {
+                    e.preventDefault();
+                    document.getElementById(h.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >{h.text}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </aside>
   );
 }
 
@@ -343,6 +417,34 @@ function StaticPolicyPage({ pageKey, showFaqs, showHighlights }: StaticPolicyPag
   );
 }
 
+// ---- Dynamic /policies/:handle route handler ----
+export function DynamicPolicyPage() {
+  const params = useParams<{ handle: string }>();
+  const handle = params.handle ?? "";
+  const policyKey = HANDLE_TO_KEY[handle];
+
+  if (policyKey) {
+    return <ShopifyShopPolicyPage policyKey={policyKey} />;
+  }
+
+  // Handle not in the map — try as a custom Shopify page
+  if (handle) {
+    return <ShopifyCustomPage handle={handle} />;
+  }
+
+  return (
+    <div className="policy-page">
+      <SFPromoBar />
+      <SFHeader darkMode={false} />
+      <div className="policy-not-found">
+        <p className="policy-not-found__title">Page not found</p>
+        <Link href="/" className="policy-not-found__link">Return home</Link>
+      </div>
+      <SFFooter />
+    </div>
+  );
+}
+
 // ---- Public Export ----
 // policyKey  → fetch from shop.policies (Shopify Settings > Policies)
 // pageKey    → legacy static config renderer
@@ -376,8 +478,9 @@ export default function PolicyPage({ policyKey, pageKey, shopifyHandle, showFaqs
       <div className="policy-page">
         <SFPromoBar />
         <SFHeader darkMode={false} />
-        <div style={{ padding: "80px 40px", textAlign: "center", color: "#888" }}>
-          <p>Page not found.</p>
+        <div className="policy-not-found">
+          <p className="policy-not-found__title">Page not found</p>
+          <Link href="/" className="policy-not-found__link">Return home</Link>
         </div>
         <SFFooter />
       </div>

@@ -37,6 +37,7 @@ const InfluencerPage = lazy(() => import("./pages/InfluencerPage"));
 const InfluencerApplyPage = lazy(() => import("./pages/InfluencerApplyPage"));
 const InfluencerCreatorPage = lazy(() => import("./pages/InfluencerCreatorPage"));
 const PolicyPage = lazy(() => import("./pages/PolicyPage"));
+const DynamicPolicyPage = lazy(() => import("./pages/PolicyPage").then(m => ({ default: m.DynamicPolicyPage })));
 const ReturnsPage = lazy(() => import("./pages/ReturnsPage"));
 const FabricGuidePage = lazy(() => import("./pages/FabricGuidePage"));
 const SizeGuidePage = lazy(() => import("./pages/SizeGuidePage"));
@@ -82,19 +83,21 @@ function Router() {
         <Route path={"/pages/influencer"} component={InfluencerPage} />
         <Route path={"/pages/influencer/apply"} component={InfluencerApplyPage} />
         <Route path={"/pages/influencer/:handle"} component={InfluencerCreatorPage} />
-        {/* Policy pages — fetched from Shopify Admin > Settings > Policies */}
-        <Route path={"/pages/privacy-policy"} component={() => <PolicyPage policyKey="privacyPolicy" />} />
-        <Route path={"/pages/return-policy"} component={() => <PolicyPage policyKey="refundPolicy" />} />
-        <Route path={"/pages/refund-policy"} component={() => <PolicyPage policyKey="refundPolicy" />} />
-        <Route path={"/pages/shipping-policy"} component={() => <PolicyPage policyKey="shippingPolicy" />} />
-        <Route path={"/pages/shipping"} component={() => <PolicyPage policyKey="shippingPolicy" />} />
-        <Route path={"/pages/terms-of-service"} component={() => <PolicyPage policyKey="termsOfService" />} />
-        {/* Bare handle aliases */}
-        <Route path={"/privacy-policy"} component={() => <PolicyPage policyKey="privacyPolicy" />} />
-        <Route path={"/return-policy"} component={() => <PolicyPage policyKey="refundPolicy" />} />
-        <Route path={"/refund-policy"} component={() => <PolicyPage policyKey="refundPolicy" />} />
-        <Route path={"/shipping-policy"} component={() => <PolicyPage policyKey="shippingPolicy" />} />
-        <Route path={"/terms-of-service"} component={() => <PolicyPage policyKey="termsOfService" />} />
+        {/* Policy pages — canonical /policies/:handle route */}
+        <Route path={"/policies/:handle"} component={DynamicPolicyPage} />
+        {/* Legacy bare-handle aliases — redirect to canonical */}
+        <Route path={"/privacy-policy"} component={() => { window.location.replace("/policies/privacy-policy"); return null; }} />
+        <Route path={"/return-policy"} component={() => { window.location.replace("/policies/return-policy"); return null; }} />
+        <Route path={"/refund-policy"} component={() => { window.location.replace("/policies/refund-policy"); return null; }} />
+        <Route path={"/shipping-policy"} component={() => { window.location.replace("/policies/shipping-policy"); return null; }} />
+        <Route path={"/terms-of-service"} component={() => { window.location.replace("/policies/terms-of-service"); return null; }} />
+        {/* Legacy /pages/* aliases — redirect to canonical */}
+        <Route path={"/pages/privacy-policy"} component={() => { window.location.replace("/policies/privacy-policy"); return null; }} />
+        <Route path={"/pages/return-policy"} component={() => { window.location.replace("/policies/return-policy"); return null; }} />
+        <Route path={"/pages/refund-policy"} component={() => { window.location.replace("/policies/refund-policy"); return null; }} />
+        <Route path={"/pages/shipping-policy"} component={() => { window.location.replace("/policies/shipping-policy"); return null; }} />
+        <Route path={"/pages/shipping"} component={() => { window.location.replace("/policies/shipping-policy"); return null; }} />
+        <Route path={"/pages/terms-of-service"} component={() => { window.location.replace("/policies/terms-of-service"); return null; }} />
         <Route path={"/pages/returns"} component={ReturnsPage} />
         <Route path={"/pages/fabric-guide"} component={FabricGuidePage} />
         <Route path={"/pages/size-guide"} component={SizeGuidePage} />
