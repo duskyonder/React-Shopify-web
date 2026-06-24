@@ -544,27 +544,24 @@
     gap: 12px;
   }
 
-  /* Main image: Forced to top, strictly constrained */
+  /* Main image: Natural scaling with height limit */
   .pdp-main-image {
     order: 1;
-    display: block;
     width: 100%;
-    height: auto;
-    aspect-ratio: 3/4;
-    background: transparent;
+    display: flex;
+    justify-content: center;
     margin: 0;
     padding: 0;
-    overflow: hidden;
   }
   .pdp-main-image img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top center;
+    height: auto;
+    max-height: 75vh;
+    object-fit: contain;
     display: block;
   }
 
-  /* Thumbs: Forced to bottom, horizontal scroll */
+  /* Thumbs: Horizontal scroll, ordered below main image */
   .pdp-thumbs {
     order: 2;
     display: flex;
