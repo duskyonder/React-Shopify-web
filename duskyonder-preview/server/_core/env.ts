@@ -8,4 +8,15 @@ export const ENV = {
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   shopifyAdminToken: process.env.SHOPIFY_ADMIN_TOKEN ?? "",
+  // Shopify Storefront API (public) — used for collection/product/page queries.
+  // The server process has access to ALL env vars at runtime (VITE_ prefix is only
+  // stripped from the client bundle by Vite, not from the server process.env).
+  shopifyStoreDomain:
+    process.env.SHOPIFY_STORE_DOMAIN ??
+    process.env.VITE_SHOPIFY_STORE_DOMAIN ??
+    "c81aag-cy.myshopify.com",
+  shopifyStorefrontToken:
+    process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
+    process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
+    "",
 };

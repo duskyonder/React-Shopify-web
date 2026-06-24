@@ -8,6 +8,7 @@ import { getAllThemeConfigs, setThemeConfig, getThemeConfig, getAllUploadedImage
 import { notifyOwner } from "./_core/notification";
 import { storagePut } from "./storage";
 import { uploadToShopifyFiles, listShopifyFiles } from "./shopifyConfig";
+import { ENV } from "./_core/env";
 
 export const appRouter = router({
   system: systemRouter,
@@ -108,8 +109,8 @@ export const appRouter = router({
     getMenu: publicProcedure
       .input(z.object({ handle: z.string() }))
       .query(async ({ input }) => {
-        const shopifyDomain = process.env.VITE_SHOPIFY_STORE_DOMAIN || "";
-        const storefrontToken = process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN || "";
+        const shopifyDomain = ENV.shopifyStoreDomain;
+        const storefrontToken = ENV.shopifyStorefrontToken;
         if (!shopifyDomain || !storefrontToken) {
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Shopify credentials not configured" });
         }
@@ -148,8 +149,8 @@ export const appRouter = router({
     getCollection: publicProcedure
       .input(z.object({ handle: z.string() }))
       .query(async ({ input }) => {
-        const shopifyDomain = process.env.VITE_SHOPIFY_STORE_DOMAIN || "";
-        const storefrontToken = process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN || "";
+        const shopifyDomain = ENV.shopifyStoreDomain;
+        const storefrontToken = ENV.shopifyStorefrontToken;
         if (!shopifyDomain || !storefrontToken) return null;
         const gql = `
           query GetCollection($handle: String!) {
@@ -187,8 +188,8 @@ export const appRouter = router({
     getPage: publicProcedure
       .input(z.object({ handle: z.string() }))
       .query(async ({ input }) => {
-        const shopifyDomain = process.env.VITE_SHOPIFY_STORE_DOMAIN || "";
-        const storefrontToken = process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN || "";
+        const shopifyDomain = ENV.shopifyStoreDomain;
+        const storefrontToken = ENV.shopifyStorefrontToken;
         if (!shopifyDomain || !storefrontToken) return null;
         const gql = `
           query GetPage($handle: String!) {
