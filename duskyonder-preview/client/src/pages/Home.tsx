@@ -49,25 +49,59 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
     <section className="sf-hero" style={{ height: isMobileHero ? '100svh' : heroHeight }}>
       {config.slides.map((slide, i) => {
         // ── Resolve alignment: per-slide editorial controls take priority over nine-grid ──
-        // Fix 1: Explicit numeric parsing — stored values may be strings after JSON round-trip.
-        // 'default', '', null, undefined all resolve to null (no override).
-        const parsePx = (v: unknown): number | null => {
-          if (v == null || v === '' || v === 'default') return null;
-          const n = parseInt(String(v), 10);
-          return isNaN(n) ? null : n;
+        // getStyle: converts any stored value (number, numeric string, 'default', null, undefined)
+        // to a CSS string, or undefined if the value is absent/zero/default.
+        const getStyle = (val: unknown, unit = 'px'): string | undefined => {
+          if (val == null || val === '' || val === 'default' || val === 0) return undefined;
+          const n = parseFloat(String(val));
+          if (isNaN(n) || n === 0) return undefined;
+          return `${n}${unit}`;
         };
-        const parseEm = (v: unknown): number | null => {
-          if (v == null || v === '' || v === 'default') return null;
-          const n = parseFloat(String(v));
-          return isNaN(n) ? null : n;
+
+        // Debug: confirm values reaching component (remove after verifying)
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[SFHero] slide config =>', {
+            id: slide.id,
+            titleFontSize: slide.titleFontSize,
+            titleLetterSpacing: slide.titleLetterSpacing,
+            subtitleFontSize: slide.subtitleFontSize,
+            subtitleLetterSpacing: slide.subtitleLetterSpacing,
+            buttonFontSize: slide.buttonFontSize,
+            buttonPaddingX: slide.buttonPaddingX,
+            buttonPaddingY: slide.buttonPaddingY,
+            verticalSpacing: slide.verticalSpacing,
+          });
+        }
+
+        // Explicit style objects — only set a property when a real numeric value is present
+        const titleStyle: React.CSSProperties = {
+          fontSize:      getStyle(slide.titleFontSize)
+                           ?? (config.heroTitleFontSize ? `${config.heroTitleFontSize}px` : undefined),
+          letterSpacing: getStyle(slide.titleLetterSpacing, 'em'),
+          marginBottom:  getStyle(slide.verticalSpacing),
+          ...(config.heroTitleColor  ? { color: config.heroTitleColor }       : {}),
+          ...(config.heroTitleWeight ? { fontWeight: config.heroTitleWeight } : {}),
         };
-        const titleFontSize     = parsePx(slide.titleFontSize);
-        const titleLetterSpacing = parseEm(slide.titleLetterSpacing);
-        const subtitleFontSize   = parsePx(slide.subtitleFontSize);
-        const subtitleLetterSpacing = parseEm(slide.subtitleLetterSpacing);
-        const buttonFontSize     = parsePx(slide.buttonFontSize);
-        const buttonPaddingX     = parsePx(slide.buttonPaddingX);
-        const buttonPaddingY     = parsePx(slide.buttonPaddingY);
+        const subtitleStyle: React.CSSProperties = {
+          fontSize:      getStyle(slide.subtitleFontSize)
+                           ?? (config.heroSubtitleFontSize ? `${config.heroSubtitleFontSize}px` : undefined),
+          letterSpacing: getStyle(slide.subtitleLetterSpacing, 'em'),
+          marginBottom:  getStyle(slide.verticalSpacing),
+          ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}),
+        };
+        const buttonPaddingX = parseFloat(String(slide.buttonPaddingX ?? config.heroBtnPaddingX ?? 28)) || 28;
+        const buttonPaddingY = parseFloat(String(slide.buttonPaddingY ?? config.heroBtnPaddingY ?? 12)) || 12;
+        const buttonStyle: React.CSSProperties = {
+          borderRadius: config.heroBtnShape === 'pill' ? 999 : config.heroBtnShape === 'rounded' ? 8 : 2,
+          background:   config.heroBtnStyle === 'solid' ? (config.heroBtnBg || '#175C40') : 'transparent',
+          border:       `2px solid ${config.heroBtnBorderColor || 'rgba(255,255,255,0.9)'}`,
+          color:        config.heroBtnTextColor || '#ffffff',
+          fontSize:     getStyle(slide.buttonFontSize) ?? `${config.heroBtnFontSize || 14}px`,
+          fontWeight:   config.heroBtnFontWeight || '600',
+          letterSpacing: `${(config.heroBtnLetterSpacing ?? 8) / 100}em`,
+          padding:      `${buttonPaddingY}px ${buttonPaddingX}px`,
+        };
+
         const hasEditorialLayout = slide.justifyContent || slide.alignItems;
         const desktopPos = slide.contentPosition || "middle-center";
         const mobilePos = slide.contentPositionMobile || desktopPos;
@@ -179,47 +213,20 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                 ))
               ) : (
                 <>
-                  <h1
-                    className="sf-hero-title"
-                    style={{
-                      // Fix 3: direct inline values always beat CSS class rules
-                      fontSize: titleFontSize ? `${titleFontSize}px`
-                        : (config.heroTitleFontSize ? `${config.heroTitleFontSize}px` : undefined),
-                      letterSpacing: titleLetterSpacing != null ? `${titleLetterSpacing * 0.01}em` : undefined,
-                      ...(config.heroTitleColor ? { color: config.heroTitleColor } : {}),
-                      ...(config.heroTitleWeight ? { fontWeight: config.heroTitleWeight } : {}),
-                    } as React.CSSProperties}
-                  >{slide.title}</h1>
-                  <p
-                    className="sf-hero-subtitle"
-                    style={{
-                      fontSize: subtitleFontSize ? `${subtitleFontSize}px`
-                        : (config.heroSubtitleFontSize ? `${config.heroSubtitleFontSize}px` : undefined),
-                      letterSpacing: subtitleLetterSpacing != null ? `${subtitleLetterSpacing * 0.01}em` : undefined,
-                      ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}),
-                    } as React.CSSProperties}
-                  >{slide.subtitle}</p>
+                  <h1 className="sf-hero-title" style={titleStyle}>{slide.title}</h1>
+                  <p  className="sf-hero-subtitle" style={subtitleStyle}>{slide.subtitle}</p>
                 </>
               )}
               <a
                 href={slide.buttonLink}
                 className="sf-hero-cta-btn"
                 style={{
-                  borderRadius: config.heroBtnShape === "pill" ? 999 : config.heroBtnShape === "rounded" ? 8 : 2,
-                  background: config.heroBtnStyle === "solid" ? (config.heroBtnBg || "#175C40") : "transparent",
-                  border: `2px solid ${config.heroBtnBorderColor || "rgba(255,255,255,0.9)"}`,
-                  color: config.heroBtnTextColor || "#ffffff",
-                  // Fix 2: per-slide buttonFontSize (parsed) overrides global heroBtnFontSize
-                  fontSize: buttonFontSize ? `${buttonFontSize}px` : `${config.heroBtnFontSize || 14}px`,
-                  fontWeight: config.heroBtnFontWeight || "600",
-                  letterSpacing: `${(config.heroBtnLetterSpacing ?? 8) / 100}em`,
-                  // Fix 1: use parsed buttonPaddingX/Y locals
-                  padding: `${buttonPaddingY ?? config.heroBtnPaddingY ?? 12}px ${buttonPaddingX ?? config.heroBtnPaddingX ?? 28}px`,
+                  ...buttonStyle,
                   alignSelf: hasEditorialLayout
-                    ? (slideAlign === "flex-start" ? "flex-start" : slideAlign === "flex-end" ? "flex-end" : "center")
-                    : ("var(--hero-btn-self, center)" as any),
-                  ["--hero-btn-self" as string]: dAlign === "flex-start" ? "flex-start" : dAlign === "flex-end" ? "flex-end" : "center",
-                  ["--hero-btn-m-self" as string]: mAlign === "flex-start" ? "flex-start" : mAlign === "flex-end" ? "flex-end" : "center",
+                    ? (slideAlign === 'flex-start' ? 'flex-start' : slideAlign === 'flex-end' ? 'flex-end' : 'center')
+                    : ('var(--hero-btn-self, center)' as any),
+                  ['--hero-btn-self' as string]: dAlign === 'flex-start' ? 'flex-start' : dAlign === 'flex-end' ? 'flex-end' : 'center',
+                  ['--hero-btn-m-self' as string]: mAlign === 'flex-start' ? 'flex-start' : mAlign === 'flex-end' ? 'flex-end' : 'center',
                 }}
               >{slide.buttonLabel}</a>
               </div>

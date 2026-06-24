@@ -39,6 +39,8 @@ export interface Slide {
   buttonPaddingX?: number; // px
   buttonPaddingY?: number; // px
   buttonFontSize?: number; // px — per-banner button font size override
+  // Spacing
+  verticalSpacing?: number; // px — margin-bottom applied to title and subtitle
 }
 
 export interface Category {

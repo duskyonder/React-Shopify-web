@@ -356,6 +356,16 @@ export default function HeroPage() {
                     placeholder="default"
                   />
                 </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <NumInput
+                    label="Vertical Spacing"
+                    unit="px"
+                    value={slide.verticalSpacing}
+                    onChange={(v) => updateSlide(slide.id, { verticalSpacing: v })}
+                    min={0} max={120} step={2}
+                    placeholder="default"
+                  />
+                </div>
               </div>
 
               {/* ── Button Size ── */}
