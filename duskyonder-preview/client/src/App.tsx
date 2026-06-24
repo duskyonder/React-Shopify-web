@@ -82,10 +82,17 @@ function Router() {
         <Route path={"/pages/influencer"} component={InfluencerPage} />
         <Route path={"/pages/influencer/apply"} component={InfluencerApplyPage} />
         <Route path={"/pages/influencer/:handle"} component={InfluencerCreatorPage} />
-        <Route path={"/pages/return-policy"} component={() => <PolicyPage pageKey="returnPolicy" showFaqs showHighlights />} />
-        <Route path={"/pages/privacy-policy"} component={() => <PolicyPage pageKey="privacyPolicy" />} />
-        <Route path={"/pages/shipping"} component={() => <PolicyPage pageKey="shippingPolicy" showHighlights />} />
-        <Route path={"/pages/terms-of-service"} component={() => <PolicyPage pageKey="termsOfService" />} />
+        {/* Policy pages — all fetch live content from Shopify by handle */}
+        <Route path={"/pages/return-policy"} component={() => <PolicyPage shopifyHandle="return-policy" />} />
+        <Route path={"/pages/privacy-policy"} component={() => <PolicyPage shopifyHandle="privacy-policy" />} />
+        <Route path={"/pages/shipping-policy"} component={() => <PolicyPage shopifyHandle="shipping-policy" />} />
+        <Route path={"/pages/shipping"} component={() => <PolicyPage shopifyHandle="shipping-policy" />} />
+        <Route path={"/pages/terms-of-service"} component={() => <PolicyPage shopifyHandle="terms-of-service" />} />
+        {/* Bare handle aliases — e.g. /privacy-policy, /shipping-policy */}
+        <Route path={"/privacy-policy"} component={() => <PolicyPage shopifyHandle="privacy-policy" />} />
+        <Route path={"/return-policy"} component={() => <PolicyPage shopifyHandle="return-policy" />} />
+        <Route path={"/shipping-policy"} component={() => <PolicyPage shopifyHandle="shipping-policy" />} />
+        <Route path={"/terms-of-service"} component={() => <PolicyPage shopifyHandle="terms-of-service" />} />
         <Route path={"/pages/returns"} component={ReturnsPage} />
         <Route path={"/pages/fabric-guide"} component={FabricGuidePage} />
         <Route path={"/pages/size-guide"} component={SizeGuidePage} />
