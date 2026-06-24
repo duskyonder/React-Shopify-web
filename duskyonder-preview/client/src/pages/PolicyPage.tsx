@@ -19,12 +19,16 @@ function extractHeadings(html: string): { id: string; text: string; level: numbe
   }));
 }
 
-// ---- Shopify Dynamic Policy Page ----
-// Renders a page fetched live from Shopify by handle (e.g. "privacy-policy", "shipping-policy")
-function ShopifyPolicyPage({ handle }: { handle: string }) {
-  const { data: page, isLoading, error } = trpc.shopify.getPage.useQuery(
-    { handle },
-    { staleTime: 5 * 60_000 }
+// Policy key → field name in shop.policies response
+type ShopPolicyKey = "privacyPolicy" | "termsOfService" | "refundPolicy" | "shippingPolicy";
+
+// ---- Shopify Shop Policy Page ----
+// Fetches all policies in one call via shop { privacyPolicy, termsOfService, ... }
+// This reads from Shopify Admin > Settings > Policies — not the Pages list.
+function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
+  const { data: shop, isLoading, error } = trpc.shopify.getPolicies.useQuery(
+    undefined,
+    { staleTime: 10 * 60_000 }
   );
 
   if (isLoading) {
@@ -40,30 +44,19 @@ function ShopifyPolicyPage({ handle }: { handle: string }) {
     );
   }
 
-  if (error || !page) {
-    const isPreconditionError = (error as any)?.data?.code === "PRECONDITION_FAILED";
+  const policy = shop?.[policyKey] as { title: string; body: string; url: string } | null | undefined;
+
+  if (error || !policy) {
     return (
       <div className="policy-page">
         <SFPromoBar />
         <SFHeader darkMode={false} />
         <div style={{ padding: "80px 40px", textAlign: "center", color: "#888", maxWidth: 600, margin: "0 auto" }}>
-          {isPreconditionError ? (
-            <>
-              <p style={{ fontWeight: 600, color: "#c0392b", marginBottom: 8 }}>Configuration Error</p>
-              <p style={{ fontSize: "0.9rem", marginBottom: 16 }}>
-                The Shopify Storefront API token is not set on this deployment.<br />
-                Add <code style={{ background: "#f5f5f5", padding: "2px 6px", borderRadius: 3, fontSize: "0.85rem" }}>SHOPIFY_STOREFRONT_ACCESS_TOKEN</code> to your Vercel environment variables.
-              </p>
-            </>
-          ) : (
-            <>
-              <p style={{ fontWeight: 600, marginBottom: 8 }}>Page not found</p>
-              <p style={{ fontSize: "0.9rem", marginBottom: 16 }}>
-                No page with handle <code style={{ background: "#f5f5f5", padding: "2px 6px", borderRadius: 3, fontSize: "0.85rem" }}>{handle}</code> was found in Shopify.<br />
-                Check that the page exists in <strong>Shopify Admin &rarr; Online Store &rarr; Pages</strong>.
-              </p>
-            </>
-          )}
+          <p style={{ fontWeight: 600, marginBottom: 8 }}>Policy not found</p>
+          <p style={{ fontSize: "0.9rem", marginBottom: 16 }}>
+            No content for <strong>{policyKey}</strong> was found.<br />
+            Add it in <strong>Shopify Admin &rarr; Settings &rarr; Policies</strong>.
+          </p>
           <Link href="/" style={{ color: "#175C40", textDecoration: "underline" }}>Return home</Link>
         </div>
         <SFFooter />
@@ -71,7 +64,7 @@ function ShopifyPolicyPage({ handle }: { handle: string }) {
     );
   }
 
-  const bodyHtml: string = page.body ?? "";
+  const bodyHtml: string = policy.body ?? "";
   const headings = extractHeadings(bodyHtml);
   let _hIdx = 0;
   const bodyWithIds = bodyHtml.replace(
@@ -93,19 +86,15 @@ function ShopifyPolicyPage({ handle }: { handle: string }) {
           <nav className="policy-breadcrumb" style={{ color: "#888" }}>
             <Link href="/">Home</Link>
             <span> / </span>
-            <span>{page.title}</span>
+            <span>{policy.title}</span>
           </nav>
-          <h1 className="policy-hero-title">{page.title}</h1>
-          {page.bodySummary && (
-            <p className="policy-hero-subtitle">{page.bodySummary}</p>
-          )}
+          <h1 className="policy-hero-title">{policy.title}</h1>
         </div>
       </section>
 
       {/* Body */}
       <section className="policy-body-section">
         <div className={`policy-body-inner${headings.length > 0 ? " policy-body-inner--with-toc" : ""}`}>
-          {/* Table of Contents */}
           {headings.length > 0 && (
             <aside className="policy-toc">
               <h3 className="policy-toc-title">Contents</h3>
@@ -126,22 +115,94 @@ function ShopifyPolicyPage({ handle }: { handle: string }) {
               </ul>
             </aside>
           )}
-
-          {/* Page Content */}
           <div className="policy-content">
             <div
               className="policy-body-html"
               dangerouslySetInnerHTML={{ __html: bodyWithIds }}
             />
-            {page.updatedAt && (
-              <p className="policy-last-updated">
-                Last updated: {new Date(page.updatedAt).toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" })}
-              </p>
-            )}
           </div>
         </div>
       </section>
 
+      <SFFooter />
+    </div>
+  );
+}
+
+// ---- Shopify Custom Page (generic /pages/:handle fetch) ----
+// Used for non-policy custom pages created in Shopify Admin > Online Store > Pages
+function ShopifyCustomPage({ handle }: { handle: string }) {
+  const { data: page, isLoading } = trpc.shopify.getPage.useQuery(
+    { handle },
+    { staleTime: 5 * 60_000 }
+  );
+
+  if (isLoading) {
+    return (
+      <div className="policy-page">
+        <SFPromoBar />
+        <SFHeader darkMode={false} />
+        <div style={{ padding: "80px 40px", textAlign: "center", color: "#888" }}>
+          <p>Loading&hellip;</p>
+        </div>
+        <SFFooter />
+      </div>
+    );
+  }
+
+  if (!page) {
+    return (
+      <div className="policy-page">
+        <SFPromoBar />
+        <SFHeader darkMode={false} />
+        <div style={{ padding: "80px 40px", textAlign: "center", color: "#888" }}>
+          <p>Page not found.</p>
+          <Link href="/" style={{ color: "#175C40", textDecoration: "underline" }}>Return home</Link>
+        </div>
+        <SFFooter />
+      </div>
+    );
+  }
+
+  const bodyHtml: string = (page as any).body ?? "";
+  const headings = extractHeadings(bodyHtml);
+  let _hIdx = 0;
+  const bodyWithIds = bodyHtml.replace(
+    /<h([2-4])([^>]*)>(.*?)<\/h[2-4]>/gi,
+    (_, level, attrs, text) => `<h${level}${attrs} id="heading-${_hIdx++}">${text}</h${level}>`
+  );
+
+  return (
+    <div className="policy-page">
+      <SFPromoBar />
+      <SFHeader darkMode={false} />
+      <section className="policy-hero" style={{ background: "#f7f5f2", color: "#1a1a1a" }}>
+        <div className="policy-hero-inner">
+          <nav className="policy-breadcrumb" style={{ color: "#888" }}>
+            <Link href="/">Home</Link><span> / </span><span>{(page as any).title}</span>
+          </nav>
+          <h1 className="policy-hero-title">{(page as any).title}</h1>
+        </div>
+      </section>
+      <section className="policy-body-section">
+        <div className={`policy-body-inner${headings.length > 0 ? " policy-body-inner--with-toc" : ""}`}>
+          {headings.length > 0 && (
+            <aside className="policy-toc">
+              <h3 className="policy-toc-title">Contents</h3>
+              <ul className="policy-toc-list">
+                {headings.map(h => (
+                  <li key={h.id} className={`policy-toc-item policy-toc-item--h${h.level}`}>
+                    <a href={`#${h.id}`} onClick={e => { e.preventDefault(); document.getElementById(h.id)?.scrollIntoView({ behavior: "smooth" }); }}>{h.text}</a>
+                  </li>
+                ))}
+              </ul>
+            </aside>
+          )}
+          <div className="policy-content">
+            <div className="policy-body-html" dangerouslySetInnerHTML={{ __html: bodyWithIds }} />
+          </div>
+        </div>
+      </section>
       <SFFooter />
     </div>
   );
@@ -283,25 +344,31 @@ function StaticPolicyPage({ pageKey, showFaqs, showHighlights }: StaticPolicyPag
 }
 
 // ---- Public Export ----
-// When called with `pageKey`, renders the static config-based page (legacy routes).
-// When called with `shopifyHandle`, fetches live content from Shopify by handle.
-// When called with neither, derives the handle from the URL path.
+// policyKey  → fetch from shop.policies (Shopify Settings > Policies)
+// pageKey    → legacy static config renderer
+// neither    → derive handle from URL and fetch as a custom Page
 interface PolicyPageProps {
+  policyKey?: ShopPolicyKey;
   pageKey?: keyof PolicyPagesConfig;
   shopifyHandle?: string;
   showFaqs?: boolean;
   showHighlights?: boolean;
 }
 
-export default function PolicyPage({ pageKey, shopifyHandle, showFaqs, showHighlights }: PolicyPageProps) {
+export default function PolicyPage({ policyKey, pageKey, shopifyHandle, showFaqs, showHighlights }: PolicyPageProps) {
   const [location] = useLocation();
 
-  // If a static pageKey is provided, use the legacy config-based renderer
+  // Shop-level policy (Settings > Policies) — primary path for legal pages
+  if (policyKey) {
+    return <ShopifyShopPolicyPage policyKey={policyKey} />;
+  }
+
+  // Legacy static config renderer (kept for backward compat)
   if (pageKey) {
     return <StaticPolicyPage pageKey={pageKey} showFaqs={showFaqs} showHighlights={showHighlights} />;
   }
 
-  // Derive handle: explicit prop > URL path segment after /pages/
+  // Generic custom-page catch-all: derive handle from URL
   const handle = shopifyHandle ?? location.match(/\/pages\/([^/?#]+)/)?.[1] ?? "";
 
   if (!handle) {
@@ -317,5 +384,6 @@ export default function PolicyPage({ pageKey, shopifyHandle, showFaqs, showHighl
     );
   }
 
-  return <ShopifyPolicyPage handle={handle} />;
+  // Fall back to custom-page fetch for non-policy /pages/* routes
+  return <ShopifyCustomPage handle={handle} />;
 }

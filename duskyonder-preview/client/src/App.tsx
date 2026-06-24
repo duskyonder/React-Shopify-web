@@ -82,17 +82,19 @@ function Router() {
         <Route path={"/pages/influencer"} component={InfluencerPage} />
         <Route path={"/pages/influencer/apply"} component={InfluencerApplyPage} />
         <Route path={"/pages/influencer/:handle"} component={InfluencerCreatorPage} />
-        {/* Policy pages — all fetch live content from Shopify by handle */}
-        <Route path={"/pages/return-policy"} component={() => <PolicyPage shopifyHandle="return-policy" />} />
-        <Route path={"/pages/privacy-policy"} component={() => <PolicyPage shopifyHandle="privacy-policy" />} />
-        <Route path={"/pages/shipping-policy"} component={() => <PolicyPage shopifyHandle="shipping-policy" />} />
-        <Route path={"/pages/shipping"} component={() => <PolicyPage shopifyHandle="shipping-policy" />} />
-        <Route path={"/pages/terms-of-service"} component={() => <PolicyPage shopifyHandle="terms-of-service" />} />
-        {/* Bare handle aliases — e.g. /privacy-policy, /shipping-policy */}
-        <Route path={"/privacy-policy"} component={() => <PolicyPage shopifyHandle="privacy-policy" />} />
-        <Route path={"/return-policy"} component={() => <PolicyPage shopifyHandle="return-policy" />} />
-        <Route path={"/shipping-policy"} component={() => <PolicyPage shopifyHandle="shipping-policy" />} />
-        <Route path={"/terms-of-service"} component={() => <PolicyPage shopifyHandle="terms-of-service" />} />
+        {/* Policy pages — fetched from Shopify Admin > Settings > Policies */}
+        <Route path={"/pages/privacy-policy"} component={() => <PolicyPage policyKey="privacyPolicy" />} />
+        <Route path={"/pages/return-policy"} component={() => <PolicyPage policyKey="refundPolicy" />} />
+        <Route path={"/pages/refund-policy"} component={() => <PolicyPage policyKey="refundPolicy" />} />
+        <Route path={"/pages/shipping-policy"} component={() => <PolicyPage policyKey="shippingPolicy" />} />
+        <Route path={"/pages/shipping"} component={() => <PolicyPage policyKey="shippingPolicy" />} />
+        <Route path={"/pages/terms-of-service"} component={() => <PolicyPage policyKey="termsOfService" />} />
+        {/* Bare handle aliases */}
+        <Route path={"/privacy-policy"} component={() => <PolicyPage policyKey="privacyPolicy" />} />
+        <Route path={"/return-policy"} component={() => <PolicyPage policyKey="refundPolicy" />} />
+        <Route path={"/refund-policy"} component={() => <PolicyPage policyKey="refundPolicy" />} />
+        <Route path={"/shipping-policy"} component={() => <PolicyPage policyKey="shippingPolicy" />} />
+        <Route path={"/terms-of-service"} component={() => <PolicyPage policyKey="termsOfService" />} />
         <Route path={"/pages/returns"} component={ReturnsPage} />
         <Route path={"/pages/fabric-guide"} component={FabricGuidePage} />
         <Route path={"/pages/size-guide"} component={SizeGuidePage} />

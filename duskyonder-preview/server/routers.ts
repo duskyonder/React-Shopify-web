@@ -215,12 +215,42 @@ export const appRouter = router({
           },
           body: JSON.stringify({ query: gql, variables: { handle: input.handle } }),
         });
-        if (!res.ok) return null;
+                if (!res.ok) return null;
         const json = await res.json() as any;
         return json.data?.page ?? null;
       }),
-  }),
 
+    getPolicies: publicProcedure
+      .query(async () => {
+        const shopifyDomain = ENV.shopifyStoreDomain;
+        const storefrontToken = ENV.shopifyStorefrontToken;
+        if (!shopifyDomain) return null;
+        const gql = `
+          {
+            shop {
+              privacyPolicy   { title body url }
+              termsOfService  { title body url }
+              refundPolicy    { title body url }
+              shippingPolicy  { title body url }
+            }
+          }
+        `;
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (storefrontToken) headers["X-Shopify-Storefront-Access-Token"] = storefrontToken;
+        const res = await fetch(`https://${shopifyDomain}/api/2024-10/graphql.json`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ query: gql }),
+        });
+        if (!res.ok) {
+          console.error(`[getPolicies] Shopify HTTP ${res.status}`);
+          return null;
+        }
+        const json = await res.json() as any;
+        if (json.errors?.length) console.error("[getPolicies] GraphQL errors:", JSON.stringify(json.errors));
+        return json.data?.shop ?? null;
+      }),
+  }),
   newsletter: router({
     subscribe: publicProcedure
       .input(z.object({ email: z.string().email(), source: z.enum(["popup", "footer"]).default("footer") }))
