@@ -40,13 +40,30 @@ function ShopifyPolicyPage({ handle }: { handle: string }) {
     );
   }
 
-  if (!page || error) {
+  if (error || !page) {
+    const isPreconditionError = (error as any)?.data?.code === "PRECONDITION_FAILED";
     return (
       <div className="policy-page">
         <SFPromoBar />
         <SFHeader darkMode={false} />
-        <div style={{ padding: "80px 40px", textAlign: "center", color: "#888" }}>
-          <p>Page not found.</p>
+        <div style={{ padding: "80px 40px", textAlign: "center", color: "#888", maxWidth: 600, margin: "0 auto" }}>
+          {isPreconditionError ? (
+            <>
+              <p style={{ fontWeight: 600, color: "#c0392b", marginBottom: 8 }}>Configuration Error</p>
+              <p style={{ fontSize: "0.9rem", marginBottom: 16 }}>
+                The Shopify Storefront API token is not set on this deployment.<br />
+                Add <code style={{ background: "#f5f5f5", padding: "2px 6px", borderRadius: 3, fontSize: "0.85rem" }}>SHOPIFY_STOREFRONT_ACCESS_TOKEN</code> to your Vercel environment variables.
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{ fontWeight: 600, marginBottom: 8 }}>Page not found</p>
+              <p style={{ fontSize: "0.9rem", marginBottom: 16 }}>
+                No page with handle <code style={{ background: "#f5f5f5", padding: "2px 6px", borderRadius: 3, fontSize: "0.85rem" }}>{handle}</code> was found in Shopify.<br />
+                Check that the page exists in <strong>Shopify Admin &rarr; Online Store &rarr; Pages</strong>.
+              </p>
+            </>
+          )}
           <Link href="/" style={{ color: "#175C40", textDecoration: "underline" }}>Return home</Link>
         </div>
         <SFFooter />

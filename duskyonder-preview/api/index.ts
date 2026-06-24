@@ -444,7 +444,17 @@ const vercelRouter = router({
           process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
           process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
           "";
-        if (!storefrontToken) return null;
+        if (!storefrontToken) {
+          console.error(
+            `[getPage] SHOPIFY_STOREFRONT_ACCESS_TOKEN is not set. ` +
+            `Cannot fetch page handle="${input.handle}". ` +
+            `Set this env var in Vercel project settings.`
+          );
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "Shopify Storefront token is not configured on this deployment.",
+          });
+        }
         const gql = `
           query GetPage($handle: String!) {
             page(handle: $handle) {
@@ -462,8 +472,18 @@ const vercelRouter = router({
           },
           body: JSON.stringify({ query: gql, variables: { handle: input.handle } }),
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.error(`[getPage] Shopify HTTP ${res.status} for handle="${input.handle}": ${text.slice(0, 200)}`);
+          return null;
+        }
         const json = (await res.json()) as { data?: { page?: unknown }; errors?: unknown[] };
+        if (json.errors?.length) {
+          console.error(`[getPage] Shopify GraphQL errors for handle="${input.handle}":`, JSON.stringify(json.errors));
+        }
+        if (!json.data?.page) {
+          console.warn(`[getPage] Shopify returned null for handle="${input.handle}". Check the page exists in Shopify Admin > Online Store > Pages.`);
+        }
         return json.data?.page ?? null;
       }),
   }),
