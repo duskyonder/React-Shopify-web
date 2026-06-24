@@ -2,12 +2,27 @@ import React, { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, Redirect, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ThemeConfigProvider } from "./contexts/ThemeConfigContext";
 import { CartProvider } from "./contexts/CartContext";
 import { CartDrawer } from "./components/CartDrawer";
+
+// ---- 301 Redirect Map ----
+// Add source → destination pairs here. These are evaluated client-side;
+// for true server-side 301s, mirror this array in your CDN/edge config.
+// Format: { from: "/old-path", to: "/new-path" }
+export const REDIRECT_MAP: Array<{ from: string; to: string }> = [
+  // Example:
+  // { from: "/old-collections/sale", to: "/collections/sale" },
+  // { from: "/pages/returns-policy", to: "/pages/return-policy" },
+];
+
+// Redirect component: matches exact path and issues client-side redirect
+function RedirectRoute({ from, to }: { from: string; to: string }) {
+  return <Route path={from} component={() => <Redirect to={to} />} />;
+}
 
 // 首页同步加载（首屏关键路径）
 import Home from "./pages/Home";
@@ -94,6 +109,10 @@ function Router() {
         <Route path="/admin/footer" component={() => <AdminLayout><AdminFooterPage /></AdminLayout>} />
         <Route path="/admin/navigation" component={() => <AdminLayout><AdminNavigationPage /></AdminLayout>} />
         <Route path="/admin/newsletter" component={() => <AdminLayout><AdminNewsletterPage /></AdminLayout>} />
+        {/* Generic Shopify page catch-all — fetches live content by handle */}
+        <Route path={"/pages/:handle"} component={() => <PolicyPage />} />
+        {/* 301 Redirects — generated from REDIRECT_MAP */}
+        {REDIRECT_MAP.map(r => <RedirectRoute key={r.from} from={r.from} to={r.to} />)}
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>

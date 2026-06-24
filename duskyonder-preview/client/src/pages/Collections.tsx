@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useThemeConfig, CollectionConfig, CollectionProduct } from "@/contexts/ThemeConfigContext";
 import { ColorSwatch, SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
 import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 // ==================== ICONS ====================
 const HeartIcon = ({ filled = false }: { filled?: boolean }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
@@ -672,6 +673,68 @@ export default function Collections() {
   const matchedCollection = routeHandle ? collections.find(c => c.handle === routeHandle) : undefined;
   const [selectedId, setSelectedId] = useState<string>(matchedCollection?.id || collections[0]?.id || "");
 
+  // --- Dynamic Shopify collection fetching ---
+  const [dynamicCollection, setDynamicCollection] = useState<CollectionConfig | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { data: shopifyCollection } = trpc.shopify.getCollection.useQuery(
+    { handle: routeHandle },
+    { enabled: !!routeHandle, staleTime: 60_000 }
+  );
+
+  // Map Shopify Storefront product data onto CollectionConfig.products when available
+  useEffect(() => {
+    if (!shopifyCollection || !routeHandle) {
+      setDynamicCollection(null);
+      return;
+    }
+    setIsLoading(true);
+    const shopifyProducts: CollectionProduct[] = (shopifyCollection.products?.edges ?? []).map(
+      (edge: any) => {
+        const p = edge.node;
+        const images: string[] = (p.images?.edges ?? []).map((e: any) => e.node.url);
+        const amount = parseFloat(p.priceRange?.minVariantPrice?.amount ?? "0");
+        const currency = p.priceRange?.minVariantPrice?.currencyCode ?? "GBP";
+        const compareAmount = parseFloat(p.compareAtPriceRange?.maxVariantPrice?.amount ?? "0");
+        const fmt = (n: number) =>
+          new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(n);
+        return {
+          id: p.id,
+          name: p.title,
+          price: fmt(amount),
+          comparePrice: compareAmount > amount ? fmt(compareAmount) : undefined,
+          imageUrl: images[0],
+          hoverImageUrl: images[1],
+          colors: [],
+          colorImages: {},
+          detailUrl: `/products/${p.handle}`,
+        } satisfies CollectionProduct;
+      }
+    );
+    // Merge Shopify live products into the static config shell (preserves banner, filters, etc.)
+    const baseConfig: CollectionConfig = matchedCollection ?? {
+      id: shopifyCollection.id,
+      handle: shopifyCollection.handle,
+      title: shopifyCollection.title,
+      subtitle: shopifyCollection.description || undefined,
+      bannerImageUrl: shopifyCollection.image?.url,
+      bannerHeight: 480,
+      showBanner: true,
+      productsPerRow: 3,
+      productAspectRatio: "3/4",
+      showColorFilter: false,
+      colorFilters: [],
+      subCategories: ["All"],
+      sortOptions: ["Featured", "Price: Low to High", "Price: High to Low", "Newest"],
+      products: [],
+      desktopGap: 24,
+      mobileGap: 12,
+      productDetails: {},
+    };
+    setDynamicCollection({ ...baseConfig, products: shopifyProducts });
+    setIsLoading(false);
+  }, [shopifyCollection, routeHandle, matchedCollection]);
+
   // Sync selectedId when URL handle or collections change
   useEffect(() => {
     if (matchedCollection && matchedCollection.id !== selectedId) {
@@ -681,7 +744,8 @@ export default function Collections() {
     if (!selectedId && collections.length > 0) setSelectedId(collections[0].id);
   }, [collections, matchedCollection, selectedId]);
 
-  const activeCollection = matchedCollection || collections.find(c => c.id === selectedId) || collections[0];
+  // Prefer live Shopify data; fall back to static config
+  const activeCollection = dynamicCollection || matchedCollection || collections.find(c => c.id === selectedId) || collections[0];
 
   if (collections.length === 0) {
     return (
@@ -721,7 +785,12 @@ export default function Collections() {
             </div>
           )}
 
-          {activeCollection && <CollectionPage collection={activeCollection} />}
+          {isLoading && (
+            <div style={{ padding: "80px 40px", textAlign: "center", color: "#888" }}>
+              <p>Loading collection…</p>
+            </div>
+          )}
+          {!isLoading && activeCollection && <CollectionPage collection={activeCollection} />}
           <SFFooter />
         </div>
       </div>
