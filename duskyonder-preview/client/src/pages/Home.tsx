@@ -104,6 +104,8 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
           '--offset-y-d':  getVar(offYD != null ? Number(offYD) : undefined, '%'),
           '--offset-x-m':  getVar(offXM, '%'),
           '--offset-y-m':  getVar(offYM, '%'),
+          // Horizontal alignment for editorial mode — drives align-items on .sf-hero-content
+          '--hero-align-h': slide.alignItems ?? 'flex-start',
           // Global hero title/subtitle color & weight
           ...(config.heroTitleColor  ? { '--hero-title-color': config.heroTitleColor }   : {}),
           ...(config.heroTitleWeight ? { '--hero-title-weight': config.heroTitleWeight } : {}),
@@ -128,28 +130,27 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
         const { alignItems: dAlign, textAlign: dText, top: dTop, left: dLeft, right: dRight, bottom: dBottom, transform: dTransform } = dStyle as any;
         const { alignItems: mAlign, textAlign: mText, top: mTop, left: mLeft, right: mRight, bottom: mBottom, transform: mTransform } = mStyle as any;
 
-        // Per-slide editorial overrides — alignment and offsets are driven by CSS vars
-        // injected on the slide wrapper (slideCssVars). We only set structural layout here.
+        // Per-slide editorial overrides — all alignment/offset is driven by CSS vars.
+        // We derive text-align for the inner wrapper only.
         const slideJustify = slide.justifyContent ?? "center";
         const slideAlign   = slide.alignItems   ?? "center";
+        const slideTextAlign = slideAlign === "flex-start" ? "left" : slideAlign === "flex-end" ? "right" : "center";
 
         // Build content container style.
-        // Editorial mode: full-inset flex container; alignment via CSS vars on wrapper.
+        // Editorial mode: full-inset flex container; NO hardcoded align-items or max-width.
+        //   Horizontal alignment is controlled by --hero-align-h CSS var (injected below).
         // Legacy mode: position via CSS vars (nine-grid).
         const contentStyle: React.CSSProperties = hasEditorialLayout ? {
           position: "absolute",
           inset: 0,
           display: "flex",
           flexDirection: "column",
-          // Alignment is set via CSS vars --hero-justify-d/m on the slide wrapper;
-          // we also set it directly here as a fallback for immediate rendering.
           justifyContent: slideJustify,
-          alignItems: slideAlign,
-          textAlign: slideAlign === "flex-start" ? "left" : slideAlign === "flex-end" ? "right" : "center",
+          // align-items driven by CSS var --hero-align-h; no inline value here
         } : {
           position: "absolute",
           display: "flex", flexDirection: "column",
-          maxWidth: "min(560px, 90%)", gap: 12,
+          gap: 12,
           // Legacy nine-grid CSS vars
           "--hero-top": dTop ?? "auto",
           "--hero-left": dLeft ?? "auto",
@@ -167,11 +168,10 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
           "--hero-m-text": mText ?? "center",
         } as React.CSSProperties;
 
-        // Inner text wrapper — constrains max-width and aligns children
+        // Inner text wrapper — text-align only; no max-width or align-items hardcoded
         const innerStyle: React.CSSProperties = hasEditorialLayout ? {
           display: "flex", flexDirection: "column", gap: 12,
-          maxWidth: "min(560px, 90%)",
-          alignItems: slideAlign === "flex-start" ? "flex-start" : slideAlign === "flex-end" ? "flex-end" : "center",
+          textAlign: slideTextAlign as React.CSSProperties['textAlign'],
         } : {};
 
         // 移动端优先使用 mobileImageUrl，未设置则回退到 imageUrl
@@ -234,12 +234,15 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                   >{slide.title}</h1>
                   {slide.subtitle && (
                     <p className="sf-hero-subtitle"
-                      style={{ ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}) }}
+                      style={{
+                        whiteSpace: 'pre-line',
+                        ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}),
+                      }}
                     >
-                      {slide.subtitle.split('|').map((line, index, array) => (
+                      {slide.subtitle.split('|').map((line, index) => (
                         <React.Fragment key={index}>
                           {line}
-                          {index < array.length - 1 && <br />}
+                          {index < slide.subtitle!.split('|').length - 1 && <br />}
                         </React.Fragment>
                       ))}
                     </p>

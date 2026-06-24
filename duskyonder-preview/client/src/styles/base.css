@@ -302,10 +302,12 @@
   z-index: 2;
   color: white;
   padding: 0 24px;
-  /* Force full width on mobile to prevent text column collapse */
-  width: 100% !important;
-  max-width: 100% !important;
+  /* Full width — no max-width here; editor controls alignment via CSS var */
+  width: 100%;
+  max-width: none;
   box-sizing: border-box;
+  /* Horizontal alignment driven by --hero-align-h (set per-slide from editor) */
+  align-items: var(--hero-align-h, flex-start);
   /* Use CSS custom properties set inline by React for desktop */
   top: var(--hero-top, auto);
   left: var(--hero-left, auto);
@@ -314,7 +316,6 @@
   /* Offset transform: translate(x, y) using per-slide CSS vars — mobile-first */
   transform: var(--hero-transform, none) translate(var(--offset-x-m, 0%), var(--offset-y-m, 0%));
   transition: transform 0.3s ease;
-  align-items: var(--hero-align, center);
   /* No !important — editorial mode sets inset:0 + flex directly as inline style */
   text-align: var(--hero-text, center);
 }
@@ -331,7 +332,7 @@
 }
 @media (min-width: 768px) {
   .sf-hero-content {
-    max-width: 540px !important;
+    /* max-width intentionally removed — controlled by editor via CSS vars */
     transform: translate(var(--offset-x-d, 0%), var(--offset-y-d, 0%)) !important;
   }
 }
