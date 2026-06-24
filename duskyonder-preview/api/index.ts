@@ -409,7 +409,14 @@ const vercelRouter = router({
                     priceRange { minVariantPrice { amount currencyCode } }
                     compareAtPriceRange { maxVariantPrice { amount currencyCode } }
                     images(first: 3) { edges { node { url altText } } }
-                    variants(first: 1) { edges { node { id availableForSale } } }
+                    variants(first: 100) {
+                      edges {
+                        node {
+                          id availableForSale
+                          selectedOptions { name value }
+                        }
+                      }
+                    }
                     tags
                   }
                 }

@@ -695,6 +695,26 @@ export default function Collections() {
       return;
     }
     setIsLoading(true);
+
+    // ── Extract distinct colors from all product variants ──────────────────
+    const colorSet = new Map<string, string>(); // value (lowercase) → display label
+    (shopifyCollection.products?.edges ?? []).forEach((edge: any) => {
+      (edge.node.variants?.edges ?? []).forEach((ve: any) => {
+        const colorOpt = (ve.node.selectedOptions ?? []).find(
+          (o: any) => o.name.toLowerCase() === "color"
+        );
+        if (colorOpt?.value) {
+          const key = colorOpt.value.toLowerCase();
+          if (!colorSet.has(key)) colorSet.set(key, colorOpt.value);
+        }
+      });
+    });
+    const dynamicColorFilters = Array.from(colorSet.entries()).map(([, label]) => ({
+      id: label.toLowerCase().replace(/\s+/g, "-"),
+      label,
+      value: label,
+    }));
+
     const shopifyProducts: CollectionProduct[] = (shopifyCollection.products?.edges ?? []).map(
       (edge: any) => {
         const p = edge.node;
@@ -704,6 +724,18 @@ export default function Collections() {
         const compareAmount = parseFloat(p.compareAtPriceRange?.maxVariantPrice?.amount ?? "0");
         const fmt = (n: number) =>
           new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(n);
+
+        // Collect distinct colors for this product
+        const productColors: string[] = [];
+        (p.variants?.edges ?? []).forEach((ve: any) => {
+          const colorOpt = (ve.node.selectedOptions ?? []).find(
+            (o: any) => o.name.toLowerCase() === "color"
+          );
+          if (colorOpt?.value && !productColors.includes(colorOpt.value)) {
+            productColors.push(colorOpt.value);
+          }
+        });
+
         return {
           id: p.id,
           name: p.title,
@@ -711,24 +743,26 @@ export default function Collections() {
           comparePrice: compareAmount > amount ? fmt(compareAmount) : undefined,
           imageUrl: images[0],
           hoverImageUrl: images[1],
-          colors: [],
+          colors: productColors,
           colorImages: {},
           detailUrl: `/products/${p.handle}`,
         } satisfies CollectionProduct;
       }
     );
-    // Merge Shopify live products into the static config shell (preserves banner, filters, etc.)
+
+    // ── Build merged config: Shopify image always wins for banner ──────────
+    const shopifyBannerUrl: string | undefined = (shopifyCollection as any).image?.url;
     const baseConfig: CollectionConfig = matchedCollection ?? {
       id: shopifyCollection.id,
       handle: shopifyCollection.handle,
       title: shopifyCollection.title,
       subtitle: shopifyCollection.description || undefined,
-      bannerImageUrl: shopifyCollection.image?.url,
+      bannerImageUrl: shopifyBannerUrl,
       bannerHeight: 480,
       showBanner: true,
       productsPerRow: 3,
       productAspectRatio: "3/4",
-      showColorFilter: false,
+      showColorFilter: true,
       colorFilters: [],
       subCategories: ["All"],
       sortOptions: ["Featured", "Price: Low to High", "Price: High to Low", "Newest"],
@@ -737,7 +771,17 @@ export default function Collections() {
       mobileGap: 12,
       productDetails: {},
     };
-    setDynamicCollection({ ...baseConfig, products: shopifyProducts });
+
+    setDynamicCollection({
+      ...baseConfig,
+      // Shopify live banner always overrides static config when available
+      bannerImageUrl: shopifyBannerUrl || baseConfig.bannerImageUrl,
+      showBanner: true,
+      // Use dynamic colors when Shopify provides them, otherwise keep static config colors
+      colorFilters: dynamicColorFilters.length > 0 ? dynamicColorFilters : baseConfig.colorFilters,
+      showColorFilter: true,
+      products: shopifyProducts,
+    });
     setIsLoading(false);
   }, [shopifyCollection, routeHandle, matchedCollection]);
 
