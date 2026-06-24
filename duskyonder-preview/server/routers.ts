@@ -141,7 +141,8 @@ export const appRouter = router({
         }
         return json.data?.menu ?? null;
       }),
-    }),
+  }),
+
   // Shopify Storefront data — collection and page fetching
   shopify: router({
     getCollection: publicProcedure
