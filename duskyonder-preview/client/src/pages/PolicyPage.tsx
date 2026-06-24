@@ -58,7 +58,7 @@ function useScrollspy(ids: string[], offset = 80): string {
 function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
   const { data: shop, isLoading, error } = trpc.shopify.getPolicies.useQuery(
     undefined,
-    { staleTime: 10 * 60_000 }
+    { staleTime: 0, retry: false }
   );
   const [mobileOpen, setMobileOpen] = useState(false);
 
