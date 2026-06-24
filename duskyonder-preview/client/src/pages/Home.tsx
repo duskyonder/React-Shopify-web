@@ -100,10 +100,11 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
           '--btn-pad-y-d': getVar(btnPadYD),
           '--btn-pad-x-m': getVar(btnPadXM),
           '--btn-pad-y-m': getVar(btnPadYM),
-          '--offset-x-d':  getVar(offXD != null ? Number(offXD) : undefined, '%'),
-          '--offset-y-d':  getVar(offYD != null ? Number(offYD) : undefined, '%'),
-          '--offset-x-m':  getVar(offXM, '%'),
-          '--offset-y-m':  getVar(offYM, '%'),
+          // Offsets: always inject the % value (even 0%) so the CSS var is never absent
+          '--offset-x-d':  offXD != null ? `${Number(offXD)}%` : '0%',
+          '--offset-y-d':  offYD != null ? `${Number(offYD)}%` : '0%',
+          '--offset-x-m':  offXM != null ? `${offXM}%` : '0%',
+          '--offset-y-m':  offYM != null ? `${offYM}%` : '0%',
           // Horizontal alignment for editorial mode — drives align-items on .sf-hero-content
           '--hero-align-h': slide.alignItems ?? 'flex-start',
           // Global hero title/subtitle color & weight
@@ -234,15 +235,12 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                   >{slide.title}</h1>
                   {slide.subtitle && (
                     <p className="sf-hero-subtitle"
-                      style={{
-                        whiteSpace: 'pre-line',
-                        ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}),
-                      }}
+                      style={{ ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}) }}
                     >
-                      {slide.subtitle.split('|').map((line, index) => (
+                      {slide.subtitle.split('|').map((line, index, array) => (
                         <React.Fragment key={index}>
                           {line}
-                          {index < slide.subtitle!.split('|').length - 1 && <br />}
+                          {index < array.length - 1 && <br />}
                         </React.Fragment>
                       ))}
                     </p>
