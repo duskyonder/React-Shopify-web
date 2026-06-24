@@ -386,6 +386,81 @@ const vercelRouter = router({
         return json.data?.menu ?? null;
       }),
   }),
+
+  // ── Shopify Storefront — collection and page fetching ──────────────────────
+  shopify: router({
+    getCollection: publicProcedure
+      .input(z.object({ handle: z.string() }))
+      .query(async ({ input }) => {
+        const storefrontToken =
+          process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
+          process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
+          "";
+        if (!storefrontToken) return null;
+        const gql = `
+          query GetCollection($handle: String!) {
+            collection(handle: $handle) {
+              id handle title description
+              image { url altText }
+              products(first: 250) {
+                edges {
+                  node {
+                    id handle title
+                    priceRange { minVariantPrice { amount currencyCode } }
+                    compareAtPriceRange { maxVariantPrice { amount currencyCode } }
+                    images(first: 3) { edges { node { url altText } } }
+                    variants(first: 1) { edges { node { id availableForSale } } }
+                    tags
+                  }
+                }
+              }
+            }
+          }
+        `;
+        const res = await fetch(`https://${SHOPIFY_DOMAIN}/api/${SHOPIFY_API_VERSION}/graphql.json`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Storefront-Access-Token": storefrontToken,
+          },
+          body: JSON.stringify({ query: gql, variables: { handle: input.handle } }),
+        });
+        if (!res.ok) return null;
+        const json = (await res.json()) as { data?: { collection?: unknown }; errors?: unknown[] };
+        return json.data?.collection ?? null;
+      }),
+
+    getPage: publicProcedure
+      .input(z.object({ handle: z.string() }))
+      .query(async ({ input }) => {
+        const storefrontToken =
+          process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
+          process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
+          "";
+        if (!storefrontToken) return null;
+        const gql = `
+          query GetPage($handle: String!) {
+            page(handle: $handle) {
+              id handle title body bodySummary
+              createdAt updatedAt
+              seo { title description }
+            }
+          }
+        `;
+        const res = await fetch(`https://${SHOPIFY_DOMAIN}/api/${SHOPIFY_API_VERSION}/graphql.json`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Storefront-Access-Token": storefrontToken,
+          },
+          body: JSON.stringify({ query: gql, variables: { handle: input.handle } }),
+        });
+        if (!res.ok) return null;
+        const json = (await res.json()) as { data?: { page?: unknown }; errors?: unknown[] };
+        return json.data?.page ?? null;
+      }),
+  }),
+
   newsletter: router({
     subscribe: publicProcedure
       .input(z.object({ email: z.string().email(), source: z.enum(["popup", "footer"]).default("footer") }))
