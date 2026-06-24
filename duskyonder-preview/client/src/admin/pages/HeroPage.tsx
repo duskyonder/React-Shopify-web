@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
 
 // ── Alignment button group ──────────────────────────────────────────────────
@@ -101,20 +101,7 @@ function NumInput({
 // ── Main page ───────────────────────────────────────────────────────────────
 export default function HeroPage() {
   const { config, updateConfig, updateSlide, addSlide, removeSlide } = useThemeConfig();
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const slides = config.slides ?? [];
-
-  const handleDragStart = (i: number) => setDragIndex(i);
-  const handleDragOver = (e: React.DragEvent, i: number) => {
-    e.preventDefault();
-    if (dragIndex === null || dragIndex === i) return;
-    const updated = [...slides];
-    const [moved] = updated.splice(dragIndex, 1);
-    updated.splice(i, 0, moved);
-    setDragIndex(i);
-    updateConfig({ slides: updated });
-  };
-  const handleDragEnd = () => setDragIndex(null);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -156,17 +143,9 @@ export default function HeroPage() {
 
       <div className="space-y-4">
         {slides.map((slide, index) => (
-          <Card
-            key={slide.id}
-            draggable
-            onDragStart={() => handleDragStart(index)}
-            onDragOver={(e) => handleDragOver(e, index)}
-            onDragEnd={handleDragEnd}
-            className={`transition-all ${dragIndex === index ? "opacity-50 scale-[0.98]" : ""}`}
-          >
+          <Card key={slide.id} className="transition-all">
             <CardHeader className="pb-3 pt-4 px-4">
               <div className="flex items-center gap-2">
-                <GripVertical className="w-5 h-5 text-muted-foreground cursor-move shrink-0" />
                 <CardTitle className="text-sm flex-1">Banner {index + 1}</CardTitle>
                 <Button
                   variant="ghost" size="sm"

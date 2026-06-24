@@ -128,28 +128,23 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
         const { alignItems: dAlign, textAlign: dText, top: dTop, left: dLeft, right: dRight, bottom: dBottom, transform: dTransform } = dStyle as any;
         const { alignItems: mAlign, textAlign: mText, top: mTop, left: mLeft, right: mRight, bottom: mBottom, transform: mTransform } = mStyle as any;
 
-        // Per-slide editorial overrides
-        const slideJustify = slide.justifyContent ?? (hasEditorialLayout ? "center" : undefined);
-        const slideAlign   = slide.alignItems   ?? (hasEditorialLayout ? "center" : undefined);
-        const hOffset = slide.horizontalOffset ?? 0;
-        const vOffset = slide.verticalOffset   ?? 0;
+        // Per-slide editorial overrides — alignment and offsets are driven by CSS vars
+        // injected on the slide wrapper (slideCssVars). We only set structural layout here.
+        const slideJustify = slide.justifyContent ?? "center";
+        const slideAlign   = slide.alignItems   ?? "center";
 
-        // Build content container style
-        // If editorial controls are set, use a full-inset absolute container with flex
-        // so justify-content/align-items position the text block inside it.
+        // Build content container style.
+        // Editorial mode: full-inset flex container; alignment via CSS vars on wrapper.
+        // Legacy mode: position via CSS vars (nine-grid).
         const contentStyle: React.CSSProperties = hasEditorialLayout ? {
           position: "absolute",
           inset: 0,
           display: "flex",
           flexDirection: "column",
+          // Alignment is set via CSS vars --hero-justify-d/m on the slide wrapper;
+          // we also set it directly here as a fallback for immediate rendering.
           justifyContent: slideJustify,
           alignItems: slideAlign,
-          // Padding offsets nudge the text away from the edge
-          paddingTop:    slideJustify === "flex-start" ? `${vOffset}%` : undefined,
-          paddingBottom: slideJustify === "flex-end"   ? `${vOffset}%` : undefined,
-          paddingLeft:   slideAlign   === "flex-start" ? `${hOffset}%` : undefined,
-          paddingRight:  slideAlign   === "flex-end"   ? `${hOffset}%` : undefined,
-          // Text align follows horizontal alignment
           textAlign: slideAlign === "flex-start" ? "left" : slideAlign === "flex-end" ? "right" : "center",
         } : {
           position: "absolute",
@@ -172,7 +167,7 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
           "--hero-m-text": mText ?? "center",
         } as React.CSSProperties;
 
-        // Inner text wrapper (only needed in editorial mode to constrain max-width)
+        // Inner text wrapper — constrains max-width and aligns children
         const innerStyle: React.CSSProperties = hasEditorialLayout ? {
           display: "flex", flexDirection: "column", gap: 12,
           maxWidth: "min(560px, 90%)",
@@ -241,10 +236,10 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                     <p className="sf-hero-subtitle"
                       style={{ ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}) }}
                     >
-                      {slide.subtitle.split('|').map((text, idx, arr) => (
-                        <React.Fragment key={idx}>
-                          {text}
-                          {idx < arr.length - 1 && <br />}
+                      {slide.subtitle.split('|').map((line, index, array) => (
+                        <React.Fragment key={index}>
+                          {line}
+                          {index < array.length - 1 && <br />}
                         </React.Fragment>
                       ))}
                     </p>

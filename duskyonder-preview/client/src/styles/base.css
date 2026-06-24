@@ -332,7 +332,7 @@
 @media (min-width: 768px) {
   .sf-hero-content {
     max-width: 540px !important;
-    transform: var(--hero-transform, none) translate(var(--offset-x-d, 0%), var(--offset-y-d, 0%));
+    transform: translate(var(--offset-x-d, 0%), var(--offset-y-d, 0%)) !important;
   }
 }
 /* Generic h1/p inside .sf-hero-content — low-specificity fallback only.
