@@ -441,6 +441,10 @@
   opacity: 0.7;
   line-height: 1.45;
   color: var(--hero-sub-color, white);
+  /* Force line breaks from <br /> to render — override any nowrap from parent or reset */
+  white-space: pre-wrap !important;
+  word-break: break-word;
+  display: block !important;
 }
 /* Text block mobile font size override */
 @media (max-width: 767px) {
