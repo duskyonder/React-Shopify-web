@@ -361,7 +361,7 @@ export default function HeroPage() {
               {/* ── Button Size ── */}
               <div className="rounded-lg border border-dashed border-border p-4 space-y-4">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Button Size</p>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <NumInput
                     label="Button Horizontal Padding"
                     unit="px"
@@ -376,6 +376,14 @@ export default function HeroPage() {
                     value={slide.buttonPaddingY}
                     onChange={(v) => updateSlide(slide.id, { buttonPaddingY: v })}
                     min={0} max={60} step={2}
+                    placeholder="default"
+                  />
+                  <NumInput
+                    label="Button Font Size"
+                    unit="px"
+                    value={slide.buttonFontSize}
+                    onChange={(v) => updateSlide(slide.id, { buttonFontSize: v })}
+                    min={8} max={48} step={1}
                     placeholder="default"
                   />
                 </div>

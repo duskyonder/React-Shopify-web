@@ -38,6 +38,7 @@ export interface Slide {
   // Button size
   buttonPaddingX?: number; // px
   buttonPaddingY?: number; // px
+  buttonFontSize?: number; // px — per-banner button font size override
 }
 
 export interface Category {

@@ -49,21 +49,25 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
     <section className="sf-hero" style={{ height: isMobileHero ? '100svh' : heroHeight }}>
       {config.slides.map((slide, i) => {
         // ── Resolve alignment: per-slide editorial controls take priority over nine-grid ──
-        // DEBUG: verify editor values reach the component (remove after confirming)
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(`[SFHero] slide[${i}] editorial fields:`, {
-            justifyContent: slide.justifyContent,
-            alignItems: slide.alignItems,
-            horizontalOffset: slide.horizontalOffset,
-            verticalOffset: slide.verticalOffset,
-            titleFontSize: slide.titleFontSize,
-            titleLetterSpacing: slide.titleLetterSpacing,
-            subtitleFontSize: slide.subtitleFontSize,
-            subtitleLetterSpacing: slide.subtitleLetterSpacing,
-            buttonPaddingX: slide.buttonPaddingX,
-            buttonPaddingY: slide.buttonPaddingY,
-          });
-        }
+        // Fix 1: Explicit numeric parsing — stored values may be strings after JSON round-trip.
+        // 'default', '', null, undefined all resolve to null (no override).
+        const parsePx = (v: unknown): number | null => {
+          if (v == null || v === '' || v === 'default') return null;
+          const n = parseInt(String(v), 10);
+          return isNaN(n) ? null : n;
+        };
+        const parseEm = (v: unknown): number | null => {
+          if (v == null || v === '' || v === 'default') return null;
+          const n = parseFloat(String(v));
+          return isNaN(n) ? null : n;
+        };
+        const titleFontSize     = parsePx(slide.titleFontSize);
+        const titleLetterSpacing = parseEm(slide.titleLetterSpacing);
+        const subtitleFontSize   = parsePx(slide.subtitleFontSize);
+        const subtitleLetterSpacing = parseEm(slide.subtitleLetterSpacing);
+        const buttonFontSize     = parsePx(slide.buttonFontSize);
+        const buttonPaddingX     = parsePx(slide.buttonPaddingX);
+        const buttonPaddingY     = parsePx(slide.buttonPaddingY);
         const hasEditorialLayout = slide.justifyContent || slide.alignItems;
         const desktopPos = slide.contentPosition || "middle-center";
         const mobilePos = slide.contentPositionMobile || desktopPos;
@@ -178,36 +182,21 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                   <h1
                     className="sf-hero-title"
                     style={{
-                      // Direct inline fontSize wins over any CSS class rule
-                      fontSize: slide.titleFontSize
-                        ? `${slide.titleFontSize}px`
+                      // Fix 3: direct inline values always beat CSS class rules
+                      fontSize: titleFontSize ? `${titleFontSize}px`
                         : (config.heroTitleFontSize ? `${config.heroTitleFontSize}px` : undefined),
-                      letterSpacing: slide.titleLetterSpacing != null
-                        ? `${slide.titleLetterSpacing * 0.01}em`
-                        : undefined,
+                      letterSpacing: titleLetterSpacing != null ? `${titleLetterSpacing * 0.01}em` : undefined,
                       ...(config.heroTitleColor ? { color: config.heroTitleColor } : {}),
                       ...(config.heroTitleWeight ? { fontWeight: config.heroTitleWeight } : {}),
-                      // Keep CSS-var fallback for mobile responsive scaling when no override set
-                      ["--hero-title-fs" as string]: !slide.titleFontSize && config.heroTitleFontSize
-                        ? `${config.heroTitleFontSize}px` : undefined,
-                      ["--hero-title-m-fs" as string]: !slide.titleFontSize && (config.heroTitleMobileFontSize || config.heroTitleFontSize)
-                        ? `${config.heroTitleMobileFontSize ?? config.heroTitleFontSize}px` : undefined,
                     } as React.CSSProperties}
                   >{slide.title}</h1>
                   <p
                     className="sf-hero-subtitle"
                     style={{
-                      fontSize: slide.subtitleFontSize
-                        ? `${slide.subtitleFontSize}px`
+                      fontSize: subtitleFontSize ? `${subtitleFontSize}px`
                         : (config.heroSubtitleFontSize ? `${config.heroSubtitleFontSize}px` : undefined),
-                      letterSpacing: slide.subtitleLetterSpacing != null
-                        ? `${slide.subtitleLetterSpacing * 0.01}em`
-                        : undefined,
+                      letterSpacing: subtitleLetterSpacing != null ? `${subtitleLetterSpacing * 0.01}em` : undefined,
                       ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}),
-                      ["--hero-sub-fs" as string]: !slide.subtitleFontSize && config.heroSubtitleFontSize
-                        ? `${config.heroSubtitleFontSize}px` : undefined,
-                      ["--hero-sub-m-fs" as string]: !slide.subtitleFontSize && (config.heroSubtitleMobileFontSize || config.heroSubtitleFontSize)
-                        ? `${config.heroSubtitleMobileFontSize ?? config.heroSubtitleFontSize}px` : undefined,
                     } as React.CSSProperties}
                   >{slide.subtitle}</p>
                 </>
@@ -220,22 +209,17 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                   background: config.heroBtnStyle === "solid" ? (config.heroBtnBg || "#175C40") : "transparent",
                   border: `2px solid ${config.heroBtnBorderColor || "rgba(255,255,255,0.9)"}`,
                   color: config.heroBtnTextColor || "#ffffff",
-                  fontSize: `var(--hero-btn-font-size, ${config.heroBtnFontSize || 14}px)`,
+                  // Fix 2: per-slide buttonFontSize (parsed) overrides global heroBtnFontSize
+                  fontSize: buttonFontSize ? `${buttonFontSize}px` : `${config.heroBtnFontSize || 14}px`,
                   fontWeight: config.heroBtnFontWeight || "600",
                   letterSpacing: `${(config.heroBtnLetterSpacing ?? 8) / 100}em`,
-                  // Per-slide button padding overrides global config
-                  padding: `${slide.buttonPaddingY ?? config.heroBtnPaddingY ?? 12}px ${slide.buttonPaddingX ?? config.heroBtnPaddingX ?? 28}px`,
+                  // Fix 1: use parsed buttonPaddingX/Y locals
+                  padding: `${buttonPaddingY ?? config.heroBtnPaddingY ?? 12}px ${buttonPaddingX ?? config.heroBtnPaddingX ?? 28}px`,
                   alignSelf: hasEditorialLayout
                     ? (slideAlign === "flex-start" ? "flex-start" : slideAlign === "flex-end" ? "flex-end" : "center")
                     : ("var(--hero-btn-self, center)" as any),
                   ["--hero-btn-self" as string]: dAlign === "flex-start" ? "flex-start" : dAlign === "flex-end" ? "flex-end" : "center",
                   ["--hero-btn-m-self" as string]: mAlign === "flex-start" ? "flex-start" : mAlign === "flex-end" ? "flex-end" : "center",
-                  ["--hero-btn-font-size" as string]: `${config.heroBtnFontSize || 14}px`,
-                  ["--hero-btn-m-font-size" as string]: `${config.heroBtnMobileFontSize ?? config.heroBtnFontSize ?? 14}px`,
-                  ["--hero-btn-pad-x" as string]: `${slide.buttonPaddingX ?? config.heroBtnPaddingX ?? 28}px`,
-                  ["--hero-btn-pad-y" as string]: `${slide.buttonPaddingY ?? config.heroBtnPaddingY ?? 12}px`,
-                  ["--hero-btn-m-pad-x" as string]: `${slide.buttonPaddingX ?? config.heroBtnMobilePaddingX ?? config.heroBtnPaddingX ?? 28}px`,
-                  ["--hero-btn-m-pad-y" as string]: `${slide.buttonPaddingY ?? config.heroBtnMobilePaddingY ?? config.heroBtnPaddingY ?? 12}px`,
                 }}
               >{slide.buttonLabel}</a>
               </div>
