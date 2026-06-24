@@ -530,14 +530,13 @@
 /* ---- Responsive adjustments ---- */
 @media (max-width: 768px) {
   .pdp-main-layout { grid-template-columns: 1fr; gap: 24px; }
-  /* Gallery: stack vertically, thumbs below, main image fills full width */
-  .pdp-gallery { flex-direction: column; width: 100%; position: static; gap: 0; }
-  .pdp-thumbs { flex-direction: row; width: 100%; overflow-x: auto; order: 2; margin-top: 8px; }
+  .pdp-gallery { flex-direction: column-reverse; width: 100%; position: static; }
+  .pdp-thumbs { flex-direction: row; width: 100%; overflow-x: auto; }
   .pdp-thumb { flex-shrink: 0; }
-  /* Main image: full width, proportional height, no gray offset */
-  .pdp-main-image { width: 100%; height: auto; flex: none; flex-shrink: 0; flex-grow: 0; flex-basis: auto; min-height: 0; aspect-ratio: unset; overflow: hidden; order: 1; margin: 0; }
-  /* Image scales down proportionally, top of image anchored so head is visible */
-  .pdp-main-image img { width: 100%; height: auto; max-height: 90vw; object-fit: contain; object-position: top center; display: block; }
+  /* Issue 2: image scales proportionally — container sized by width, height follows aspect-ratio */
+  .pdp-main-image { width: 100%; height: auto; flex: none; flex-shrink: 0; flex-grow: 0; flex-basis: auto; min-height: 0; aspect-ratio: unset; overflow: visible; }
+  /* Use object-fit: contain + object-position: top center so model's head is never cropped */
+  .pdp-main-image img { width: 100%; height: auto; max-height: 80vw; object-fit: contain; object-position: top center; display: block; }
   .pdp-product-name { font-size: var(--pdp-title-font-size-mobile, 1.6rem); }
   /* padding-top accounts for fixed promo bar (36px mobile) + fixed header (64px) */
   .pdp-page { padding: calc(36px + 64px) 16px 40px; box-sizing: border-box; max-width: 100%; width: 100%; }
@@ -552,8 +551,8 @@
   .pdp-collapsible-header { overflow-wrap: break-word; }
   .pdp-collapsible-body div { overflow-wrap: break-word; word-break: break-word; }
   /* Issue 3: info panel must not clip swatches; swatches wrap freely */
-  /* Info panel: constrain width, clip horizontal overflow */
-  .pdp-info-panel { overflow: visible; overflow-x: hidden; width: 100%; max-width: 100vw; box-sizing: border-box; }
+  /* Issue 5: info panel clips horizontal overflow from text/cards */
+  .pdp-info-panel { overflow: visible; overflow-x: hidden; }
   .pdp-option-group { overflow: visible; }
   .pdp-option-label { flex-wrap: wrap; row-gap: 6px; }
   /* Change 3: shift swatches 8px right so first swatch is not clipped */
@@ -563,13 +562,11 @@
   .pdp-info-modules { width: 98%; max-width: 98%; margin-left: auto; margin-right: auto; flex-direction: column; gap: 0; }
   .pdp-info-module { min-width: 0; width: 100%; }
   .pdp-info-module-text { overflow-wrap: break-word; word-break: break-word; white-space: normal; }
-  .pdp-collapsible { width: 100%; max-width: 100%; overflow: hidden; box-sizing: border-box; }
-  .pdp-collapsible-header { width: 100%; box-sizing: border-box; }
-  .pdp-collapsible-body { overflow: hidden; overflow-x: hidden; width: 100%; box-sizing: border-box; }
-  .pdp-collapsible-body > div { max-width: 100%; width: 100%; box-sizing: border-box; padding: 12px 0 16px; overflow: hidden; }
-  .pdp-collapsible-body * { max-width: 100%; overflow-wrap: break-word; word-break: break-word; }
-  .pdp-shopify-description { overflow-x: hidden; max-width: 100%; width: 100%; word-break: break-word; box-sizing: border-box; padding: 0 16px; }
-  .pdp-shopify-description * { max-width: 100%; overflow-wrap: break-word; word-break: break-word; }
+  .pdp-collapsible { width: 100%; max-width: 100%; overflow: hidden; }
+  .pdp-collapsible-body { overflow: hidden; overflow-x: hidden; }
+  .pdp-collapsible-body * { max-width: 100%; overflow-wrap: break-word; word-break: break-word; overflow-x: hidden; }
+  .pdp-shopify-description { overflow-x: hidden; max-width: 100%; word-break: break-word; }
+  .pdp-shopify-description * { max-width: 100%; overflow-wrap: break-word; word-break: break-word; overflow-x: hidden; }
 }
 
 /* Size Guide slide-in animation */
