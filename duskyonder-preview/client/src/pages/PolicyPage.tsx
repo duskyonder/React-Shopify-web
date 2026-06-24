@@ -62,6 +62,18 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
   );
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Diagnostic: log the raw shop object so we can verify the mapping and Shopify Admin content
+  useEffect(() => {
+    if (shop !== undefined) {
+      console.log('[PolicyPage] getPolicies returned shop:', shop);
+      console.log('[PolicyPage] policyKey requested:', policyKey);
+      console.log('[PolicyPage] resolved policy:', (shop as any)?.[policyKey] ?? null);
+    }
+    if (error) {
+      console.error('[PolicyPage] getPolicies error:', error);
+    }
+  }, [shop, policyKey, error]);
+
   if (isLoading) {
     return (
       <div className="policy-page">
@@ -76,16 +88,31 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
   const policy = shop?.[policyKey] as { title: string; body: string; url: string } | null | undefined;
 
   if (error || !policy) {
+    const isTokenMissing = !error && shop === null;
+    const isPolicyEmpty = !error && shop !== null && !policy;
     return (
       <div className="policy-page">
         <SFPromoBar />
         <SFHeader darkMode={false} />
         <div className="policy-not-found">
           <p className="policy-not-found__title">Policy not found</p>
-          <p className="policy-not-found__body">
-            No content for <strong>{policyKey}</strong> was found.<br />
-            Add it in <strong>Shopify Admin &rarr; Settings &rarr; Policies</strong>.
-          </p>
+          {isTokenMissing && (
+            <p className="policy-not-found__body">
+              The <code>SHOPIFY_ADMIN_TOKEN</code> environment variable is not configured.<br />
+              Add it in your Vercel project settings to enable policy fetching.
+            </p>
+          )}
+          {isPolicyEmpty && (
+            <p className="policy-not-found__body">
+              No content for <strong>{policyKey}</strong> was found in Shopify.<br />
+              Add it in <strong>Shopify Admin &rarr; Settings &rarr; Policies</strong>.
+            </p>
+          )}
+          {error && (
+            <p className="policy-not-found__body">
+              API error: {(error as any)?.message ?? 'Unknown error'}
+            </p>
+          )}
           <Link href="/" className="policy-not-found__link">Return home</Link>
         </div>
         <SFFooter />
