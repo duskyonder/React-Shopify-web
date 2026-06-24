@@ -28,8 +28,14 @@ export interface Slide {
   // Editorial layout controls (per-banner overrides)
   justifyContent?: 'flex-start' | 'center' | 'flex-end';
   alignItems?: 'flex-start' | 'center' | 'flex-end';
-  horizontalOffset?: number; // % nudge
-  verticalOffset?: number;   // % nudge
+  // Separate desktop / mobile offsets (% values)
+  horizontalOffsetDesktop?: number;
+  verticalOffsetDesktop?: number;
+  horizontalOffsetMobile?: number;
+  verticalOffsetMobile?: number;
+  // Legacy universal offsets kept for backward compat
+  horizontalOffset?: number;
+  verticalOffset?: number;
   // Per-banner typography overrides — separate desktop / mobile values
   titleFontSizeDesktop?: number;       // px
   titleFontSizeMobile?: number;        // px
@@ -42,8 +48,10 @@ export interface Slide {
   verticalSpacingDesktop?: number;     // px — margin-bottom on title + subtitle
   verticalSpacingMobile?: number;      // px
   // Button size
-  buttonPaddingX?: number; // px
-  buttonPaddingY?: number; // px
+  buttonPaddingX?: number;        // px — desktop horizontal padding
+  buttonPaddingY?: number;        // px — desktop vertical padding
+  buttonPaddingXMobile?: number;  // px — mobile horizontal padding
+  buttonPaddingYMobile?: number;  // px — mobile vertical padding
   buttonFontSizeDesktop?: number; // px
   buttonFontSizeMobile?: number;  // px
   // Legacy single-value fields kept for backward compat (mapped to desktop if present)

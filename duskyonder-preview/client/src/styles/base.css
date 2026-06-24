@@ -307,7 +307,8 @@
   left: var(--hero-left, auto);
   right: var(--hero-right, auto);
   bottom: var(--hero-bottom, auto);
-  transform: var(--hero-transform, none);
+  /* Offset transform: translate(x, y) using per-slide CSS vars */
+  transform: var(--hero-transform, none) translate(var(--offset-x-m, 0), var(--offset-y-m, 0));
   align-items: var(--hero-align, center);
   /* No !important — editorial mode sets inset:0 + flex directly as inline style */
   text-align: var(--hero-text, center);
@@ -318,9 +319,14 @@
     left: var(--hero-m-left, var(--hero-left, auto));
     right: var(--hero-m-right, var(--hero-right, auto));
     bottom: var(--hero-m-bottom, var(--hero-bottom, auto));
-    transform: var(--hero-m-transform, var(--hero-transform, none));
+    transform: var(--hero-m-transform, var(--hero-transform, none)) translate(var(--offset-x-m, 0), var(--offset-y-m, 0));
     align-items: var(--hero-m-align, var(--hero-align, center));
     text-align: var(--hero-m-text, var(--hero-text, center));
+  }
+}
+@media (min-width: 768px) {
+  .sf-hero-content {
+    transform: var(--hero-transform, none) translate(var(--offset-x-d, 0), var(--offset-y-d, 0));
   }
 }
 /* Generic h1/p inside .sf-hero-content — low-specificity fallback only.
@@ -360,6 +366,7 @@
 .sf-btn-primary:active { transform: scale(0.97); }
 
 /* Hero CTA button — editorial text-link style */
+/* Padding driven by CSS vars; desktop defaults to 0 (text-link style) */
 .sf-hero-cta-btn {
   display: inline-flex;
   align-items: center;
@@ -385,7 +392,7 @@
 @media (max-width: 767px) {
   .sf-hero-cta-btn {
     font-size: var(--btn-fs-m, 11px);
-    padding: var(--hero-btn-m-pad-y, 0px) var(--hero-btn-m-pad-x, 0px);
+    padding: var(--btn-pad-y-m, var(--hero-btn-m-pad-y, 0px)) var(--btn-pad-x-m, var(--hero-btn-m-pad-x, 0px));
     padding-bottom: 2px;
     align-self: var(--hero-btn-m-self, var(--hero-btn-self, center));
   }

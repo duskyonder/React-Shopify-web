@@ -468,6 +468,8 @@
   }
   .sf-hero-cta-btn {
     font-size: var(--btn-fs-d, 11px);
+    padding: var(--btn-pad-y-d, 0px) var(--btn-pad-x-d, 0px);
+    padding-bottom: 2px;
   }
 }
 

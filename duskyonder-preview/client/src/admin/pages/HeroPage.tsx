@@ -299,23 +299,31 @@ export default function HeroPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <NumInput
-                    label="Horizontal Offset"
-                    unit="%"
-                    value={slide.horizontalOffset}
-                    onChange={(v) => updateSlide(slide.id, { horizontalOffset: v })}
-                    min={-50} max={50} step={1}
-                    placeholder="0"
-                  />
-                  <NumInput
-                    label="Vertical Offset"
-                    unit="%"
-                    value={slide.verticalOffset}
-                    onChange={(v) => updateSlide(slide.id, { verticalOffset: v })}
-                    min={-50} max={50} step={1}
-                    placeholder="0"
-                  />
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Desktop offsets */}
+                  <div className="space-y-3">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Desktop Offset</p>
+                    <NumInput label="Horizontal" unit="%"
+                      value={slide.horizontalOffsetDesktop}
+                      onChange={(v) => updateSlide(slide.id, { horizontalOffsetDesktop: v })}
+                      min={-50} max={50} step={1} placeholder="0" />
+                    <NumInput label="Vertical" unit="%"
+                      value={slide.verticalOffsetDesktop}
+                      onChange={(v) => updateSlide(slide.id, { verticalOffsetDesktop: v })}
+                      min={-50} max={50} step={1} placeholder="0" />
+                  </div>
+                  {/* Mobile offsets */}
+                  <div className="space-y-3">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Mobile Offset</p>
+                    <NumInput label="Horizontal" unit="%"
+                      value={slide.horizontalOffsetMobile}
+                      onChange={(v) => updateSlide(slide.id, { horizontalOffsetMobile: v })}
+                      min={-50} max={50} step={1} placeholder="0" />
+                    <NumInput label="Vertical" unit="%"
+                      value={slide.verticalOffsetMobile}
+                      onChange={(v) => updateSlide(slide.id, { verticalOffsetMobile: v })}
+                      min={-50} max={50} step={1} placeholder="0" />
+                  </div>
                 </div>
               </div>
 
@@ -404,6 +412,14 @@ export default function HeroPage() {
                       value={slide.buttonFontSizeMobile}
                       onChange={(v) => updateSlide(slide.id, { buttonFontSizeMobile: v })}
                       min={8} max={36} step={1} placeholder="default" />
+                    <NumInput label="Horizontal Padding" unit="px"
+                      value={slide.buttonPaddingXMobile}
+                      onChange={(v) => updateSlide(slide.id, { buttonPaddingXMobile: v })}
+                      min={0} max={80} step={2} placeholder="default" />
+                    <NumInput label="Vertical Padding" unit="px"
+                      value={slide.buttonPaddingYMobile}
+                      onChange={(v) => updateSlide(slide.id, { buttonPaddingYMobile: v })}
+                      min={0} max={40} step={2} placeholder="default" />
                   </div>
                 </div>
               </div>

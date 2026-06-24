@@ -71,6 +71,12 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
         const bFsD  = slide.buttonFontSizeDesktop ?? slide.buttonFontSize;
         const bFsM  = slide.buttonFontSizeMobile;
 
+        // Backward-compat: legacy universal offsets fall back to desktop
+        const offXD = slide.horizontalOffsetDesktop ?? slide.horizontalOffset;
+        const offYD = slide.verticalOffsetDesktop   ?? slide.verticalOffset;
+        const offXM = slide.horizontalOffsetMobile;
+        const offYM = slide.verticalOffsetMobile;
+
         // CSS variable dictionary injected on the slide wrapper
         const slideCssVars = {
           '--title-fs-d':  getVar(tFsD),
@@ -85,15 +91,21 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
           '--v-gap-m':     getVar(vGapM),
           '--btn-fs-d':    getVar(bFsD),
           '--btn-fs-m':    getVar(bFsM),
-          // Global hero title/subtitle color & weight (not responsive, same on all breakpoints)
+          '--btn-pad-x-d': getVar(slide.buttonPaddingX),
+          '--btn-pad-y-d': getVar(slide.buttonPaddingY),
+          '--btn-pad-x-m': getVar(slide.buttonPaddingXMobile),
+          '--btn-pad-y-m': getVar(slide.buttonPaddingYMobile),
+          '--offset-x-d':  getVar(offXD, '%'),
+          '--offset-y-d':  getVar(offYD, '%'),
+          '--offset-x-m':  getVar(offXM, '%'),
+          '--offset-y-m':  getVar(offYM, '%'),
+          // Global hero title/subtitle color & weight
           ...(config.heroTitleColor  ? { '--hero-title-color': config.heroTitleColor }   : {}),
           ...(config.heroTitleWeight ? { '--hero-title-weight': config.heroTitleWeight } : {}),
           ...(config.heroSubtitleColor ? { '--hero-sub-color': config.heroSubtitleColor } : {}),
         } as React.CSSProperties;
 
-        // Button style (non-typographic properties remain as inline styles)
-        const buttonPaddingX = parseFloat(String(slide.buttonPaddingX ?? config.heroBtnPaddingX ?? 28)) || 28;
-        const buttonPaddingY = parseFloat(String(slide.buttonPaddingY ?? config.heroBtnPaddingY ?? 12)) || 12;
+        // Button style — padding and font-size are handled by CSS vars in the stylesheet
         const buttonStyle: React.CSSProperties = {
           borderRadius: config.heroBtnShape === 'pill' ? 999 : config.heroBtnShape === 'rounded' ? 8 : 2,
           background:   config.heroBtnStyle === 'solid' ? (config.heroBtnBg || '#175C40') : 'transparent',
@@ -101,8 +113,6 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
           color:        config.heroBtnTextColor || '#ffffff',
           fontWeight:   config.heroBtnFontWeight || '600',
           letterSpacing: `${(config.heroBtnLetterSpacing ?? 8) / 100}em`,
-          padding:      `${buttonPaddingY}px ${buttonPaddingX}px`,
-          // fontSize handled by CSS var --btn-fs-d / --btn-fs-m in the stylesheet
         };
 
         const hasEditorialLayout = slide.justifyContent || slide.alignItems;
