@@ -150,9 +150,9 @@ export function ProductInfoPanel({
 
       {/* Size selection */}
       <div className="pdp-option-group">
-        <div className="pdp-option-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="pdp-option-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
           <span>Size{selectedSize ? <span>: <strong>{selectedSize}</strong></span> : ""}</span>
-          {!isMobile && <button className="pdp-size-guide-btn" onClick={() => setShowSizeGuide(true)}>Size Guide</button>}
+          <button className="pdp-size-guide-btn" onClick={() => setShowSizeGuide(true)}>Size Guide</button>
         </div>
         <div className="pdp-size-grid">
           {sizes.map(s => (
@@ -225,10 +225,6 @@ export function ProductInfoPanel({
           </button>
         )}
       </div>
-      {/* Issue 6: Size Guide button below CTA on mobile */}
-      {isMobile && (
-        <button className="pdp-size-guide-btn" style={{ marginBottom: 16, alignSelf: "flex-start" }} onClick={() => setShowSizeGuide(true)}>Size Guide</button>
-      )}
 
       {/* Shipping / Return quick-info modules */}
       <div className="pdp-info-modules">

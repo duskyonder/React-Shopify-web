@@ -23,7 +23,9 @@
   text-decoration: none;
   transition: color 0.2s ease;
 }
-.pdp-back-link:hover { color: #175C40; }
+@media (hover: hover) {
+  .pdp-back-link:hover { color: #175C40; }
+}
 
 /* Main layout: gallery left, info right */
 .pdp-main-layout {
@@ -64,7 +66,9 @@
   justify-content: center;
 }
 .pdp-thumb.active { border-color: #175C40; }
-.pdp-thumb:hover { border-color: #175C40; }
+@media (hover: hover) {
+  .pdp-thumb:hover { border-color: #175C40; }
+}
 .pdp-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .pdp-thumb-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 
@@ -115,7 +119,9 @@
   z-index: 2;
   transition: background 0.2s ease;
 }
-.pdp-arrow:hover { background: #fff; }
+@media (hover: hover) {
+  .pdp-arrow:hover { background: #fff; }
+}
 .pdp-arrow.prev { left: 8px; }
 .pdp-arrow.next { right: 8px; }
 
@@ -136,7 +142,9 @@
   flex-wrap: wrap;
 }
 .pdp-breadcrumb a { color: #888; text-decoration: none; }
-.pdp-breadcrumb a:hover { color: #175C40; }
+@media (hover: hover) {
+  .pdp-breadcrumb a:hover { color: #175C40; }
+}
 .pdp-breadcrumb span:last-child { color: #333; }
 
 .pdp-badge {
@@ -229,7 +237,9 @@
   transition: all 0.15s ease;
   color: #444;
 }
-.pdp-size-btn:hover:not(.unavailable) { border-color: #333; color: #111; }
+@media (hover: hover) {
+  .pdp-size-btn:hover:not(.unavailable) { border-color: #333; color: #111; }
+}
 .pdp-size-btn.active { border-color: #111; background: #111; color: #fff; }
 .pdp-size-btn.unavailable { opacity: 0.3; cursor: not-allowed; text-decoration: line-through; }
 
@@ -247,7 +257,9 @@
   align-items: center;
   justify-content: center;
 }
-.pdp-qty-btn:hover { background: #f5f5f5; }
+@media (hover: hover) {
+  .pdp-qty-btn:hover { background: #f5f5f5; }
+}
 .pdp-qty-value { min-width: 40px; text-align: center; font-size: 15px; font-weight: 600; }
 
 /* CTA row */
@@ -267,7 +279,9 @@
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease;
 }
-.pdp-add-to-cart:hover { background: #0D3D2B; }
+@media (hover: hover) {
+  .pdp-add-to-cart:hover { background: #0D3D2B; }
+}
 .pdp-add-to-cart:active { transform: scale(0.98); }
 .pdp-wishlist-btn {
   width: 48px;
@@ -282,7 +296,9 @@
   color: #888;
   transition: all 0.2s ease;
 }
-.pdp-wishlist-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+@media (hover: hover) {
+  .pdp-wishlist-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+}
 .pdp-wishlist-btn.active { border-color: #e74c3c; color: #e74c3c; background: #fff5f5; }
 
 /* Shipping / Return info modules */
@@ -351,7 +367,9 @@
   padding: 0;
   transition: color 0.2s ease;
 }
-.pdp-share-trigger:hover { color: #175C40; }
+@media (hover: hover) {
+  .pdp-share-trigger:hover { color: #175C40; }
+}
 .pdp-share-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -383,7 +401,9 @@
   width: 100%;
   text-align: left;
 }
-.pdp-share-btn:hover { background: #f5f5f5; }
+@media (hover: hover) {
+  .pdp-share-btn:hover { background: #f5f5f5; }
+}
 
 /* Collapsible sections */
 .pdp-collapsible { border-top: 1px solid #f0f0f0; }
@@ -406,7 +426,9 @@
   text-align: left;
   transition: color 0.15s;
 }
-.pdp-collapsible-header:hover { color: #175C40; }
+@media (hover: hover) {
+  .pdp-collapsible-header:hover { color: #175C40; }
+}
 
 /* Care icons */
 .pdp-care-grid {
@@ -487,7 +509,9 @@
   box-shadow: 0 4px 16px rgba(23,92,64,0.3);
   transition: background 0.2s ease, transform 0.2s ease;
 }
-.pdp-back-to-top:hover { background: #0D3D2B; transform: translateY(-2px); }
+@media (hover: hover) {
+  .pdp-back-to-top:hover { background: #0D3D2B; transform: translateY(-2px); }
+}
 
 /* ---- Mobile sticky cart ---- */
 .pdp-mobile-sticky {
@@ -573,12 +597,9 @@
     margin: 0 auto;
   }
 
-  /* 5. Carousel arrows must not occupy layout space */
+  /* 5. Carousel arrows: hidden on mobile (swipe replaces them) */
   .pdp-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 10;
+    display: none;
   }
   .pdp-arrow.prev {
     left: 10px;
@@ -687,6 +708,11 @@
   .pdp-recs-section { margin: 24px 0; }
   .pdp-section-title { margin-bottom: 16px; }
 }
+
+/* Minimalist Scrollbar for Thumbs */
+.pdp-thumbs::-webkit-scrollbar { height: 3px; }
+.pdp-thumbs::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 4px; }
+.pdp-thumbs::-webkit-scrollbar-thumb { background: #111111; border-radius: 4px; }
 
 /* Size Guide slide-in animation */
 @keyframes slideInRight {
