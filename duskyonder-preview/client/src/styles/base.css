@@ -298,7 +298,7 @@
   background: linear-gradient(135deg, rgba(13,61,43,0.75) 0%, rgba(23,92,64,0.4) 100%);
 }
 .sf-hero-content {
-  position: absolute !important;
+  position: absolute;
   z-index: 2;
   color: white;
   padding: 0 24px;
@@ -309,29 +309,27 @@
   bottom: var(--hero-bottom, auto);
   transform: var(--hero-transform, none);
   align-items: var(--hero-align, center);
-  text-align: var(--hero-text, center) !important;
+  /* No !important — editorial mode sets inset:0 + flex directly as inline style */
+  text-align: var(--hero-text, center);
 }
 @media (max-width: 767px) {
   .sf-hero-content {
-    /* Switch to mobile CSS custom properties on small screens */
     top: var(--hero-m-top, var(--hero-top, auto));
     left: var(--hero-m-left, var(--hero-left, auto));
     right: var(--hero-m-right, var(--hero-right, auto));
     bottom: var(--hero-m-bottom, var(--hero-bottom, auto));
     transform: var(--hero-m-transform, var(--hero-transform, none));
     align-items: var(--hero-m-align, var(--hero-align, center));
-    text-align: var(--hero-m-text, var(--hero-text, center)) !important;
+    text-align: var(--hero-m-text, var(--hero-text, center));
   }
 }
+/* Generic h1/p inside .sf-hero-content — low-specificity fallback only.
+   .sf-hero-title and .sf-hero-subtitle classes (and inline styles) always win. */
 .sf-hero-content h1 {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 800;
-  letter-spacing: 0.04em;
   margin-bottom: 16px;
   line-height: 1.15;
 }
 .sf-hero-content p {
-  font-size: clamp(0.95rem, 2vw, 1.15rem);
   opacity: 0.9;
   margin-bottom: 32px;
   line-height: 1.7;
@@ -386,10 +384,11 @@
 .sf-hero-cta-btn:active { transform: scale(0.97); }
 @media (max-width: 767px) {
   .sf-hero-cta-btn {
-    font-size: 11px !important;
-    padding: 0 !important;
-    padding-bottom: 2px !important;
-    align-self: var(--hero-btn-m-self, var(--hero-btn-self, center)) !important;
+    /* Remove !important so inline padding from editor can override */
+    font-size: var(--hero-btn-m-font-size, 11px);
+    padding: var(--hero-btn-m-pad-y, 0px) var(--hero-btn-m-pad-x, 0px);
+    padding-bottom: 2px;
+    align-self: var(--hero-btn-m-self, var(--hero-btn-self, center));
   }
 }
 .sf-hero-nav {

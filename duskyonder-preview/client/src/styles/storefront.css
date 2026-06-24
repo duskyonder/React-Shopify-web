@@ -446,10 +446,11 @@
     font-size: var(--tb-m-font-size, var(--tb-font-size, inherit)) !important;
   }
   .sf-hero-title {
-    font-size: var(--hero-title-m-fs, var(--hero-title-fs, clamp(1.25rem, 4vw, 2rem))) !important;
+    /* No !important — inline style from editor must win */
+    font-size: var(--hero-title-m-fs, var(--hero-title-fs, clamp(1.25rem, 4vw, 2rem)));
   }
   .sf-hero-subtitle {
-    font-size: var(--hero-sub-m-fs, var(--hero-sub-fs, clamp(0.72rem, 2vw, 0.875rem))) !important;
+    font-size: var(--hero-sub-m-fs, var(--hero-sub-fs, clamp(0.72rem, 2vw, 0.875rem)));
   }
 }
 

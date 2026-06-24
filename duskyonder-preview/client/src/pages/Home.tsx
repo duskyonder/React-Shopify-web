@@ -49,6 +49,21 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
     <section className="sf-hero" style={{ height: isMobileHero ? '100svh' : heroHeight }}>
       {config.slides.map((slide, i) => {
         // ── Resolve alignment: per-slide editorial controls take priority over nine-grid ──
+        // DEBUG: verify editor values reach the component (remove after confirming)
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[SFHero] slide[${i}] editorial fields:`, {
+            justifyContent: slide.justifyContent,
+            alignItems: slide.alignItems,
+            horizontalOffset: slide.horizontalOffset,
+            verticalOffset: slide.verticalOffset,
+            titleFontSize: slide.titleFontSize,
+            titleLetterSpacing: slide.titleLetterSpacing,
+            subtitleFontSize: slide.subtitleFontSize,
+            subtitleLetterSpacing: slide.subtitleLetterSpacing,
+            buttonPaddingX: slide.buttonPaddingX,
+            buttonPaddingY: slide.buttonPaddingY,
+          });
+        }
         const hasEditorialLayout = slide.justifyContent || slide.alignItems;
         const desktopPos = slide.contentPosition || "middle-center";
         const mobilePos = slide.contentPositionMobile || desktopPos;
@@ -163,30 +178,36 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
                   <h1
                     className="sf-hero-title"
                     style={{
-                      // Per-slide font size overrides global config
-                      ["--hero-title-fs" as string]: slide.titleFontSize
+                      // Direct inline fontSize wins over any CSS class rule
+                      fontSize: slide.titleFontSize
                         ? `${slide.titleFontSize}px`
                         : (config.heroTitleFontSize ? `${config.heroTitleFontSize}px` : undefined),
-                      ["--hero-title-m-fs" as string]: slide.titleFontSize
-                        ? `${slide.titleFontSize}px`
-                        : (config.heroTitleMobileFontSize ? `${config.heroTitleMobileFontSize}px` : (config.heroTitleFontSize ? `${config.heroTitleFontSize}px` : undefined)),
+                      letterSpacing: slide.titleLetterSpacing != null
+                        ? `${slide.titleLetterSpacing * 0.01}em`
+                        : undefined,
                       ...(config.heroTitleColor ? { color: config.heroTitleColor } : {}),
                       ...(config.heroTitleWeight ? { fontWeight: config.heroTitleWeight } : {}),
-                      // Per-slide letter spacing (stored as em*100, e.g. 5 → 0.05em)
-                      ...(slide.titleLetterSpacing != null ? { letterSpacing: `${slide.titleLetterSpacing / 100}em` } : {}),
+                      // Keep CSS-var fallback for mobile responsive scaling when no override set
+                      ["--hero-title-fs" as string]: !slide.titleFontSize && config.heroTitleFontSize
+                        ? `${config.heroTitleFontSize}px` : undefined,
+                      ["--hero-title-m-fs" as string]: !slide.titleFontSize && (config.heroTitleMobileFontSize || config.heroTitleFontSize)
+                        ? `${config.heroTitleMobileFontSize ?? config.heroTitleFontSize}px` : undefined,
                     } as React.CSSProperties}
                   >{slide.title}</h1>
                   <p
                     className="sf-hero-subtitle"
                     style={{
-                      ["--hero-sub-fs" as string]: slide.subtitleFontSize
+                      fontSize: slide.subtitleFontSize
                         ? `${slide.subtitleFontSize}px`
                         : (config.heroSubtitleFontSize ? `${config.heroSubtitleFontSize}px` : undefined),
-                      ["--hero-sub-m-fs" as string]: slide.subtitleFontSize
-                        ? `${slide.subtitleFontSize}px`
-                        : (config.heroSubtitleMobileFontSize ? `${config.heroSubtitleMobileFontSize}px` : (config.heroSubtitleFontSize ? `${config.heroSubtitleFontSize}px` : undefined)),
+                      letterSpacing: slide.subtitleLetterSpacing != null
+                        ? `${slide.subtitleLetterSpacing * 0.01}em`
+                        : undefined,
                       ...(config.heroSubtitleColor ? { color: config.heroSubtitleColor } : {}),
-                      ...(slide.subtitleLetterSpacing != null ? { letterSpacing: `${slide.subtitleLetterSpacing / 100}em` } : {}),
+                      ["--hero-sub-fs" as string]: !slide.subtitleFontSize && config.heroSubtitleFontSize
+                        ? `${config.heroSubtitleFontSize}px` : undefined,
+                      ["--hero-sub-m-fs" as string]: !slide.subtitleFontSize && (config.heroSubtitleMobileFontSize || config.heroSubtitleFontSize)
+                        ? `${config.heroSubtitleMobileFontSize ?? config.heroSubtitleFontSize}px` : undefined,
                     } as React.CSSProperties}
                   >{slide.subtitle}</p>
                 </>
