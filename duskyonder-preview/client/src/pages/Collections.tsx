@@ -320,45 +320,49 @@ function FilterSidebar({
   const [colorOpen, setColorOpen] = useState(true);
   const [catOpen, setCatOpen] = useState(true);
 
+  // Normalise: always include at least ["All"] as sub-categories
+  const subCats = (collection.subCategories ?? []).length > 0
+    ? collection.subCategories
+    : ["All"];
+  const colors = collection.colorFilters ?? [];
+
   return (
     <aside className="col-filter-sidebar">
-      {/* Sub-categories */}
-      {collection.subCategories.length > 1 && (
-        <div className="col-filter-group">
-          <button className="col-filter-group-header" onClick={() => setCatOpen(o => !o)}>
-            <span>Category</span>
-            <span style={{ transform: catOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
-              <ChevronDownIcon />
-            </span>
-          </button>
-          {catOpen && (
-            <div className="col-filter-options">
-              {collection.subCategories.map(cat => (
-                <button
-                  key={cat}
-                  className={`col-filter-cat-btn${activeSubCat === cat ? " active" : ""}`}
-                  onClick={() => onSubCatChange(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Category section — always rendered */}
+      <div className="col-filter-group">
+        <button className="col-filter-group-header" onClick={() => setCatOpen(o => !o)}>
+          <span>Category</span>
+          <span style={{ transform: catOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
+            <ChevronDownIcon />
+          </span>
+        </button>
+        {catOpen && (
+          <div className="col-filter-options">
+            {subCats.map(cat => (
+              <button
+                key={cat}
+                className={`col-filter-cat-btn${activeSubCat === cat ? " active" : ""}`}
+                onClick={() => onSubCatChange(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* Color filter */}
-      {collection.showColorFilter && collection.colorFilters.length > 0 && (
-        <div className="col-filter-group">
-          <button className="col-filter-group-header" onClick={() => setColorOpen(o => !o)}>
-            <span>Color</span>
-            <span style={{ transform: colorOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
-              <ChevronDownIcon />
-            </span>
-          </button>
-          {colorOpen && (
+      {/* Color section — always rendered; shows placeholder when no colors configured */}
+      <div className="col-filter-group">
+        <button className="col-filter-group-header" onClick={() => setColorOpen(o => !o)}>
+          <span>Color</span>
+          <span style={{ transform: colorOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
+            <ChevronDownIcon />
+          </span>
+        </button>
+        {colorOpen && (
+          colors.length > 0 ? (
             <div className="col-filter-color-grid">
-              {collection.colorFilters.map(cf => (
+              {colors.map(cf => (
                 <div
                   key={cf.id}
                   className="col-filter-color-item"
@@ -373,9 +377,11 @@ function FilterSidebar({
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      )}
+          ) : (
+            <p className="col-filter-empty-hint">All colors</p>
+          )
+        )}
+      </div>
     </aside>
   );
 }
