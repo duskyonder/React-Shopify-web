@@ -161,7 +161,7 @@ export default function BlogIndex() {
   const { config } = useThemeConfig();
   const blogCfg = config.blog;
 
-  const heroTitle = blogCfg?.heroTitle ?? "DUSKYONDER Journal";
+  const heroTitle = blogCfg?.heroTitle ?? "DUSKYONDER Blog";
   const heroSubtitle = blogCfg?.heroSubtitle ?? "Stories about movement, wellness, and the life you're building.";
   const heroBgColor = blogCfg?.heroBgColor ?? "#F7F5F2";
   const heroTextColor = blogCfg?.heroTextColor ?? "#1a1a1a";
@@ -226,7 +226,7 @@ export default function BlogIndex() {
         style={{ background: heroBgColor, color: heroTextColor, minHeight: heroMinHeight ? `${heroMinHeight}px` : undefined, ...heroPositionVars(heroDesktopPosition, heroMobilePosition) }}
       >
         <div className="blog-hero-inner">
-          <p className="blog-hero-label">JOURNAL</p>
+          <p className="blog-hero-label">BLOG</p>
           <h1 className="blog-hero-title">{heroTitle}</h1>
           <p className="blog-hero-subtitle">{heroSubtitle}</p>
         </div>

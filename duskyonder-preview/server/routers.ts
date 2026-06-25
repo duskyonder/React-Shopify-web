@@ -263,7 +263,11 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const shopifyDomain = ENV.shopifyStoreDomain;
         const storefrontToken = ENV.shopifyStorefrontToken;
-        if (!shopifyDomain || !storefrontToken) return null;
+        console.log(`[getBlog] handle="${input.handle}" domain="${shopifyDomain}" hasToken=${!!storefrontToken}`);
+        if (!shopifyDomain || !storefrontToken) {
+          console.warn("[getBlog] Missing Shopify credentials — returning null");
+          return null;
+        }
         const gql = `
           query GetBlog($handle: String!) {
             blog(handle: $handle) {
@@ -297,13 +301,19 @@ export const appRouter = router({
             },
             body: JSON.stringify({ query: gql, variables: { handle: input.handle } }),
           });
-          if (!res.ok) return null;
-          const json = await res.json() as any;
-          if (json.errors) {
-            console.error("[getBlog] Shopify GraphQL errors:", json.errors);
+          if (!res.ok) {
+            console.error(`[getBlog] HTTP ${res.status} from Shopify`);
             return null;
           }
-          return json.data?.blog ?? null;
+          const json = await res.json() as any;
+          console.log("[getBlog] raw response:", JSON.stringify(json).slice(0, 500));
+          if (json.errors) {
+            console.error("[getBlog] Shopify GraphQL errors:", JSON.stringify(json.errors));
+            return null;
+          }
+          const blog = json.data?.blog ?? null;
+          console.log(`[getBlog] blog=${blog ? `"${blog.handle}" articles=${blog.articles?.edges?.length ?? 0}` : "null"}`);
+          return blog;
         } catch (err) {
           console.error("[getBlog] fetch error:", err instanceof Error ? err.message : err);
           return null;
