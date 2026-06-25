@@ -527,6 +527,75 @@ const vercelRouter = router({
           return null;
         }
       }),
+
+    getBlog: publicProcedure
+      .input(z.object({ handle: z.string().default("news") }))
+      .query(async ({ input }) => {
+        const adminToken = process.env.SHOPIFY_ADMIN_TOKEN ?? "";
+        const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN ?? process.env.VITE_SHOPIFY_STORE_DOMAIN ?? SHOPIFY_DOMAIN;
+        console.log(`[getBlog] handle="${input.handle}" domain="${shopifyDomain}" hasAdminToken=${!!adminToken}`);
+        if (!adminToken) {
+          console.warn("[getBlog] SHOPIFY_ADMIN_TOKEN not set — returning null");
+          return null;
+        }
+        const baseUrl = `https://${shopifyDomain}/admin/api/2024-10`;
+        const headers = { "X-Shopify-Access-Token": adminToken, "Content-Type": "application/json" };
+        try {
+          // Step 1: find the blog ID by handle
+          const blogsRes = await fetch(`${baseUrl}/blogs.json?fields=id,handle,title`, { headers });
+          if (!blogsRes.ok) {
+            console.error(`[getBlog] blogs.json HTTP ${blogsRes.status}`);
+            return null;
+          }
+          const blogsJson = await blogsRes.json() as any;
+          const blog = (blogsJson.blogs as any[]).find((b: any) => b.handle === input.handle);
+          if (!blog) {
+            console.warn(`[getBlog] No blog with handle "${input.handle}". Available: ${(blogsJson.blogs as any[]).map((b: any) => b.handle).join(", ")}`);
+            return null;
+          }
+          console.log(`[getBlog] found blog id=${blog.id} handle="${blog.handle}"`);
+
+          // Step 2: fetch articles for this blog
+          const articlesRes = await fetch(
+            `${baseUrl}/blogs/${blog.id}/articles.json?limit=50&fields=id,handle,title,excerpt,body_html,published_at,image,author,tags`,
+            { headers }
+          );
+          if (!articlesRes.ok) {
+            console.error(`[getBlog] articles.json HTTP ${articlesRes.status}`);
+            return null;
+          }
+          const articlesJson = await articlesRes.json() as any;
+          const articles = (articlesJson.articles ?? []) as any[];
+          console.log(`[getBlog] fetched ${articles.length} articles`);
+
+          return {
+            id: String(blog.id),
+            handle: blog.handle,
+            title: blog.title,
+            articles: {
+              edges: articles
+                .sort((a: any, b: any) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+                .map((a: any) => ({
+                  node: {
+                    id: String(a.id),
+                    handle: a.handle,
+                    title: a.title,
+                    excerpt: a.excerpt ?? "",
+                    publishedAt: a.published_at,
+                    image: a.image ? { url: a.image.src, altText: a.image.alt ?? a.title } : null,
+                    author: { name: a.author ?? "Dusk Yonder" },
+                    tags: typeof a.tags === "string"
+                      ? a.tags.split(",").map((t: string) => t.trim()).filter(Boolean)
+                      : (a.tags ?? []),
+                  },
+                })),
+            },
+          };
+        } catch (err) {
+          console.error("[getBlog] fetch error:", err instanceof Error ? err.message : err);
+          return null;
+        }
+      }),
   }),
 
   newsletter: router({
