@@ -32,24 +32,69 @@ const HANDLE_TO_KEY: Record<string, ShopPolicyKey> = {
   "shipping":         "shippingPolicy",
 };
 
-// ---- Scrollspy hook ----
-function useScrollspy(ids: string[], offset = 80): string {
+// ---- Scrollspy hook (IntersectionObserver-based) ----
+function useScrollspy(ids: string[]): string {
   const [active, setActive] = useState("");
   useEffect(() => {
     if (!ids.length) return;
-    const handler = () => {
-      let current = ids[0];
-      for (const id of ids) {
+    // rootMargin: top offset accounts for sticky header (~80px) + small buffer
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the topmost visible heading
+        const visible = entries
+          .filter(e => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible.length > 0) {
+          setActive(visible[0].target.id);
+        }
+      },
+      { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
+    );
+    // Small delay to ensure DOM is ready after content renders
+    const timer = setTimeout(() => {
+      ids.forEach(id => {
         const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top <= offset + 4) current = id;
-      }
-      setActive(current);
+        if (el) observer.observe(el);
+      });
+      // Initialise active to first heading above viewport fold
+      const firstVisible = ids.find(id => {
+        const el = document.getElementById(id);
+        return el && el.getBoundingClientRect().top > 0;
+      });
+      const idx = firstVisible ? ids.indexOf(firstVisible) : -1;
+      setActive(idx > 0 ? ids[idx - 1] : ids[0]);
+    }, 100);
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [ids]);
+  return active;
+}
+
+// ---- Scroll progress hook ----
+// Returns 0-100 percentage of how far the user has scrolled through the content element
+function useScrollProgress(contentRef: React.RefObject<HTMLDivElement | null>): number {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const handler = () => {
+      const el = contentRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const windowH = window.innerHeight;
+      // Total scrollable distance = element height - viewport height
+      const total = rect.height - windowH;
+      if (total <= 0) { setProgress(100); return; }
+      // How far the top of the element has scrolled above the viewport top
+      const scrolled = -rect.top;
+      const pct = Math.min(100, Math.max(0, (scrolled / total) * 100));
+      setProgress(pct);
     };
     window.addEventListener("scroll", handler, { passive: true });
     handler();
     return () => window.removeEventListener("scroll", handler);
-  }, [ids, offset]);
-  return active;
+  }, [contentRef]);
+  return progress;
 }
 
 // ---- Shopify Shop Policy Page ----
@@ -129,6 +174,9 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
     (_, level, attrs, text) => `<h${level}${attrs} id="heading-${_hIdx++}">${text}</h${level}>`
   );
 
+  // Ref for the content div — used by the scroll progress hook
+  const contentRef = useRef<HTMLDivElement>(null);
+
   return (
     <div className="policy-page">
       <SFPromoBar />
@@ -154,11 +202,11 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
 
           {/* Desktop sticky sidebar */}
           {headings.length > 0 && (
-            <PolicySidebar headings={headings} headingIds={headingIds} />
+            <PolicySidebar headings={headings} headingIds={headingIds} contentRef={contentRef} />
           )}
 
           {/* Main content */}
-          <div className="policy-content">
+          <div className="policy-content" ref={contentRef}>
             {/* Mobile sticky TOC accordion */}
             {headings.length > 0 && (
               <div className="policy-mobile-toc">
@@ -203,13 +251,31 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
   );
 }
 
-// ---- Desktop Sidebar with Scrollspy ----
-function PolicySidebar({ headings, headingIds }: { headings: { id: string; text: string; level: number }[]; headingIds: string[] }) {
-  const activeId = useScrollspy(headingIds, 100);
+// ---- Desktop Sidebar with Scrollspy + Progress Bar ----
+function PolicySidebar({
+  headings,
+  headingIds,
+  contentRef,
+}: {
+  headings: { id: string; text: string; level: number }[];
+  headingIds: string[];
+  contentRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const activeId = useScrollspy(headingIds);
+  const progress = useScrollProgress(contentRef);
   return (
     <aside className="policy-sidebar">
       <div className="policy-sidebar__inner">
-        <p className="policy-sidebar__label">Contents</p>
+        {/* Progress bar */}
+        <div className="policy-sidebar__progress-wrap">
+          <p className="policy-sidebar__label">Contents</p>
+          <div className="policy-sidebar__progress-bar">
+            <div
+              className="policy-sidebar__progress-fill"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
         <nav>
           <ul className="policy-sidebar__list">
             {headings.map(h => (

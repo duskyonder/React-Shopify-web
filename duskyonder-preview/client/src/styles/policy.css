@@ -220,13 +220,26 @@
 /* ---- Desktop sticky sidebar ---- */
 .policy-sidebar {
   display: block;
+  /* align-self: start is set on the grid item so sticky works correctly */
+  align-self: start;
 }
 .policy-sidebar__inner {
   position: sticky;
-  top: 100px;
-  max-height: calc(100vh - 120px);
+  /* 80px header + 24px promo bar + 16px breathing room = 120px */
+  top: 120px;
+  max-height: calc(100vh - 140px);
   overflow-y: auto;
   padding-bottom: 24px;
+  /* Hide scrollbar but keep scrollability */
+  scrollbar-width: none;
+}
+.policy-sidebar__inner::-webkit-scrollbar { display: none; }
+
+/* Progress bar */
+.policy-sidebar__progress-wrap {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ebebeb;
 }
 .policy-sidebar__label {
   font-size: 0.68rem;
@@ -234,9 +247,20 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #aaa;
-  margin: 0 0 14px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #ebebeb;
+  margin: 0 0 8px;
+}
+.policy-sidebar__progress-bar {
+  height: 3px;
+  background: #ebebeb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.policy-sidebar__progress-fill {
+  height: 100%;
+  background: #175C40;
+  border-radius: 2px;
+  transition: width 0.15s ease-out;
+  min-width: 0;
 }
 .policy-sidebar__list {
   list-style: none;
@@ -412,6 +436,8 @@
   padding-bottom: 0.4rem;
   border-bottom: 1px solid #e8e8e8;
   line-height: 1.25;
+  /* Offset for fixed header when anchor-linked — header ~80px + promo ~24px + buffer */
+  scroll-margin-top: 120px;
 }
 .policy-body-html h3 {
   font-size: 1.05rem;
@@ -419,6 +445,7 @@
   color: #1a1a1a;
   margin: 2rem 0 0.5rem;
   line-height: 1.3;
+  scroll-margin-top: 120px;
 }
 .policy-body-html h4 {
   font-size: 0.9rem;
@@ -427,6 +454,7 @@
   letter-spacing: 0.06em;
   color: #555;
   margin: 1.5rem 0 0.4rem;
+  scroll-margin-top: 120px;
 }
 
 /* Paragraphs */
