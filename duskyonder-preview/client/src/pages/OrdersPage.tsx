@@ -1,55 +1,84 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
+import { trpc } from "@/lib/trpc";
 
-// ==================== MOCK DATA ====================
-const mockOrders = [
-  {
-    id: "DY-10042",
-    date: "June 8, 2026",
-    status: "Processing",
-    statusColor: "#E8A020",
-    total: "$166.00",
-    items: [
-      { name: "AirLight High-Rise Leggings", variant: "Sage Green / M", qty: 1, imageUrl: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=80&h=100&fit=crop" },
-      { name: "SculptFlex Sports Bra", variant: "Sage Green / M", qty: 1, imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=100&fit=crop" },
-    ],
-  },
-  {
-    id: "DY-10031",
-    date: "May 22, 2026",
-    status: "Delivered",
-    statusColor: "#175C40",
-    total: "$98.00",
-    items: [
-      { name: "EcoMove Shorts", variant: "Charcoal / S", qty: 1, imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=80&h=100&fit=crop" },
-    ],
-  },
-  {
-    id: "DY-10018",
-    date: "April 5, 2026",
-    status: "Delivered",
-    statusColor: "#175C40",
-    total: "$234.00",
-    items: [
-      { name: "CloudSoft Hoodie", variant: "Oat / L", qty: 1, imageUrl: "https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=80&h=100&fit=crop" },
-      { name: "AirLight Leggings", variant: "Black / L", qty: 1, imageUrl: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=80&h=100&fit=crop" },
-      { name: "SculptFlex Bra", variant: "Black / L", qty: 1, imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=100&fit=crop" },
-    ],
-  },
-  {
-    id: "DY-10005",
-    date: "February 14, 2026",
-    status: "Delivered",
-    statusColor: "#175C40",
-    total: "$68.00",
-    items: [
-      { name: "SculptFlex Sports Bra", variant: "Dusty Rose / S", qty: 1, imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=100&fit=crop" },
-    ],
-  },
-];
+// ── Types ──────────────────────────────────────────────────────────────────────
+interface LineItem {
+  title: string;
+  quantity: number;
+  price: { amount: string; currencyCode: string };
+  image: { url: string; altText: string | null } | null;
+  merchandise: {
+    id: string;
+    title: string;
+    product: { handle: string };
+  } | null;
+}
 
-// ==================== STATUS BADGE ====================
-function StatusBadge({ status, color }: { status: string; color: string }) {
+interface ShopifyOrder {
+  id: string;
+  name: string;
+  processedAt: string;
+  financialStatus: string | null;
+  fulfillmentStatus: string | null;
+  totalPrice: { amount: string; currencyCode: string };
+  lineItems: { nodes: LineItem[] };
+}
+
+interface CustomerData {
+  displayName: string;
+  emailAddress: { emailAddress: string } | null;
+  orders: { nodes: ShopifyOrder[] };
+}
+
+// ── Token helpers ──────────────────────────────────────────────────────────────
+const TOKEN_KEY = "shopify_customer_token";
+const TOKEN_EXPIRY_KEY = "shopify_customer_token_expiry";
+
+function getStoredToken(): string | null {
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
+    if (!token) return null;
+    if (expiry && Date.now() > parseInt(expiry, 10)) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_EXPIRY_KEY);
+      return null;
+    }
+    return token;
+  } catch {
+    return null;
+  }
+}
+
+function storeToken(accessToken: string, expiresIn: number) {
+  try {
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    localStorage.setItem(TOKEN_EXPIRY_KEY, String(Date.now() + expiresIn * 1000));
+  } catch {
+    // ignore
+  }
+}
+
+// ── UI helpers ─────────────────────────────────────────────────────────────────
+function formatStatus(status: string | null): { label: string; color: string } {
+  if (!status) return { label: "Pending", color: "#888" };
+  const s = status.toLowerCase();
+  if (s === "paid" || s === "fulfilled") return { label: "Fulfilled", color: "#175C40" };
+  if (s === "partially_fulfilled") return { label: "Partial", color: "#E8A020" };
+  if (s === "cancelled" || s === "canceled") return { label: "Cancelled", color: "#c0392b" };
+  if (s === "pending" || s === "open") return { label: "Processing", color: "#E8A020" };
+  if (s === "refunded") return { label: "Refunded", color: "#888" };
+  return { label: status.charAt(0).toUpperCase() + status.slice(1).toLowerCase(), color: "#555" };
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+
+function StatusBadge({ status }: { status: string | null }) {
+  const { label, color } = formatStatus(status);
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 6,
@@ -58,80 +87,99 @@ function StatusBadge({ status, color }: { status: string; color: string }) {
       fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.04em",
     }}>
       <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, display: "inline-block" }} />
-      {status}
+      {label}
     </span>
   );
 }
 
-// ==================== ORDER CARD ====================
-function OrderCard({ order }: { order: typeof mockOrders[0] }) {
+// ── Order Card ─────────────────────────────────────────────────────────────────
+function OrderCard({ order }: { order: ShopifyOrder }) {
   const [expanded, setExpanded] = useState(false);
+  const firstItem = order.lineItems.nodes[0];
+  const extraCount = order.lineItems.nodes.length - 1;
+  const displayStatus = order.fulfillmentStatus ?? order.financialStatus;
 
   return (
     <div style={{
       background: "#fff", borderRadius: 8, marginBottom: 16,
-      boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
-      overflow: "hidden",
+      boxShadow: "0 1px 6px rgba(0,0,0,0.06)", overflow: "hidden",
     }}>
-      {/* Header */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "20px 24px", flexWrap: "wrap", gap: 12,
-        cursor: "pointer",
-      }} onClick={() => setExpanded(!expanded)}>
-        <div style={{ display: "flex", gap: 32, flexWrap: "wrap", alignItems: "center" }}>
+      <div
+        onClick={() => setExpanded(e => !e)}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "20px 24px", flexWrap: "wrap", gap: 12, cursor: "pointer",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {firstItem?.image?.url ? (
+            <img
+              src={firstItem.image.url}
+              alt={firstItem.image.altText ?? firstItem.title}
+              style={{ width: 64, height: 80, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
+            />
+          ) : (
+            <div style={{
+              width: 64, height: 80, borderRadius: 4, background: "#f0ede8",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#bbb", fontSize: "1.5rem", flexShrink: 0,
+            }}>📦</div>
+          )}
           <div>
-            <div style={{ fontSize: "0.72rem", color: "#888", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>Order</div>
-            <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#1A1A1A" }}>#{order.id}</div>
+            <StatusBadge status={displayStatus} />
+            <div style={{ marginTop: 6, fontSize: "0.85rem", color: "#555" }}>
+              <span style={{ fontWeight: 700, color: "#1a1a1a" }}>{order.name}</span>
+              {" · "}
+              {parseFloat(order.totalPrice.amount).toFixed(2)} {order.totalPrice.currencyCode}
+            </div>
+            <div style={{ fontSize: "0.78rem", color: "#999", marginTop: 2 }}>
+              {formatDate(order.processedAt)}
+              {extraCount > 0 && ` · +${extraCount} more item${extraCount > 1 ? "s" : ""}`}
+            </div>
           </div>
-          <div>
-            <div style={{ fontSize: "0.72rem", color: "#888", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>Date</div>
-            <div style={{ fontWeight: 500, fontSize: "0.88rem", color: "#555" }}>{order.date}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: "0.72rem", color: "#888", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>Total</div>
-            <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#1A1A1A" }}>{order.total}</div>
-          </div>
-          <StatusBadge status={order.status} color={order.statusColor} />
         </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        {firstItem?.merchandise?.product?.handle && (
           <a
-            href={`/account/orders/${order.id}`}
-            style={{
-              padding: "8px 18px", background: "transparent", color: "#175C40",
-              textDecoration: "none", borderRadius: 4, fontWeight: 600,
-              fontSize: "0.8rem", letterSpacing: "0.06em", textTransform: "uppercase",
-              border: "1.5px solid #175C40",
-            }}
+            href={`/products/${firstItem.merchandise.product.handle}`}
             onClick={e => e.stopPropagation()}
+            style={{
+              padding: "8px 18px", border: "1px solid #ddd", borderRadius: 20,
+              fontSize: "0.8rem", fontWeight: 600, color: "#1a1a1a",
+              textDecoration: "none", background: "#fff",
+              transition: "border-color 0.2s, color 0.2s",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#175C40"; e.currentTarget.style.color = "#175C40"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#ddd"; e.currentTarget.style.color = "#1a1a1a"; }}
           >
-            View Details
+            Buy again
           </a>
-          <svg
-            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"
-            style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </div>
+        )}
       </div>
 
-      {/* Expanded items */}
       {expanded && (
-        <div style={{ borderTop: "1px solid #F5F5F5", padding: "16px 24px" }}>
-          {order.items.map((item, i) => (
+        <div style={{ borderTop: "1px solid #f0ede8", padding: "16px 24px" }}>
+          {order.lineItems.nodes.map((item, i) => (
             <div key={i} style={{
-              display: "flex", gap: 14, alignItems: "center",
-              paddingBottom: i < order.items.length - 1 ? 14 : 0,
-              marginBottom: i < order.items.length - 1 ? 14 : 0,
-              borderBottom: i < order.items.length - 1 ? "1px solid #F5F5F5" : "none",
+              display: "flex", alignItems: "center", gap: 14,
+              padding: "10px 0",
+              borderBottom: i < order.lineItems.nodes.length - 1 ? "1px solid #f5f3ef" : "none",
             }}>
-              <div style={{ width: 52, height: 64, borderRadius: 4, overflow: "hidden", flexShrink: 0, background: "#F5F5F5" }}>
-                <img src={item.imageUrl} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              </div>
+              {item.image?.url ? (
+                <img src={item.image.url} alt={item.image.altText ?? item.title}
+                  style={{ width: 48, height: 60, objectFit: "cover", borderRadius: 3, flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: 48, height: 60, background: "#f0ede8", borderRadius: 3, flexShrink: 0 }} />
+              )}
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "#1A1A1A", marginBottom: 3 }}>{item.name}</div>
-                <div style={{ fontSize: "0.78rem", color: "#888" }}>{item.variant} · Qty {item.qty}</div>
+                <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1a1a1a" }}>{item.title}</div>
+                {item.merchandise?.title && item.merchandise.title !== "Default Title" && (
+                  <div style={{ fontSize: "0.78rem", color: "#888", marginTop: 2 }}>{item.merchandise.title}</div>
+                )}
+                <div style={{ fontSize: "0.78rem", color: "#888", marginTop: 2 }}>Qty: {item.quantity}</div>
+              </div>
+              <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1a1a1a", whiteSpace: "nowrap" }}>
+                {parseFloat(item.price.amount).toFixed(2)} {item.price.currencyCode}
               </div>
             </div>
           ))}
@@ -141,78 +189,197 @@ function OrderCard({ order }: { order: typeof mockOrders[0] }) {
   );
 }
 
-// ==================== MAIN PAGE ====================
-export default function OrdersPage() {
-  const [filter, setFilter] = useState<"all" | "processing" | "delivered">("all");
+// ── Empty State ────────────────────────────────────────────────────────────────
+function EmptyState() {
+  return (
+    <div style={{ textAlign: "center", padding: "60px 24px", color: "#888" }}>
+      <div style={{ fontSize: "3rem", marginBottom: 16 }}>📦</div>
+      <div style={{ fontWeight: 600, fontSize: "1.1rem", color: "#555", marginBottom: 8 }}>
+        You haven't placed any orders yet
+      </div>
+      <p style={{ fontSize: "0.9rem", color: "#999", marginBottom: 28 }}>
+        When you place an order, it will appear here.
+      </p>
+      <a href="/collections/all" style={{
+        display: "inline-block", padding: "12px 28px",
+        background: "#0D3D2B", color: "#fff", borderRadius: 2,
+        fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.1em",
+        textTransform: "uppercase", textDecoration: "none",
+      }}>
+        Shop Now
+      </a>
+    </div>
+  );
+}
 
-  const filtered = mockOrders.filter(o => {
-    if (filter === "all") return true;
-    if (filter === "processing") return o.status === "Processing";
-    if (filter === "delivered") return o.status === "Delivered";
-    return true;
-  });
+// ── Loading Spinner ────────────────────────────────────────────────────────────
+function Spinner({ label }: { label: string }) {
+  return (
+    <div style={{ textAlign: "center", padding: "60px 24px", color: "#888" }}>
+      <style>{`@keyframes dy-spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{
+        width: 36, height: 36, border: "3px solid #e0ddd8",
+        borderTopColor: "#175C40", borderRadius: "50%",
+        animation: "dy-spin 0.8s linear infinite",
+        margin: "0 auto 16px",
+      }} />
+      <p style={{ fontSize: "0.9rem" }}>{label}</p>
+    </div>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────────────────────────
+export default function OrdersPage() {
+  const [, navigate] = useLocation();
+  const [accessToken, setAccessToken] = useState<string | null>(() => getStoredToken());
+  const [exchanging, setExchanging] = useState(false);
+  const [exchangeError, setExchangeError] = useState<string | null>(null);
+
+  const exchangeTokenMutation = trpc.customer.exchangeToken.useMutation();
+
+  // Step 1: Handle OAuth callback — exchange ?code= for access token
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (!code) return;
+
+    const codeVerifier = sessionStorage.getItem("shopify_code_verifier");
+    if (!codeVerifier) {
+      setExchangeError("Session expired. Please sign in again.");
+      return;
+    }
+
+    setExchanging(true);
+    const redirectUri = `${window.location.origin}/account/orders`;
+
+    exchangeTokenMutation.mutate(
+      { code, codeVerifier, redirectUri },
+      {
+        onSuccess: (data) => {
+          storeToken(data.accessToken, data.expiresIn);
+          sessionStorage.removeItem("shopify_code_verifier");
+          sessionStorage.removeItem("shopify_auth_state");
+          sessionStorage.removeItem("shopify_auth_nonce");
+          window.history.replaceState({}, "", "/account/orders");
+          setAccessToken(data.accessToken);
+          setExchanging(false);
+        },
+        onError: (err) => {
+          setExchangeError(err.message ?? "Sign-in failed. Please try again.");
+          setExchanging(false);
+        },
+      }
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Step 2: If no token and no code in URL → redirect to Shopify login
+  useEffect(() => {
+    const hasCode = new URLSearchParams(window.location.search).has("code");
+    if (!accessToken && !hasCode && !exchanging) {
+      import("@/lib/shopify").then(({ getCustomerLoginUrlAsync }) => {
+        const redirectUri = `${window.location.origin}/account/orders`;
+        getCustomerLoginUrlAsync(redirectUri).then((url) => {
+          window.location.href = url;
+        });
+      });
+    }
+  }, [accessToken, exchanging]);
+
+  // Step 3: Fetch orders once we have a token
+  const { data: rawCustomer, isLoading, error } = trpc.customer.getOrders.useQuery(
+    { accessToken: accessToken ?? "" },
+    {
+      enabled: !!accessToken && !exchanging,
+      retry: false,
+    }
+  );
+
+  const customer = rawCustomer as CustomerData | null | undefined;
+  const orders = customer?.orders?.nodes ?? [];
+
+  // Handle auth errors from the query
+  useEffect(() => {
+    if (error) {
+      const trpcErr = error as { data?: { code?: string } };
+      if (trpcErr.data?.code === "UNAUTHORIZED") {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(TOKEN_EXPIRY_KEY);
+        navigate("/account/login");
+      }
+    }
+  }, [error, navigate]);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#FAFAF8", fontFamily: "var(--font-body, sans-serif)" }}>
+    <div style={{ minHeight: "100vh", background: "#FAF9F7" }}>
       <SFPromoBar />
-      <SFHeader darkMode={false} />
+      <SFHeader darkMode />
 
-      <div style={{ paddingTop: "calc(var(--promo-height, 40px) + 72px)", maxWidth: 800, margin: "0 auto", padding: "calc(var(--promo-height, 40px) + 72px) 24px 80px" }}>
-
-        {/* Page header */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: "0.72rem", letterSpacing: "0.18em", color: "#175C40", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>
-            My Account
-          </div>
-          <h1 style={{ fontSize: "clamp(1.6rem, 3vw, 2.2rem)", fontWeight: 700, color: "#1A1A1A", margin: "0 0 8px", letterSpacing: "-0.02em" }}>
-            Order History
+      <div style={{
+        maxWidth: 720,
+        margin: "0 auto",
+        padding: "calc(var(--promo-height, 40px) + 80px) 24px 80px",
+      }}>
+        {/* Page title */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
+          <h1 style={{
+            fontFamily: "'Tenor Sans', sans-serif",
+            fontSize: "1.8rem", fontWeight: 400, color: "#1a1a1a", margin: 0,
+          }}>
+            My Orders
           </h1>
-          <p style={{ color: "#888", fontSize: "0.9rem", margin: 0 }}>
-            {mockOrders.length} orders placed
-          </p>
-        </div>
-
-        {/* Filter tabs */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "#F5F5F5", padding: 4, borderRadius: 6, width: "fit-content" }}>
-          {(["all", "processing", "delivered"] as const).map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              style={{
-                padding: "8px 18px", borderRadius: 4, border: "none", cursor: "pointer",
-                background: filter === f ? "#fff" : "transparent",
-                color: filter === f ? "#1A1A1A" : "#888",
-                fontWeight: filter === f ? 700 : 500,
-                fontSize: "0.82rem", letterSpacing: "0.04em",
-                textTransform: "capitalize",
-                boxShadow: filter === f ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
-                transition: "all 0.15s",
-              }}
-            >
-              {f === "all" ? "All Orders" : f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* Orders list */}
-        {filtered.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 24px", color: "#888" }}>
-            <div style={{ fontSize: "2.5rem", marginBottom: 16 }}>📦</div>
-            <div style={{ fontWeight: 600, fontSize: "1rem", color: "#555", marginBottom: 8 }}>No orders found</div>
-            <a href="/collections/all" style={{ color: "#175C40", fontWeight: 600, textDecoration: "none", fontSize: "0.9rem" }}>
-              Start Shopping →
-            </a>
-          </div>
-        ) : (
-          filtered.map(order => <OrderCard key={order.id} order={order} />)
-        )}
-
-        {/* Back to account */}
-        <div style={{ marginTop: 32, textAlign: "center" }}>
-          <a href="/account" style={{ color: "#888", fontSize: "0.85rem", textDecoration: "none" }}>
+          <a href="/account" style={{ fontSize: "0.82rem", color: "#888", textDecoration: "none" }}>
             ← Back to Account
           </a>
         </div>
+
+        {/* Customer greeting */}
+        {customer?.displayName && (
+          <p style={{ fontSize: "0.9rem", color: "#666", marginBottom: 24 }}>
+            Signed in as <strong>{customer.displayName}</strong>
+            {customer.emailAddress?.emailAddress && ` (${customer.emailAddress.emailAddress})`}
+          </p>
+        )}
+
+        {/* Exchange error */}
+        {exchangeError && (
+          <div style={{
+            background: "#fff5f5", border: "1px solid #fcc", borderRadius: 8,
+            padding: "16px 20px", color: "#c0392b", fontSize: "0.9rem", marginBottom: 24,
+          }}>
+            {exchangeError}{" "}
+            <a href="/account/login" style={{ color: "#c0392b", fontWeight: 600 }}>Sign in again</a>
+          </div>
+        )}
+
+        {/* Loading states */}
+        {exchanging && <Spinner label="Signing you in…" />}
+        {!exchanging && isLoading && <Spinner label="Loading your orders…" />}
+
+        {/* Query error (non-auth) */}
+        {error && !isLoading && !exchanging && (error as { data?: { code?: string } }).data?.code !== "UNAUTHORIZED" && (
+          <div style={{
+            background: "#fff5f5", border: "1px solid #fcc", borderRadius: 8,
+            padding: "16px 20px", color: "#c0392b", fontSize: "0.9rem", marginBottom: 24,
+          }}>
+            Unable to load orders.{" "}
+            <button
+              onClick={() => {
+                localStorage.removeItem(TOKEN_KEY);
+                localStorage.removeItem(TOKEN_EXPIRY_KEY);
+                navigate("/account/login");
+              }}
+              style={{ background: "none", border: "none", color: "#c0392b", textDecoration: "underline", cursor: "pointer", fontSize: "0.9rem", padding: 0 }}
+            >
+              Sign in again
+            </button>
+          </div>
+        )}
+
+        {/* Orders list */}
+        {!isLoading && !exchanging && !error && accessToken && (
+          orders.length === 0 ? <EmptyState /> : orders.map(order => <OrderCard key={order.id} order={order} />)
+        )}
       </div>
 
       <SFFooter />

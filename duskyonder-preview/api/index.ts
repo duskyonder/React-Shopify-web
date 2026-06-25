@@ -789,6 +789,118 @@ const vercelRouter = router({
         return { success: true };
       }),
   }),
+
+  // ── Shopify Customer Account API — order history ───────────────────────────
+  customer: router({
+    // Fetch authenticated customer's order history
+    getOrders: publicProcedure
+      .input(z.object({ accessToken: z.string() }))
+      .query(async ({ input }) => {
+        const SHOP_ID = process.env.SHOPIFY_SHOP_ID ?? "90159776010";
+        const CA_API_URL = `https://shopify.com/${SHOP_ID}/account/customer/api/2024-10/graphql`;
+        const gql = `
+          query GetCustomerOrders {
+            customer {
+              displayName
+              emailAddress { emailAddress }
+              orders(first: 20, sortKey: PROCESSED_AT, reverse: true) {
+                nodes {
+                  id
+                  name
+                  processedAt
+                  financialStatus
+                  fulfillmentStatus
+                  totalPrice { amount currencyCode }
+                  lineItems(first: 5) {
+                    nodes {
+                      title
+                      quantity
+                      price { amount currencyCode }
+                      image { url altText }
+                      merchandise {
+                        ... on ProductVariant {
+                          id
+                          title
+                          product { handle }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        `;
+        const res = await fetch(CA_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": input.accessToken,
+          },
+          body: JSON.stringify({ query: gql }),
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.error(`[customer.getOrders] HTTP ${res.status}: ${text.slice(0, 300)}`);
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired customer token" });
+        }
+        const json = (await res.json()) as {
+          data?: { customer?: unknown };
+          errors?: { message: string }[];
+        };
+        if (json.errors?.length) {
+          console.error("[customer.getOrders] GraphQL errors:", json.errors);
+          throw new TRPCError({ code: "UNAUTHORIZED", message: json.errors[0].message });
+        }
+        return json.data?.customer ?? null;
+      }),
+
+    // Exchange OAuth authorization code for access token (PKCE flow)
+    exchangeToken: publicProcedure
+      .input(z.object({
+        code: z.string(),
+        codeVerifier: z.string(),
+        redirectUri: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const SHOP_ID = process.env.SHOPIFY_SHOP_ID ?? "90159776010";
+        const CLIENT_ID =
+          process.env.SHOPIFY_CUSTOMER_ACCOUNT_API_CLIENT_ID ??
+          process.env.VITE_SHOPIFY_CUSTOMER_ACCOUNT_API_CLIENT_ID ?? "";
+        const tokenUrl = `https://shopify.com/${SHOP_ID}/auth/oauth/token`;
+        const body = new URLSearchParams({
+          grant_type: "authorization_code",
+          client_id: CLIENT_ID,
+          redirect_uri: input.redirectUri,
+          code: input.code,
+          code_verifier: input.codeVerifier,
+        });
+        const res = await fetch(tokenUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: body.toString(),
+        });
+        const json = (await res.json()) as {
+          access_token?: string;
+          expires_in?: number;
+          token_type?: string;
+          error?: string;
+          error_description?: string;
+        };
+        if (!res.ok || json.error) {
+          console.error("[customer.exchangeToken] Error:", json);
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: json.error_description ?? json.error ?? "Token exchange failed",
+          });
+        }
+        return {
+          accessToken: json.access_token!,
+          expiresIn: json.expires_in ?? 3600,
+          tokenType: json.token_type ?? "Bearer",
+        };
+      }),
+  }),
 });
 
 export type VercelRouter = typeof vercelRouter;
