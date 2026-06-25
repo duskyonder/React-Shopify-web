@@ -325,6 +325,34 @@ export const appRouter = router({
           return null;
         }
       }),
+
+    getBlogArticle: publicProcedure
+      .input(z.object({ blogHandle: z.string().default("news"), articleHandle: z.string() }))
+      .query(async ({ input }) => {
+        const adminToken = ENV.shopifyAdminToken;
+        const shopifyDomain = ENV.shopifyStoreDomain;
+        if (!adminToken || !input.articleHandle) return null;
+        const baseUrl = `https://${shopifyDomain}/admin/api/2024-10`;
+        const headers = { "X-Shopify-Access-Token": adminToken, "Content-Type": "application/json" };
+        try {
+          const blogsRes = await fetch(`${baseUrl}/blogs.json?fields=id,handle`, { headers });
+          if (!blogsRes.ok) return null;
+          const blogsJson = await blogsRes.json() as any;
+          const blog = (blogsJson.blogs as any[]).find((b: any) => b.handle === input.blogHandle);
+          if (!blog) return null;
+          const articlesRes = await fetch(
+            `${baseUrl}/blogs/${blog.id}/articles.json?fields=id,handle,title,excerpt,body_html,published_at,image,author,tags`,
+            { headers }
+          );
+          if (!articlesRes.ok) return null;
+          const articlesJson = await articlesRes.json() as any;
+          const article = (articlesJson.articles as any[]).find((a: any) => a.handle === input.articleHandle);
+          return article ?? null;
+        } catch (err) {
+          console.error("[getBlogArticle] error:", err instanceof Error ? err.message : err);
+          return null;
+        }
+      }),
   }),
   newsletter: router({
     subscribe: publicProcedure

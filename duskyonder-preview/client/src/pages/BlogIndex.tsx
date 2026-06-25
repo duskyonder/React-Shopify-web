@@ -172,7 +172,7 @@ export default function BlogIndex() {
   const footerCtaPlaceholder = blogCfg?.footerCtaPlaceholder ?? "Your email address";
   const footerCtaButton = blogCfg?.footerCtaButton ?? "Subscribe";
   const showFooterCta = blogCfg?.showFooterCta ?? true;
-  const detailMode = (blogCfg?.detailMode ?? "drawer") as "drawer" | "page";
+  const detailMode = (blogCfg?.detailMode ?? "page") as "drawer" | "page";
   const cardLinkStyle = (blogCfg?.cardLinkStyle ?? "C") as "A" | "C";
   const customCategories = blogCfg?.customCategories ?? [];
   const heroMinHeight = blogCfg?.heroMinHeight;

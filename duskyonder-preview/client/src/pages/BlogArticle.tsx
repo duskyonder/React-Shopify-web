@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useParams } from "wouter";
 import { SFHeader, SFFooter, SFPromoBar } from "@/components/StorefrontShell";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
-import { mockArticles, type BlogArticle } from "../../../shared/mockBlogData";
+import { type BlogArticle } from "../../../shared/mockBlogData";
+import { trpc } from "@/lib/trpc";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -133,11 +134,50 @@ export default function BlogArticle() {
   const showToc = blogCfg?.showToc ?? true;
   const showBreadcrumb = blogCfg?.showBreadcrumb ?? true;
 
-  // Find article from mock data
-  const article: BlogArticle | undefined = useMemo(
-    () => mockArticles.find((a) => a.handle === handle),
-    [handle]
+  // Fetch article from Shopify Admin API
+  const { data: articleData, isLoading: articleLoading } = trpc.shopify.getBlogArticle.useQuery(
+    { blogHandle: "news", articleHandle: handle ?? "" },
+    { enabled: !!handle }
   );
+
+  const article: BlogArticle | undefined = useMemo(() => {
+    if (!articleData) return undefined;
+    const a = articleData as any;
+    const readingTime = Math.max(1, Math.round((a.body_html?.split(" ").length ?? 100) / 200));
+    return {
+      id: String(a.id),
+      handle: a.handle,
+      title: a.title,
+      excerpt: a.excerpt ?? "",
+      publishedAt: a.published_at,
+      readingTimeMinutes: readingTime,
+      tags: typeof a.tags === "string" ? a.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : (a.tags ?? []),
+      image: a.image ? { url: a.image.src, altText: a.image.alt ?? a.title } : null,
+      author: a.author ?? "Dusk Yonder",
+      content: a.body_html ?? "",
+    };
+  }, [articleData]);
+
+  // Fetch related articles from the same blog
+  const { data: blogData } = trpc.shopify.getBlog.useQuery({ handle: "news" });
+  const allArticles: BlogArticle[] = useMemo(() => {
+    if (!blogData?.articles?.edges) return [];
+    return (blogData.articles.edges as any[]).map((e: any) => {
+      const a = e.node;
+      return {
+        id: String(a.id),
+        handle: a.handle,
+        title: a.title,
+        excerpt: a.excerpt ?? "",
+        publishedAt: a.publishedAt,
+        readingTimeMinutes: 1,
+        tags: a.tags ?? [],
+        image: a.image ? { url: a.image.url, altText: a.image.altText ?? a.title } : null,
+        author: a.author?.name ?? "Dusk Yonder",
+        content: "",
+      } as BlogArticle;
+    });
+  }, [blogData]);
 
   // Process HTML to inject heading IDs
   const processedHtml = useMemo(
@@ -174,10 +214,23 @@ export default function BlogArticle() {
   // Related articles (same tag, exclude current)
   const relatedArticles = useMemo(() => {
     if (!article) return [];
-    return mockArticles
+    return allArticles
       .filter((a) => a.handle !== handle && a.tags.some((t) => article.tags.includes(t)))
       .slice(0, 3);
-  }, [article, handle]);
+  }, [article, handle, allArticles]);
+
+  if (articleLoading) {
+    return (
+      <div className="blog-article-page">
+        <SFPromoBar />
+        <SFHeader darkMode={true} />
+        <div className="blog-article-not-found">
+          <p>Loading article…</p>
+        </div>
+        <SFFooter />
+      </div>
+    );
+  }
 
   if (!article) {
     return (
@@ -186,7 +239,7 @@ export default function BlogArticle() {
         <SFHeader darkMode={true} />
         <div className="blog-article-not-found">
           <h1>Article not found</h1>
-          <Link href="/pages/blog" className="blog-article-back-link">← Back to Journal</Link>
+          <Link href="/blogs/news" className="blog-article-back-link">← Back to Blog</Link>
         </div>
         <SFFooter />
       </div>
@@ -296,7 +349,7 @@ export default function BlogArticle() {
             <div className="blog-related-grid">
               {relatedArticles.map((rel) => (
                 <article key={rel.id} className="blog-related-card">
-                  <Link href={`/pages/blog/${rel.handle}`} className="blog-related-img-wrap">
+                  <Link href={`/blogs/news/${rel.handle}`} className="blog-related-img-wrap">
                     {rel.image?.url ? (
                       <img src={rel.image.url} alt={rel.image.altText} className="blog-related-img" />
                     ) : (
@@ -305,7 +358,7 @@ export default function BlogArticle() {
                   </Link>
                   <div className="blog-related-body">
                     {rel.tags[0] && <span className="blog-card-tag">{rel.tags[0]}</span>}
-                    <Link href={`/pages/blog/${rel.handle}`}>
+                    <Link href={`/blogs/news/${rel.handle}`}>
                       <h3 className="blog-related-card-title">{rel.title}</h3>
                     </Link>
                     <p className="blog-related-card-excerpt">{rel.excerpt.slice(0, 100)}...</p>
