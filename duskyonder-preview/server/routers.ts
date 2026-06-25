@@ -445,17 +445,20 @@ export const appRouter = router({
           }
         `;
         // Shopify Customer Account API expects: Authorization: Bearer <access_token>
-        // The access_token from the PKCE exchange is a JWT — it must be prefixed with "Bearer "
         const authHeader = input.accessToken.startsWith("Bearer ")
           ? input.accessToken
           : `Bearer ${input.accessToken}`;
-        console.log(`[customer.getOrders] token prefix: ${input.accessToken.slice(0, 12)}...`);
+        const fetchHeaders = {
+          "Content-Type": "application/json",
+          "Authorization": authHeader,
+        };
+        // DIAGNOSTIC: log the exact headers object sent to Shopify
+        console.log("[customer.getOrders] raw input.accessToken (first 20):", input.accessToken.slice(0, 20));
+        console.log("[customer.getOrders] authHeader (first 30):", authHeader.slice(0, 30));
+        console.log("[customer.getOrders] Final Fetch Headers:", JSON.stringify(fetchHeaders));
         const res = await fetch(CA_API_URL, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": authHeader,
-          },
+          headers: fetchHeaders,
           body: JSON.stringify({ query: gql }),
         });
         if (!res.ok) {
