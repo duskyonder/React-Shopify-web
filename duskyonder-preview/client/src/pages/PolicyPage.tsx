@@ -106,6 +106,8 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
     { staleTime: 0, retry: false }
   );
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Must be declared unconditionally before any early returns — Rules of Hooks
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Diagnostic: log the raw shop object so we can verify the mapping and Shopify Admin content
   useEffect(() => {
@@ -173,9 +175,6 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
     /<h([2-4])([^>]*)>(.*?)<\/h[2-4]>/gi,
     (_, level, attrs, text) => `<h${level}${attrs} id="heading-${_hIdx++}">${text}</h${level}>`
   );
-
-  // Ref for the content div — used by the scroll progress hook
-  const contentRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="policy-page">
