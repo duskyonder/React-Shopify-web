@@ -93,53 +93,89 @@ interface MobileTocProps {
 
 function MobileToc({ items, activeId, scrollProgress }: MobileTocProps) {
   const [open, setOpen] = useState(false);
+  const [isFixed, setIsFixed] = useState(false);
+  const [tocHeight, setTocHeight] = useState(0);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const tocRef = useRef<HTMLDivElement>(null);
+
+  // JS-based fixed positioning: measure initial offset, then fix on scroll past it
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+
+    // Record the natural top position of the wrapper (once, on mount)
+    const initialTop = wrap.getBoundingClientRect().top + window.scrollY;
+
+    const handleScroll = () => {
+      const shouldFix = window.scrollY > initialTop;
+      setIsFixed(shouldFix);
+      // Keep spacer height in sync with actual TOC height
+      if (tocRef.current) {
+        setTocHeight(tocRef.current.offsetHeight);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // run once on mount
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   if (items.length === 0) return null;
   const activeIndex = items.findIndex((i) => i.id === activeId);
   const activeLabel = activeIndex >= 0 ? `Section ${activeIndex + 1}` : "Contents";
 
   return (
-    <div className="blog-mobile-toc">
-      <button
-        className="blog-mobile-toc__toggle"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
+    // Outer wrapper stays in flow; provides the spacer when TOC is fixed
+    <div ref={wrapRef} style={{ position: "relative" }}>
+      {/* Spacer: prevents content jump when TOC lifts out of flow */}
+      {isFixed && <div style={{ height: tocHeight }} aria-hidden="true" />}
+
+      <div
+        ref={tocRef}
+        className={`blog-mobile-toc${isFixed ? " is-fixed" : ""}`}
       >
-        <span className="blog-mobile-toc__label">
-          {open ? "Contents" : activeLabel}
-        </span>
-        <span className={`blog-mobile-toc__chevron${open ? " open" : ""}`}>▾</span>
-      </button>
-      {open && (
-        <ul className="blog-mobile-toc__list">
-          {items.map((item, idx) => (
-            <li
-              key={item.id}
-              className={`blog-mobile-toc__item${item.level === 3 ? " indent" : ""}${activeId === item.id ? " active" : ""}`}
-            >
-              <a
-                href={`#${item.id}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setOpen(false);
-                  setTimeout(() => {
-                    const el = document.getElementById(item.id);
-                    if (el) {
-                      const offset = 120;
-                      const top = el.getBoundingClientRect().top + window.scrollY - offset;
-                      window.scrollTo({ top, behavior: "smooth" });
-                    }
-                  }, 50);
-                }}
+        <button
+          className="blog-mobile-toc__toggle"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+        >
+          <span className="blog-mobile-toc__label">
+            {open ? "Contents" : activeLabel}
+          </span>
+          <span className={`blog-mobile-toc__chevron${open ? " open" : ""}`}>▾</span>
+        </button>
+        {open && (
+          <ul className="blog-mobile-toc__list">
+            {items.map((item, idx) => (
+              <li
+                key={item.id}
+                className={`blog-mobile-toc__item${item.level === 3 ? " indent" : ""}${activeId === item.id ? " active" : ""}`}
               >
-                Section {idx + 1}
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
-      {/* 3px reading progress bar below the TOC */}
-      <div className="blog-mobile-toc__progress-bar">
-        <div className="blog-mobile-toc__progress-fill" style={{ width: `${scrollProgress}%` }} />
+                <a
+                  href={`#${item.id}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpen(false);
+                    setTimeout(() => {
+                      const el = document.getElementById(item.id);
+                      if (el) {
+                        const offset = isFixed ? tocHeight + 8 : 120;
+                        const top = el.getBoundingClientRect().top + window.scrollY - offset;
+                        window.scrollTo({ top, behavior: "smooth" });
+                      }
+                    }, 50);
+                  }}
+                >
+                  Section {idx + 1}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+        {/* 3px reading progress bar below the TOC */}
+        <div className="blog-mobile-toc__progress-bar">
+          <div className="blog-mobile-toc__progress-fill" style={{ width: `${scrollProgress}%` }} />
+        </div>
       </div>
     </div>
   );

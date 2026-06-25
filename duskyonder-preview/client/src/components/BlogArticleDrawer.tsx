@@ -95,10 +95,17 @@ export default function BlogArticleDrawer({ article, onClose }: BlogArticleDrawe
           {/* Author */}
           <p className="blog-drawer-author">By {typeof article.author === 'string' ? article.author : (article.author as any)?.name ?? 'Dusk Yonder'}</p>
 
-          {/* Body: show excerpt as preview; full content on article page */}
-          {article.excerpt && (
-            <p className="blog-drawer-excerpt">{article.excerpt}</p>
-          )}
+          {/* Excerpt preview — always shown; falls back to stripped body HTML if excerpt is empty */}
+          {(() => {
+            const text =
+              article.excerpt?.trim() ||
+              (article.content
+                ? article.content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 150) + "…"
+                : "");
+            return text ? (
+              <p className="blog-drawer-excerpt" style={{ display: "block" }}>{text}</p>
+            ) : null;
+          })()}
 
           {/* Footer */}
           <div className="blog-drawer-footer">

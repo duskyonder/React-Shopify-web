@@ -946,12 +946,22 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fff;
-  /* NOTE: overflow:hidden is intentionally removed — it breaks position:sticky.
-     Border-radius clipping is preserved via the border itself. */
-  position: sticky;
-  top: 0;
+  /* No position:sticky — JS scroll listener applies .is-fixed instead */
   z-index: 20;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* JS-applied class: lifts TOC out of flow and pins it to viewport top */
+.blog-mobile-toc.is-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
 }
 
 .blog-mobile-toc__toggle {
