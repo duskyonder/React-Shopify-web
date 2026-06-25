@@ -97,6 +97,19 @@ function useScrollProgress(contentRef: React.RefObject<HTMLDivElement | null>): 
   return progress;
 }
 
+// ---- Back-to-top visibility hook ----
+// Returns true once user has scrolled past threshold px
+function useShowBackToTop(threshold = 500): boolean {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const handler = () => setShow(window.scrollY > threshold);
+    window.addEventListener("scroll", handler, { passive: true });
+    handler();
+    return () => window.removeEventListener("scroll", handler);
+  }, [threshold]);
+  return show;
+}
+
 // ---- Shopify Shop Policy Page ----
 // Fetches all policies in one call via shop { privacyPolicy, termsOfService, ... }
 // This reads from Shopify Admin > Settings > Policies — not the Pages list.
@@ -108,6 +121,8 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   // Must be declared unconditionally before any early returns — Rules of Hooks
   const contentRef = useRef<HTMLDivElement>(null);
+  const showBackToTop = useShowBackToTop(500);
+  const mobileProgress = useScrollProgress(contentRef);
 
   // Diagnostic: log the raw shop object so we can verify the mapping and Shopify Admin content
   useEffect(() => {
@@ -206,7 +221,7 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
 
           {/* Main content */}
           <div className="policy-content" ref={contentRef}>
-            {/* Mobile sticky TOC accordion */}
+            {/* Mobile sticky TOC accordion + progress bar */}
             {headings.length > 0 && (
               <div className="policy-mobile-toc">
                 <button
@@ -237,6 +252,10 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
                     ))}
                   </ul>
                 )}
+                {/* 2px progress bar below the TOC */}
+                <div className="policy-mobile-toc__progress-bar">
+                  <div className="policy-mobile-toc__progress-fill" style={{ width: `${mobileProgress}%` }} />
+                </div>
               </div>
             )}
 
@@ -244,6 +263,17 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
           </div>
         </div>
       </section>
+
+      {/* Floating back-to-top button */}
+      <button
+        className={`policy-back-to-top${showBackToTop ? " visible" : ""}`}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Back to top"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="18 15 12 9 6 15" />
+        </svg>
+      </button>
 
       <SFFooter />
     </div>

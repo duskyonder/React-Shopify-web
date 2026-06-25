@@ -218,10 +218,13 @@
 }
 
 /* ---- Desktop sticky sidebar ---- */
+/* The grid parent already has align-items: start, so sticky works.
+   align-self: start here is a belt-and-suspenders guard. */
 .policy-sidebar {
   display: block;
-  /* align-self: start is set on the grid item so sticky works correctly */
   align-self: start;
+  /* height: 100% ensures the grid cell stretches so sticky has room */
+  height: 100%;
 }
 .policy-sidebar__inner {
   position: sticky;
@@ -232,6 +235,8 @@
   padding-bottom: 24px;
   /* Hide scrollbar but keep scrollability */
   scrollbar-width: none;
+  /* Ensure sidebar is above page content but below nav */
+  z-index: 5;
 }
 .policy-sidebar__inner::-webkit-scrollbar { display: none; }
 
@@ -300,12 +305,13 @@
   margin-bottom: 28px;
   border: 1px solid #e5e5e5;
   border-radius: 6px;
-  overflow: hidden;
+  /* overflow: hidden removed — let the dropdown push content down */
   position: sticky;
-  top: 72px;
+  /* Match header height so TOC sits flush below it */
+  top: 80px;
   z-index: 10;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 .policy-mobile-toc__toggle {
   width: 100%;
@@ -350,6 +356,56 @@
 .policy-mobile-toc__item a:hover { background: #f0f7f3; color: #175C40; }
 .policy-mobile-toc__item--h3 a { padding-left: 28px; font-size: 0.78rem; color: #888; }
 .policy-mobile-toc__item--h4 a { padding-left: 40px; font-size: 0.75rem; color: #aaa; }
+
+/* Mobile progress bar — 2px strip at the very bottom of the TOC widget */
+.policy-mobile-toc__progress-bar {
+  height: 2px;
+  background: #ebebeb;
+  border-radius: 0 0 6px 6px;
+  overflow: hidden;
+}
+.policy-mobile-toc__progress-fill {
+  height: 100%;
+  background: #175C40;
+  transition: width 0.15s ease-out;
+  min-width: 0;
+}
+
+/* ---- Floating back-to-top button ---- */
+.policy-back-to-top {
+  position: fixed;
+  bottom: 32px;
+  right: 28px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #d8d8d8;
+  color: #175C40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  /* Hidden by default — revealed by .visible class */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 0.22s cubic-bezier(0.23,1,0.32,1), transform 0.22s cubic-bezier(0.23,1,0.32,1);
+  z-index: 50;
+}
+.policy-back-to-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.policy-back-to-top:hover {
+  background: #f5f8f6;
+  border-color: #175C40;
+}
+.policy-back-to-top:active {
+  transform: scale(0.93);
+}
 
 /* ---- Loading / not-found states ---- */
 .policy-loading {
@@ -555,6 +611,19 @@
   }
   .policy-sidebar { display: none; }
   .policy-mobile-toc { display: block; }
+
+  /* When the TOC is open, keep rounded corners on the list */
+  .policy-mobile-toc__list {
+    border-radius: 0 0 6px 6px;
+  }
+
+  /* Back-to-top: slightly smaller on mobile, avoid overlap with browser chrome */
+  .policy-back-to-top {
+    bottom: 24px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+  }
 }
 
 /* ============================================================
