@@ -274,37 +274,50 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  /* Prevent gap areas from being selectable or clickable */
+  /* No pointer events on the container — gaps are dead zones */
+  -webkit-user-select: none;
   user-select: none;
   pointer-events: none;
 }
-/* Restore pointer events only on the actual link elements */
-.policy-sidebar__item a {
-  pointer-events: auto;
-}
-.policy-sidebar__item a {
+/* Row: full-width visual container, default cursor on whitespace */
+.policy-sidebar__item {
   display: block;
-  font-size: 0.82rem;
-  color: #777;
-  text-decoration: none;
   padding: 5px 10px 5px 12px;
   border-left: 2px solid transparent;
   border-radius: 0 4px 4px 0;
+  cursor: default;
+  transition: border-color 0.15s, background 0.15s;
+}
+.policy-sidebar__item:hover {
+  background: #f5f8f6;
+}
+/* Anchor: inline text-only hit box, pointer cursor only on text */
+.policy-sidebar__item a {
+  display: inline;
+  font-size: 0.82rem;
+  color: #777;
+  text-decoration: none;
   line-height: 1.45;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 0.15s;
 }
 .policy-sidebar__item a:hover {
   color: #175C40;
-  background: #f5f8f6;
+}
+/* Active row: full-width green tint + left accent on the <li> */
+.policy-sidebar__item.active {
+  border-left-color: #175C40;
+  background: #f0f7f3;
 }
 .policy-sidebar__item.active a {
   color: #175C40;
   font-weight: 600;
-  border-left-color: #175C40;
-  background: #f0f7f3;
 }
-.policy-sidebar__item--h3 a { padding-left: 22px; font-size: 0.78rem; }
-.policy-sidebar__item--h4 a { padding-left: 32px; font-size: 0.75rem; color: #999; }
+.policy-sidebar__item--h3 { padding-left: 22px; }
+.policy-sidebar__item--h3 a { font-size: 0.78rem; }
+.policy-sidebar__item--h4 { padding-left: 32px; }
+.policy-sidebar__item--h4 a { font-size: 0.75rem; color: #999; }
 
 /* ---- Mobile sticky TOC accordion ---- */
 .policy-mobile-toc {
@@ -352,37 +365,46 @@
   margin: 0;
   border-top: 1px solid #ebebeb;
   background: #fafafa;
-  /* Prevent gap areas between items from being selectable or clickable */
+  /* No pointer events on the container — gaps are dead zones */
+  -webkit-user-select: none;
   user-select: none;
   pointer-events: none;
 }
-/* Restore pointer events only on the actual link elements */
-.policy-mobile-toc__item a {
-  pointer-events: auto;
-}
-.policy-mobile-toc__item a {
+/* Row: full-width visual container, default cursor on whitespace */
+.policy-mobile-toc__item {
   display: block;
   padding: 10px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  border-left: 3px solid transparent;
+  cursor: default;
+  transition: background 0.12s, border-color 0.12s;
+}
+.policy-mobile-toc__item:last-child { border-bottom: none; }
+.policy-mobile-toc__item:hover { background: #f5f8f6; }
+/* Anchor: inline text-only hit box, pointer cursor only on text */
+.policy-mobile-toc__item a {
+  display: inline;
   font-size: 0.82rem;
   color: #444;
   text-decoration: none;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background 0.12s, color 0.12s;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 0.12s;
 }
-.policy-mobile-toc__item:last-child a { border-bottom: none; }
-.policy-mobile-toc__item a:hover { background: #f0f7f3; color: #175C40; }
-.policy-mobile-toc__item--h3 a { padding-left: 28px; font-size: 0.78rem; color: #888; }
-.policy-mobile-toc__item--h4 a { padding-left: 40px; font-size: 0.75rem; color: #aaa; }
+.policy-mobile-toc__item a:hover { color: #175C40; }
+.policy-mobile-toc__item--h3 { padding-left: 28px; }
+.policy-mobile-toc__item--h3 a { font-size: 0.78rem; color: #888; }
+.policy-mobile-toc__item--h4 { padding-left: 40px; }
+.policy-mobile-toc__item--h4 a { font-size: 0.75rem; color: #aaa; }
 
-/* Active state: full-width block highlight on the <li> element */
+/* Active state: full-width green tint + left accent on the <li> */
 .policy-mobile-toc__item.active {
   background: #f0f7f3;
+  border-left-color: #175C40;
 }
 .policy-mobile-toc__item.active a {
   color: #175C40;
   font-weight: 600;
-  /* Left accent bar — replaces the border-left trick that caused the thin broken line */
-  box-shadow: inset 3px 0 0 #175C40;
 }
 
 /* Mobile progress bar — 2px strip at the very bottom of the TOC widget */
