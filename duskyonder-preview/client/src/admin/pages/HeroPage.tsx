@@ -119,15 +119,7 @@ export default function HeroPage() {
       <Card className="mb-4">
         <CardContent className="pt-4 pb-4">
           <div className="flex flex-wrap gap-6 items-end">
-            <div className="space-y-1.5 flex-1 min-w-[180px]">
-              <Label className="text-xs">Hero Height — Desktop (px)</Label>
-              <Input
-                type="number"
-                value={config.heroHeight ?? 600}
-                onChange={e => updateConfig({ heroHeight: Number(e.target.value) })}
-                className="h-8"
-              />
-            </div>
+            {/* Hero Height — Desktop removed: banner is always 100vh (CSS-driven) */}
             <div className="space-y-1.5 flex-1 min-w-[180px]">
               <Label className="text-xs">Autoplay Speed (seconds)</Label>
               <Input

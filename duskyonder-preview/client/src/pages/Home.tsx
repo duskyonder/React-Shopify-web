@@ -40,13 +40,11 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
   }, [config.slideshowAutoplay, config.slideshowSpeed, total]);
   useEffect(() => { startTimer(); return () => { if (timerRef.current) clearInterval(timerRef.current); }; }, [startTimer]);
   const go = (n: number) => { setCurrent((current + n + total) % total); startTimer(); };
-  // Hero sits below the header — on mobile use 100svh (full screen), on desktop use configured height
-  const baseHeroHeight = isMobileHero
-    ? (config.heroMobileHeight || window.innerHeight)
-    : (config.heroHeight || 600);
-  const heroHeight = baseHeroHeight;
+  // Hero: full-viewport on both mobile and desktop.
+  // Mobile uses 100svh (safe viewport height avoids mobile browser chrome).
+  // Desktop uses 100vh — CSS-driven, no admin height dependency.
   return (
-    <section className="sf-hero" style={{ height: isMobileHero ? '100svh' : heroHeight }}>
+    <section className="sf-hero" style={{ height: isMobileHero ? '100svh' : '100vh' }}>
       {config.slides.map((slide, i) => {
         // ── Resolve alignment: per-slide editorial controls take priority over nine-grid ──
         // getVar: returns a CSS-ready string or undefined (no var injected when absent/zero/default)
