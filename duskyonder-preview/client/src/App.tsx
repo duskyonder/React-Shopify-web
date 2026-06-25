@@ -48,6 +48,7 @@ const OrderDetailPage = lazy(() => import("./pages/OrderDetailPage"));
 const WishlistPage = lazy(() => import("./pages/WishlistPage"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
+const FAQPage = lazy(() => import("./pages/FAQPage"));
 
 // Admin pages (lazy loaded)
 const AdminLayout = lazy(() => import("./admin/AdminLayout"));
@@ -112,6 +113,8 @@ function Router() {
         <Route path={"/search"} component={SearchPage} />
         <Route path={"/contact"} component={ContactPage} />
         <Route path={"/pages/contact"} component={ContactPage} />
+        <Route path={"/faq"} component={FAQPage} />
+        <Route path={"/pages/faq"} component={FAQPage} />
         {/* Admin routes */}
         <Route path="/admin" component={() => <AdminLayout><AdminSectionsPage /></AdminLayout>} />
         <Route path="/admin/hero" component={() => <AdminLayout><AdminHeroPage /></AdminLayout>} />
