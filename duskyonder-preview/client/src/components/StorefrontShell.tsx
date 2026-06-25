@@ -663,30 +663,35 @@ export function SFFooter() {
             ))}
           </div>
         </div>
-        <div className="sf-footer-col">
-          <h4>Shop</h4>
-          <ul className="sf-footer-links">
-            <li><a href="/collections">Shop All</a></li>
-            <li><a href="/collections/new-arrivals">New Arrivals</a></li>
-            <li><a href="/collections/sale">Sale</a></li>
-          </ul>
-        </div>
-        <div className="sf-footer-col">
-          <h4>Company</h4>
-          <ul className="sf-footer-links">
-            <li><a href="/about">Our Story</a></li>
-            <li><a href="/blog">Blog</a></li>
-            <li><a href="/sustainability">Sustainability</a></li>
-          </ul>
-        </div>
-        <div className="sf-footer-col">
-          <h4>Help</h4>
-          <ul className="sf-footer-links">
-            <li><a href="/contact">Contact Us</a></li>
-            <li><a href="/returns">Shipping & Returns</a></li>
-            <li><a href="/size-guide">Size Guide</a></li>
-          </ul>
-        </div>
+        {(config.footerColumns && config.footerColumns.length > 0
+          ? config.footerColumns
+          : [
+              { id: "shop", title: "Shop", links: [
+                { id: "s1", label: "Shop All", link: "/collections" },
+                { id: "s2", label: "New Arrivals", link: "/collections/new-arrivals" },
+                { id: "s3", label: "Sale", link: "/collections/sale" },
+              ]},
+              { id: "company", title: "Company", links: [
+                { id: "c1", label: "Our Story", link: "/about" },
+                { id: "c2", label: "Blog", link: "/blog" },
+                { id: "c3", label: "Sustainability", link: "/sustainability" },
+              ]},
+              { id: "help", title: "Help", links: [
+                { id: "h1", label: "Contact Us", link: "/contact" },
+                { id: "h2", label: "Shipping & Returns", link: "/returns" },
+                { id: "h3", label: "Size Guide", link: "/size-guide" },
+              ]},
+            ]
+        ).map(col => (
+          <div key={col.id} className="sf-footer-col">
+            <h4>{col.title}</h4>
+            <ul className="sf-footer-links">
+              {col.links.map(link => (
+                <li key={link.id}><a href={link.link}>{link.label}</a></li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
 
       {/* Mobile: stacked layout — brand centered on top, nav columns in 3-col row, social at bottom */}
@@ -733,34 +738,37 @@ export function SFFooter() {
             )}
             {footerStatus === "error" && <p className="sf-footer-mobile-newsletter-error">Something went wrong. Please try again.</p>}
           </div>
-          {/* Nav links: 2-column grid */}
+          {/* Nav links: dynamic columns from admin config */}
           <div className="sf-footer-mobile-nav">
-            <div className="sf-footer-col">
-              <h4>Shop</h4>
-              <ul className="sf-footer-links">
-                <li><a href="/collections">Shop All</a></li>
-                <li><a href="/collections/new-arrivals">New Arrivals</a></li>
-                <li><a href="/collections/sale">Sale</a></li>
-              </ul>
-            </div>
-            <div className="sf-footer-col">
-              <h4>Support</h4>
-              <ul className="sf-footer-links">
-                <li><a href="/contact">Contact Us</a></li>
-                <li><a href="/returns">Returns</a></li>
-                <li><a href="/size-guide">Size Guide</a></li>
-                <li><a href="/shipping">Shipping Information</a></li>
-              </ul>
-            </div>
-          </div>
-          {/* Explore section — full width below the 2-col grid */}
-          <div className="sf-footer-mobile-explore">
-            <h4>Explore</h4>
-            <ul className="sf-footer-links">
-              <li><a href="/about">Our Story</a></li>
-              <li><a href="/blog">Blog</a></li>
-              <li><a href="/sustainability">Sustainability</a></li>
-            </ul>
+            {(config.footerColumns && config.footerColumns.length > 0
+              ? config.footerColumns
+              : [
+                  { id: "shop", title: "Shop", links: [
+                    { id: "s1", label: "Shop All", link: "/collections" },
+                    { id: "s2", label: "New Arrivals", link: "/collections/new-arrivals" },
+                    { id: "s3", label: "Sale", link: "/collections/sale" },
+                  ]},
+                  { id: "company", title: "Company", links: [
+                    { id: "c1", label: "Our Story", link: "/about" },
+                    { id: "c2", label: "Blog", link: "/blog" },
+                    { id: "c3", label: "Sustainability", link: "/sustainability" },
+                  ]},
+                  { id: "help", title: "Help", links: [
+                    { id: "h1", label: "Contact Us", link: "/contact" },
+                    { id: "h2", label: "Shipping & Returns", link: "/returns" },
+                    { id: "h3", label: "Size Guide", link: "/size-guide" },
+                  ]},
+                ]
+            ).map(col => (
+              <div key={col.id} className="sf-footer-col">
+                <h4>{col.title}</h4>
+                <ul className="sf-footer-links">
+                  {col.links.map(link => (
+                    <li key={link.id}><a href={link.link}>{link.label}</a></li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
           {/* Social icons */}
           <div className="sf-footer-mobile-social">
