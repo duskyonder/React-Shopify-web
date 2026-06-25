@@ -3,14 +3,31 @@ import { Link } from "wouter";
 import { SFHeader, SFFooter, SFPromoBar } from "@/components/StorefrontShell";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import { heroPositionVars } from "@/lib/heroPosition";
+import { trpc } from "@/lib/trpc";
 import {
-  mockArticles,
-  mockBlogMeta,
   getAllTags,
   filterByTag,
   type BlogArticle,
 } from "../../../shared/mockBlogData";
 import BlogArticleDrawer from "@/components/BlogArticleDrawer";
+
+// ── Shopify → BlogArticle adapter ─────────────────────────────────────────
+// Converts a Shopify Storefront API article node to the internal BlogArticle shape.
+function adaptShopifyArticle(node: any): BlogArticle {
+  const readingTime = Math.max(1, Math.round((node.excerpt?.split(" ").length ?? 100) / 200));
+  return {
+    id: node.id,
+    handle: node.handle,
+    title: node.title,
+    excerpt: node.excerpt ?? "",
+    publishedAt: node.publishedAt,
+    readingTimeMinutes: readingTime,
+    tags: node.tags ?? [],
+    image: node.image ? { url: node.image.url, altText: node.image.altText ?? node.title } : null,
+    author: node.author?.name ?? "Dusk Yonder",
+    content: "",  // full body HTML is fetched separately on the article detail page
+  };
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -32,7 +49,7 @@ interface ArticleCardProps {
 }
 
 function ArticleCard({ article, onDrawerOpen, detailMode, cardLinkStyle }: ArticleCardProps) {
-  const href = `/pages/blog/${article.handle}`;
+  const href = `/blogs/news/${article.handle}`;
 
   const handleClick = (e: React.MouseEvent) => {
     if (detailMode === "drawer") {
@@ -90,7 +107,7 @@ interface FeaturedCardProps {
 }
 
 function FeaturedCard({ article, onDrawerOpen, detailMode, cardLinkStyle }: FeaturedCardProps) {
-  const href = `/pages/blog/${article.handle}`;
+  const href = `/blogs/news/${article.handle}`;
 
   const handleClick = (e: React.MouseEvent) => {
     if (detailMode === "drawer") {
@@ -144,7 +161,7 @@ export default function BlogIndex() {
   const { config } = useThemeConfig();
   const blogCfg = config.blog;
 
-  const heroTitle = blogCfg?.heroTitle ?? mockBlogMeta.title;
+  const heroTitle = blogCfg?.heroTitle ?? "DUSKYONDER Journal";
   const heroSubtitle = blogCfg?.heroSubtitle ?? "Stories about movement, wellness, and the life you're building.";
   const heroBgColor = blogCfg?.heroBgColor ?? "#F7F5F2";
   const heroTextColor = blogCfg?.heroTextColor ?? "#1a1a1a";
@@ -162,8 +179,17 @@ export default function BlogIndex() {
   const heroDesktopPosition = blogCfg?.heroDesktopPosition;
   const heroMobilePosition = blogCfg?.heroMobilePosition;
 
+  // ── Shopify live data ──────────────────────────────────────────────────
+  const { data: blogData, isLoading: blogLoading } = trpc.shopify.getBlog.useQuery({ handle: "news" });
+
+  // Adapt Shopify articles to the internal BlogArticle shape, fall back to empty array
+  const shopifyArticles = useMemo<BlogArticle[]>(() => {
+    if (!blogData?.articles?.edges) return [];
+    return (blogData.articles.edges as any[]).map((e: any) => adaptShopifyArticle(e.node));
+  }, [blogData]);
+
   // Merge auto-detected tags with custom categories
-  const autoTags = useMemo(() => getAllTags(mockArticles), []);
+  const autoTags = useMemo(() => getAllTags(shopifyArticles), [shopifyArticles]);
   const allCategories = useMemo(() => {
     const merged = new Set(["All", ...autoTags, ...customCategories]);
     return Array.from(merged);
@@ -175,7 +201,7 @@ export default function BlogIndex() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  const filtered = useMemo(() => filterByTag(mockArticles, activeTag), [activeTag]);
+  const filtered = useMemo(() => filterByTag(shopifyArticles, activeTag), [shopifyArticles, activeTag]);
   const featuredArticle = filtered[0];
   const gridArticles = showFeatured ? filtered.slice(1, visibleCount + 1) : filtered.slice(0, visibleCount);
   const hasMore = showFeatured
@@ -227,8 +253,26 @@ export default function BlogIndex() {
       )}
 
       <div className="blog-content">
+        {/* ── Loading skeleton ── */}
+        {blogLoading && (
+          <div className="blog-loading">
+            <div className="blog-loading-grid">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="blog-card-skeleton">
+                  <div className="blog-card-skeleton__img" />
+                  <div className="blog-card-skeleton__body">
+                    <div className="blog-card-skeleton__line blog-card-skeleton__line--short" />
+                    <div className="blog-card-skeleton__line" />
+                    <div className="blog-card-skeleton__line blog-card-skeleton__line--medium" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Featured Card ── */}
-        {showFeatured && featuredArticle && (
+        {!blogLoading && showFeatured && featuredArticle && (
           <div className="blog-featured-wrap">
             <FeaturedCard
               article={featuredArticle}
@@ -240,7 +284,7 @@ export default function BlogIndex() {
         )}
 
         {/* ── Article Grid ── */}
-        {gridArticles.length > 0 ? (
+        {!blogLoading && gridArticles.length > 0 ? (
           <div className="blog-grid">
             {gridArticles.map((article) => (
               <ArticleCard
@@ -252,11 +296,11 @@ export default function BlogIndex() {
               />
             ))}
           </div>
-        ) : (
+        ) : !blogLoading ? (
           <div className="blog-empty">
             <p>No articles found in this category yet.</p>
           </div>
-        )}
+        ) : null}
 
         {/* ── Load More ── */}
         {hasMore && (

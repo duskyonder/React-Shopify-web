@@ -257,6 +257,58 @@ export const appRouter = router({
           return null;
         }
       }),
+
+    getBlog: publicProcedure
+      .input(z.object({ handle: z.string().default("news") }))
+      .query(async ({ input }) => {
+        const shopifyDomain = ENV.shopifyStoreDomain;
+        const storefrontToken = ENV.shopifyStorefrontToken;
+        if (!shopifyDomain || !storefrontToken) return null;
+        const gql = `
+          query GetBlog($handle: String!) {
+            blog(handle: $handle) {
+              id
+              handle
+              title
+              articles(first: 50, sortKey: PUBLISHED_AT, reverse: true) {
+                edges {
+                  node {
+                    id
+                    handle
+                    title
+                    excerpt
+                    publishedAt
+                    image { url altText width height }
+                    author { name }
+                    tags
+                    seo { title description }
+                  }
+                }
+              }
+            }
+          }
+        `;
+        try {
+          const res = await fetch(`https://${shopifyDomain}/api/2024-10/graphql.json`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Shopify-Storefront-Access-Token": storefrontToken,
+            },
+            body: JSON.stringify({ query: gql, variables: { handle: input.handle } }),
+          });
+          if (!res.ok) return null;
+          const json = await res.json() as any;
+          if (json.errors) {
+            console.error("[getBlog] Shopify GraphQL errors:", json.errors);
+            return null;
+          }
+          return json.data?.blog ?? null;
+        } catch (err) {
+          console.error("[getBlog] fetch error:", err instanceof Error ? err.message : err);
+          return null;
+        }
+      }),
   }),
   newsletter: router({
     subscribe: publicProcedure

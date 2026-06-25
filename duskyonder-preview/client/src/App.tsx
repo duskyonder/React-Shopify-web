@@ -78,8 +78,8 @@ function Router() {
         <Route path={"/collections/:handle"} component={Collections} />
         <Route path={"/products/:handle"} component={ProductDetail} />
         <Route path={"/pages/about-us"} component={AboutUs} />
-        <Route path={"/pages/blog"} component={BlogIndex} />
-        <Route path={"/pages/blog/:handle"} component={BlogArticle} />
+        <Route path={"/blogs/news"} component={BlogIndex} />
+        <Route path={"/blogs/news/:handle"} component={BlogArticle} />
         <Route path={"/pages/influencer"} component={InfluencerPage} />
         <Route path={"/pages/influencer/apply"} component={InfluencerApplyPage} />
         <Route path={"/pages/influencer/:handle"} component={InfluencerCreatorPage} />

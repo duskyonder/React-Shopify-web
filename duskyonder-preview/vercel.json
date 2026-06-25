@@ -7,18 +7,6 @@
       "maxDuration": 30
     }
   },
-  "redirects": [
-    {
-      "source": "/blogs/news",
-      "destination": "/pages/blog",
-      "permanent": true
-    },
-    {
-      "source": "/blogs/news/:path*",
-      "destination": "/pages/blog/:path*",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
