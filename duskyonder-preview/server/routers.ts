@@ -444,21 +444,16 @@ export const appRouter = router({
             }
           }
         `;
-        // DIAGNOSTIC: confirm token shape before building headers
-        console.log("[customer.getOrders] input.accessToken (first 20):", input.accessToken.slice(0, 20));
-        // Force Authorization header inline — no intermediate variable — to rule out any scope override
-        const forcedAuthValue = `Bearer ${input.accessToken}`;
-        console.log("FINAL REQUEST HEADERS BEING SENT:", JSON.stringify({
-          "Content-Type": "application/json",
-          "Authorization": forcedAuthValue,
-        }));
+        // Do not use any authHeader variable or constructed headers object
+        // Hardcode the prefix and injection directly into the fetch call
+        console.log("EXACT AUTHORIZATION HEADER VALUE:", "Bearer " + input.accessToken);
         const res = await fetch(CA_API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${input.accessToken}`, // Force this exact format
+            "Authorization": "Bearer " + input.accessToken
           },
-          body: JSON.stringify({ query: gql }),
+          body: JSON.stringify({ query: gql })
         });
         if (!res.ok) {
           const text = await res.text().catch(() => "");
