@@ -170,13 +170,13 @@ export default function BlogIndex() {
   const heroBgColor = blogCfg?.heroBgColor ?? "#F7F5F2";
   const heroTextColor = blogCfg?.heroTextColor ?? "#1a1a1a";
   const showFeatured = blogCfg?.showFeatured ?? true;
-  const showCategoryFilter = blogCfg?.showCategoryFilter ?? true;
+  const showCategoryFilter = blogCfg?.showCategoryFilter ?? false;
   const footerCtaTitle = blogCfg?.footerCtaTitle ?? "Stay in the Loop";
   const footerCtaSubtitle = blogCfg?.footerCtaSubtitle ?? "Subscribe for movement tips, new arrivals, and community stories.";
   const footerCtaPlaceholder = blogCfg?.footerCtaPlaceholder ?? "Your email address";
   const footerCtaButton = blogCfg?.footerCtaButton ?? "Subscribe";
   const showFooterCta = blogCfg?.showFooterCta ?? true;
-  const detailMode = (blogCfg?.detailMode ?? "page") as "drawer" | "page";
+  const detailMode = (blogCfg?.detailMode ?? "drawer") as "drawer" | "page";
   const cardLinkStyle = (blogCfg?.cardLinkStyle ?? "C") as "A" | "C";
   const customCategories = blogCfg?.customCategories ?? [];
   const heroMinHeight = blogCfg?.heroMinHeight;

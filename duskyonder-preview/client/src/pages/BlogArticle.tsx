@@ -93,7 +93,8 @@ interface MobileTocProps {
 function MobileToc({ items, activeId }: MobileTocProps) {
   const [open, setOpen] = useState(false);
   if (items.length === 0) return null;
-  const activeItem = items.find((i) => i.id === activeId);
+  const activeIndex = items.findIndex((i) => i.id === activeId);
+  const activeLabel = activeIndex >= 0 ? `Section ${activeIndex + 1}` : "Contents";
 
   return (
     <div className="blog-mobile-toc">
@@ -103,13 +104,13 @@ function MobileToc({ items, activeId }: MobileTocProps) {
         aria-expanded={open}
       >
         <span className="blog-mobile-toc__label">
-          {open ? "Contents" : (activeItem?.text ?? "Contents")}
+          {open ? "Contents" : activeLabel}
         </span>
         <span className={`blog-mobile-toc__chevron${open ? " open" : ""}`}>▾</span>
       </button>
       {open && (
         <ul className="blog-mobile-toc__list">
-          {items.map((item) => (
+          {items.map((item, idx) => (
             <li
               key={item.id}
               className={`blog-mobile-toc__item${item.level === 3 ? " indent" : ""}${activeId === item.id ? " active" : ""}`}
@@ -129,7 +130,7 @@ function MobileToc({ items, activeId }: MobileTocProps) {
                   }, 50);
                 }}
               >
-                {item.text}
+                Section {idx + 1}
               </a>
             </li>
           ))}

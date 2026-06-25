@@ -62,7 +62,7 @@ export default function BlogArticleDrawer({ article, onClose }: BlogArticleDrawe
             ✕
           </button>
           <Link
-            href={`/pages/blog/${article.handle}`}
+            href={`/blogs/news/${article.handle}`}
             className="blog-drawer-open-page"
             onClick={onClose}
           >
@@ -93,18 +93,17 @@ export default function BlogArticleDrawer({ article, onClose }: BlogArticleDrawe
           <h1 className="blog-drawer-title">{article.title}</h1>
 
           {/* Author */}
-          <p className="blog-drawer-author">By {article.author.name}</p>
+          <p className="blog-drawer-author">By {typeof article.author === 'string' ? article.author : (article.author as any)?.name ?? 'Dusk Yonder'}</p>
 
-          {/* Body */}
-          <div
-            className="blog-drawer-body"
-            dangerouslySetInnerHTML={{ __html: article.content }}
-          />
+          {/* Body: show excerpt as preview; full content on article page */}
+          {article.excerpt && (
+            <p className="blog-drawer-excerpt">{article.excerpt}</p>
+          )}
 
           {/* Footer */}
           <div className="blog-drawer-footer">
             <Link
-              href={`/pages/blog/${article.handle}`}
+              href={`/blogs/news/${article.handle}`}
               className="blog-drawer-full-link"
               onClick={onClose}
             >
