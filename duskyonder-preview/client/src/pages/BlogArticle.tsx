@@ -88,9 +88,10 @@ function TocSidebar({ items, activeId }: TocSidebarProps) {
 interface MobileTocProps {
   items: TocItem[];
   activeId: string;
+  scrollProgress: number;
 }
 
-function MobileToc({ items, activeId }: MobileTocProps) {
+function MobileToc({ items, activeId, scrollProgress }: MobileTocProps) {
   const [open, setOpen] = useState(false);
   if (items.length === 0) return null;
   const activeIndex = items.findIndex((i) => i.id === activeId);
@@ -136,11 +137,27 @@ function MobileToc({ items, activeId }: MobileTocProps) {
           ))}
         </ul>
       )}
+      {/* 3px reading progress bar below the TOC */}
+      <div className="blog-mobile-toc__progress-bar">
+        <div className="blog-mobile-toc__progress-fill" style={{ width: `${scrollProgress}%` }} />
+      </div>
     </div>
   );
 }
 
-// ── Main Component ──────────────────────────────────────────────────────────
+// ── Back-to-top visibility hook ──────────────────────────────────────────────
+function useShowBackToTop(threshold = 500): boolean {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const handler = () => setShow(window.scrollY > threshold);
+    window.addEventListener("scroll", handler, { passive: true });
+    handler();
+    return () => window.removeEventListener("scroll", handler);
+  }, [threshold]);
+  return show;
+}
+
+// ── Main Component ──────────────────────────────────────────────
 
 
 // ---- Inline Newsletter Strip ----
@@ -249,6 +266,7 @@ export default function BlogArticle() {
   const [activeId, setActiveId] = useState("");
   const [scrollProgress, setScrollProgress] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
+  const showBackToTop = useShowBackToTop(500);
 
   const updateScroll = useCallback(() => {
     // Progress bar: based on full page scroll
@@ -392,10 +410,10 @@ export default function BlogArticle() {
           {/* Excerpt */}
           <p className="blog-article-excerpt">{article.excerpt}</p>
 
-          {/* Mobile TOC */}
+          {/* Mobile TOC + progress bar */}
           {hasToc && (
             <div className="blog-mobile-toc-wrap">
-              <MobileToc items={tocItems} activeId={activeId} />
+              <MobileToc items={tocItems} activeId={activeId} scrollProgress={scrollProgress} />
             </div>
           )}
 
@@ -452,6 +470,17 @@ export default function BlogArticle() {
           </div>
         </section>
       )}
+
+      {/* Floating back-to-top button */}
+      <button
+        className={`blog-back-to-top${showBackToTop ? " visible" : ""}`}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Back to top"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="18 15 12 9 6 15" />
+        </svg>
+      </button>
 
       <InlineNewsletterStrip />
       <SFFooter />
