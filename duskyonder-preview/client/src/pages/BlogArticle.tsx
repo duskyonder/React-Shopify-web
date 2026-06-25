@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Link, useParams } from "wouter";
 import { SFHeader, SFFooter, SFPromoBar } from "@/components/StorefrontShell";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
@@ -95,28 +96,23 @@ function MobileToc({ items, activeId, scrollProgress }: MobileTocProps) {
   const [open, setOpen] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
   const [tocHeight, setTocHeight] = useState(0);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const tocRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);   // stays in document flow
+  const tocRef  = useRef<HTMLDivElement>(null);   // the actual TOC element
 
-  // JS-based fixed positioning: measure initial offset, then fix on scroll past it
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
 
-    // Record the natural top position of the wrapper (once, on mount)
+    // Capture the wrapper's natural distance from the top of the document once.
     const initialTop = wrap.getBoundingClientRect().top + window.scrollY;
 
     const handleScroll = () => {
-      const shouldFix = window.scrollY > initialTop;
-      setIsFixed(shouldFix);
-      // Keep spacer height in sync with actual TOC height
-      if (tocRef.current) {
-        setTocHeight(tocRef.current.offsetHeight);
-      }
+      setIsFixed(window.scrollY > initialTop);
+      if (tocRef.current) setTocHeight(tocRef.current.offsetHeight);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // run once on mount
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -124,59 +120,83 @@ function MobileToc({ items, activeId, scrollProgress }: MobileTocProps) {
   const activeIndex = items.findIndex((i) => i.id === activeId);
   const activeLabel = activeIndex >= 0 ? `Section ${activeIndex + 1}` : "Contents";
 
+  // ── TOC markup (shared between in-flow and portal renders) ──────────────
+  const tocMarkup = (
+    <div
+      ref={tocRef}
+      className="blog-mobile-toc"
+      style={isFixed ? {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        borderRadius: 0,
+        borderLeft: "none",
+        borderRight: "none",
+        borderTop: "none",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
+      } : undefined}
+    >
+      <button
+        className="blog-mobile-toc__toggle"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+      >
+        <span className="blog-mobile-toc__label">
+          {open ? "Contents" : activeLabel}
+        </span>
+        <span className={`blog-mobile-toc__chevron${open ? " open" : ""}`}>▾</span>
+      </button>
+      {open && (
+        <ul className="blog-mobile-toc__list">
+          {items.map((item, idx) => (
+            <li
+              key={item.id}
+              className={`blog-mobile-toc__item${item.level === 3 ? " indent" : ""}${activeId === item.id ? " active" : ""}`}
+            >
+              <a
+                href={`#${item.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setOpen(false);
+                  setTimeout(() => {
+                    const el = document.getElementById(item.id);
+                    if (el) {
+                      const offset = isFixed ? tocHeight + 8 : 120;
+                      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+                      window.scrollTo({ top, behavior: "smooth" });
+                    }
+                  }, 50);
+                }}
+              >
+                Section {idx + 1}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      {/* 3px reading progress bar */}
+      <div className="blog-mobile-toc__progress-bar">
+        <div className="blog-mobile-toc__progress-fill" style={{ width: `${scrollProgress}%` }} />
+      </div>
+    </div>
+  );
+
   return (
-    // Outer wrapper stays in flow; provides the spacer when TOC is fixed
     <div ref={wrapRef} style={{ position: "relative" }}>
-      {/* Spacer: prevents content jump when TOC lifts out of flow */}
+      {/* Spacer holds the space vacated when TOC goes fixed */}
       {isFixed && <div style={{ height: tocHeight }} aria-hidden="true" />}
 
-      <div
-        ref={tocRef}
-        className={`blog-mobile-toc${isFixed ? " is-fixed" : ""}`}
-      >
-        <button
-          className="blog-mobile-toc__toggle"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-        >
-          <span className="blog-mobile-toc__label">
-            {open ? "Contents" : activeLabel}
-          </span>
-          <span className={`blog-mobile-toc__chevron${open ? " open" : ""}`}>▾</span>
-        </button>
-        {open && (
-          <ul className="blog-mobile-toc__list">
-            {items.map((item, idx) => (
-              <li
-                key={item.id}
-                className={`blog-mobile-toc__item${item.level === 3 ? " indent" : ""}${activeId === item.id ? " active" : ""}`}
-              >
-                <a
-                  href={`#${item.id}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setOpen(false);
-                    setTimeout(() => {
-                      const el = document.getElementById(item.id);
-                      if (el) {
-                        const offset = isFixed ? tocHeight + 8 : 120;
-                        const top = el.getBoundingClientRect().top + window.scrollY - offset;
-                        window.scrollTo({ top, behavior: "smooth" });
-                      }
-                    }, 50);
-                  }}
-                >
-                  Section {idx + 1}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-        {/* 3px reading progress bar below the TOC */}
-        <div className="blog-mobile-toc__progress-bar">
-          <div className="blog-mobile-toc__progress-fill" style={{ width: `${scrollProgress}%` }} />
-        </div>
-      </div>
+      {/*
+        When fixed: render via Portal directly into document.body so the TOC
+        escapes ALL ancestor stacking contexts (backdrop-filter on header,
+        overflow on layout containers, etc.) and is guaranteed to sit on top.
+        When in flow: render normally inside the article layout.
+      */}
+      {isFixed
+        ? createPortal(tocMarkup, document.body)
+        : tocMarkup}
     </div>
   );
 }
