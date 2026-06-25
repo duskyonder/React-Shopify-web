@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { Link, useParams } from "wouter";
 import { SFHeader, SFFooter, SFPromoBar } from "@/components/StorefrontShell";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
@@ -94,50 +93,13 @@ interface MobileTocProps {
 
 function MobileToc({ items, activeId, scrollProgress }: MobileTocProps) {
   const [open, setOpen] = useState(false);
-  const [isFixed, setIsFixed] = useState(false);
-  const [tocHeight, setTocHeight] = useState(0);
-  const wrapRef = useRef<HTMLDivElement>(null);   // stays in document flow
-  const tocRef  = useRef<HTMLDivElement>(null);   // the actual TOC element
-
-  useEffect(() => {
-    const wrap = wrapRef.current;
-    if (!wrap) return;
-
-    // Capture the wrapper's natural distance from the top of the document once.
-    const initialTop = wrap.getBoundingClientRect().top + window.scrollY;
-
-    const handleScroll = () => {
-      setIsFixed(window.scrollY > initialTop);
-      if (tocRef.current) setTocHeight(tocRef.current.offsetHeight);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   if (items.length === 0) return null;
   const activeIndex = items.findIndex((i) => i.id === activeId);
   const activeLabel = activeIndex >= 0 ? `Section ${activeIndex + 1}` : "Contents";
 
-  // ── TOC markup (shared between in-flow and portal renders) ──────────────
-  const tocMarkup = (
-    <div
-      ref={tocRef}
-      className="blog-mobile-toc"
-      style={isFixed ? {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 9999,
-        borderRadius: 0,
-        borderLeft: "none",
-        borderRight: "none",
-        borderTop: "none",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
-      } : undefined}
-    >
+  return (
+    <div className="blog-mobile-toc">
       <button
         className="blog-mobile-toc__toggle"
         onClick={() => setOpen((o) => !o)}
@@ -163,8 +125,7 @@ function MobileToc({ items, activeId, scrollProgress }: MobileTocProps) {
                   setTimeout(() => {
                     const el = document.getElementById(item.id);
                     if (el) {
-                      const offset = isFixed ? tocHeight + 8 : 120;
-                      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+                      const top = el.getBoundingClientRect().top + window.scrollY - 120;
                       window.scrollTo({ top, behavior: "smooth" });
                     }
                   }, 50);
@@ -180,23 +141,6 @@ function MobileToc({ items, activeId, scrollProgress }: MobileTocProps) {
       <div className="blog-mobile-toc__progress-bar">
         <div className="blog-mobile-toc__progress-fill" style={{ width: `${scrollProgress}%` }} />
       </div>
-    </div>
-  );
-
-  return (
-    <div ref={wrapRef} style={{ position: "relative" }}>
-      {/* Spacer holds the space vacated when TOC goes fixed */}
-      {isFixed && <div style={{ height: tocHeight }} aria-hidden="true" />}
-
-      {/*
-        When fixed: render via Portal directly into document.body so the TOC
-        escapes ALL ancestor stacking contexts (backdrop-filter on header,
-        overflow on layout containers, etc.) and is guaranteed to sit on top.
-        When in flow: render normally inside the article layout.
-      */}
-      {isFixed
-        ? createPortal(tocMarkup, document.body)
-        : tocMarkup}
     </div>
   );
 }

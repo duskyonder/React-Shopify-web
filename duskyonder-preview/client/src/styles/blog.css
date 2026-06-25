@@ -946,22 +946,17 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fff;
-  /* No position:sticky — JS scroll listener applies .is-fixed instead */
+  /*
+   * CSS sticky — mirrors Policy page exactly.
+   * Mobile header = promo bar (36px) + nav inner (64px) + 4px buffer = 104px.
+   * This keeps the TOC flush below the nav, never overlapping it.
+   * z-index is intentionally LOWER than the header (490) so the nav
+   * always renders on top when the user opens the mobile menu.
+   */
+  position: sticky;
+  top: 104px;
   z-index: 20;
-}
-
-/* JS-applied class: lifts TOC out of flow and pins it to viewport top */
-.blog-mobile-toc.is-fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
-  border-top: none;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .blog-mobile-toc__toggle {
