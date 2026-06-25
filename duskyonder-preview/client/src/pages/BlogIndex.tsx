@@ -51,16 +51,22 @@ interface ArticleCardProps {
 function ArticleCard({ article, onDrawerOpen, detailMode, cardLinkStyle }: ArticleCardProps) {
   const href = `/blogs/news/${article.handle}`;
 
-  const handleClick = (e: React.MouseEvent) => {
+  // Card container click: open Quick View drawer (when detailMode === 'drawer')
+  const handleCardClick = (e: React.MouseEvent) => {
     if (detailMode === "drawer") {
       e.preventDefault();
       onDrawerOpen(article);
     }
   };
 
+  // Read More button: always navigate; stop event from bubbling to card
+  const handleReadMoreClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <article className="blog-card">
-      <Link href={href} onClick={handleClick} className="blog-card-img-wrap">
+    <article className="blog-card" onClick={handleCardClick} style={detailMode === "drawer" ? { cursor: "pointer" } : undefined}>
+      <div className="blog-card-img-wrap">
         {article.image?.url ? (
           <img src={article.image.url} alt={article.image.altText} className="blog-card-img" />
         ) : (
@@ -69,24 +75,22 @@ function ArticleCard({ article, onDrawerOpen, detailMode, cardLinkStyle }: Artic
         {article.tags[0] && (
           <span className="blog-card-tag">{article.tags[0]}</span>
         )}
-      </Link>
+      </div>
       <div className="blog-card-body">
         <div className="blog-card-meta">
           <span>{formatDate(article.publishedAt)}</span>
           <span className="blog-card-dot">·</span>
           <span>{article.readingTimeMinutes} min read</span>
         </div>
-        <Link href={href} onClick={handleClick}>
-          <h3 className="blog-card-title">{article.title}</h3>
-        </Link>
+        <h3 className="blog-card-title">{article.title}</h3>
         <p className="blog-card-excerpt">{article.excerpt}</p>
         <div className="blog-card-footer">
           {cardLinkStyle === "A" ? (
-            <Link href={href} onClick={handleClick} className="blog-card-link-a">
+            <Link href={href} onClick={handleReadMoreClick} className="blog-card-link-a">
               Read More →
             </Link>
           ) : (
-            <Link href={href} onClick={handleClick} className="blog-card-link-c">
+            <Link href={href} onClick={handleReadMoreClick} className="blog-card-link-c">
               <span>Read More</span>
               <span className="blog-card-link-arrow">↗</span>
             </Link>

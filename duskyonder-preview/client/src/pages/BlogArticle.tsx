@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Link, useParams } from "wouter";
 import { SFHeader, SFFooter, SFPromoBar } from "@/components/StorefrontShell";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
@@ -80,6 +80,62 @@ function TocSidebar({ items, activeId }: TocSidebarProps) {
         ))}
       </ul>
     </nav>
+  );
+}
+
+// ── Mobile TOC ─────────────────────────────────────────────────────────────
+
+interface MobileTocProps {
+  items: TocItem[];
+  activeId: string;
+}
+
+function MobileToc({ items, activeId }: MobileTocProps) {
+  const [open, setOpen] = useState(false);
+  if (items.length === 0) return null;
+  const activeItem = items.find((i) => i.id === activeId);
+
+  return (
+    <div className="blog-mobile-toc">
+      <button
+        className="blog-mobile-toc__toggle"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+      >
+        <span className="blog-mobile-toc__label">
+          {open ? "Contents" : (activeItem?.text ?? "Contents")}
+        </span>
+        <span className={`blog-mobile-toc__chevron${open ? " open" : ""}`}>▾</span>
+      </button>
+      {open && (
+        <ul className="blog-mobile-toc__list">
+          {items.map((item) => (
+            <li
+              key={item.id}
+              className={`blog-mobile-toc__item${item.level === 3 ? " indent" : ""}${activeId === item.id ? " active" : ""}`}
+            >
+              <a
+                href={`#${item.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setOpen(false);
+                  setTimeout(() => {
+                    const el = document.getElementById(item.id);
+                    if (el) {
+                      const offset = 120;
+                      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+                      window.scrollTo({ top, behavior: "smooth" });
+                    }
+                  }, 50);
+                }}
+              >
+                {item.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -188,28 +244,40 @@ export default function BlogArticle() {
   // Extract TOC from processed HTML
   const tocItems = useMemo(() => extractToc(processedHtml), [processedHtml]);
 
-  // Track active heading for TOC highlight
+  // Track active heading for TOC highlight + scroll progress
   const [activeId, setActiveId] = useState("");
+  const [scrollProgress, setScrollProgress] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const updateScroll = useCallback(() => {
+    // Progress bar: based on full page scroll
+    const scrolled = window.scrollY;
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    setScrollProgress(total > 0 ? Math.min(100, (scrolled / total) * 100) : 0);
+
+    // Scrollspy: last heading at/above viewport top (with header offset)
     if (!showToc || tocItems.length === 0) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-          }
-        });
-      },
-      { rootMargin: "-20% 0px -70% 0px" }
-    );
-    tocItems.forEach((item) => {
+    const topOffset = 130; // header + promo + buffer
+    // Bottom-of-page: highlight last section
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 50) {
+      setActiveId(tocItems[tocItems.length - 1].id);
+      return;
+    }
+    let current = tocItems[0].id;
+    for (const item of tocItems) {
       const el = document.getElementById(item.id);
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
+      if (el && el.getBoundingClientRect().top <= topOffset) {
+        current = item.id;
+      }
+    }
+    setActiveId(current);
   }, [tocItems, showToc]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", updateScroll, { passive: true });
+    updateScroll(); // run once on mount
+    return () => window.removeEventListener("scroll", updateScroll);
+  }, [updateScroll]);
 
   // Related articles (same tag, exclude current)
   const relatedArticles = useMemo(() => {
@@ -250,6 +318,13 @@ export default function BlogArticle() {
 
   return (
     <div className="blog-article-page">
+      {/* ── Reading Progress Bar ── */}
+      <div
+        className="blog-article-progress-bar"
+        style={{ width: `${scrollProgress}%` }}
+        aria-hidden="true"
+      />
+
       <SFPromoBar />
       <SFHeader darkMode={true} />
 
@@ -259,12 +334,12 @@ export default function BlogArticle() {
           <div className="blog-breadcrumb-inner">
             <Link href="/" className="blog-breadcrumb-link">Home</Link>
             <span className="blog-breadcrumb-sep">›</span>
-            <Link href="/pages/blog" className="blog-breadcrumb-link">Journal</Link>
+            <Link href="/blogs/news" className="blog-breadcrumb-link">Blog</Link>
             {article.tags[0] && (
               <>
                 <span className="blog-breadcrumb-sep">›</span>
                 <Link
-                  href={`/pages/blog?tag=${encodeURIComponent(article.tags[0])}`}
+                  href={`/blogs/news?tag=${encodeURIComponent(article.tags[0])}`}
                   className="blog-breadcrumb-link"
                 >
                   {article.tags[0]}
@@ -293,7 +368,7 @@ export default function BlogArticle() {
             {article.tags.map((tag) => (
               <Link
                 key={tag}
-                href={`/pages/blog?tag=${encodeURIComponent(tag)}`}
+                href={`/blogs/news?tag=${encodeURIComponent(tag)}`}
                 className="blog-article-tag"
               >
                 {tag}
@@ -306,7 +381,7 @@ export default function BlogArticle() {
 
           {/* Meta */}
           <div className="blog-article-meta">
-            <span className="blog-article-author">By {article.author.name}</span>
+            <span className="blog-article-author">By {typeof article.author === "string" ? article.author : (article.author as any)?.name ?? "Dusk Yonder"}</span>
             <span className="blog-card-dot">·</span>
             <span>{formatDate(article.publishedAt)}</span>
             <span className="blog-card-dot">·</span>
@@ -315,6 +390,13 @@ export default function BlogArticle() {
 
           {/* Excerpt */}
           <p className="blog-article-excerpt">{article.excerpt}</p>
+
+          {/* Mobile TOC */}
+          {hasToc && (
+            <div className="blog-mobile-toc-wrap">
+              <MobileToc items={tocItems} activeId={activeId} />
+            </div>
+          )}
 
           {/* Body */}
           <div
@@ -325,8 +407,8 @@ export default function BlogArticle() {
 
           {/* Back link */}
           <div className="blog-article-back">
-            <Link href="/pages/blog" className="blog-article-back-link">
-              ← Back to Journal
+            <Link href="/blogs/news" className="blog-article-back-link">
+              ← Back to Blog
             </Link>
           </div>
         </article>

@@ -907,3 +907,109 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ── Reading Progress Bar ──────────────────────────────────────────────────── */
+.blog-article-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: #175C40;
+  z-index: 9999;
+  transition: width 0.1s linear;
+  pointer-events: none;
+}
+
+/* ── Mobile TOC ─────────────────────────────────────────────────────────────── */
+.blog-mobile-toc-wrap {
+  display: none;
+  margin-bottom: 1.5rem;
+}
+
+.blog-mobile-toc {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+  position: sticky;
+  top: 104px;
+  z-index: 20;
+}
+
+.blog-mobile-toc__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #f9f9f7;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-align: left;
+  gap: 0.5rem;
+}
+
+.blog-mobile-toc__label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blog-mobile-toc__chevron {
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.blog-mobile-toc__chevron.open {
+  transform: rotate(180deg);
+}
+
+.blog-mobile-toc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+  border-top: 1px solid #e5e7eb;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.blog-mobile-toc__item {
+  padding: 0;
+  cursor: default;
+}
+
+.blog-mobile-toc__item.indent {
+  padding-left: 1rem;
+}
+
+.blog-mobile-toc__item.active {
+  background: #f0f7f3;
+}
+
+.blog-mobile-toc__item a {
+  display: inline;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  color: #374151;
+  text-decoration: none;
+  line-height: 1.4;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.blog-mobile-toc__item.active a {
+  color: #175C40;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .blog-mobile-toc-wrap {
+    display: block;
+  }
+}
