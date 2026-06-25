@@ -248,6 +248,33 @@
   margin: 0;
 }
 
+/* ── Legal entity section (GMC compliance) ── */
+.contact-legal {
+  border-top: 1px solid #e8e5e0;
+  background: #faf9f7;
+  padding: 28px 40px;
+}
+.contact-legal-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.contact-legal-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b7280; /* neutral-500 */
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+.contact-legal-address {
+  font-size: 0.78rem;
+  color: #9ca3af; /* neutral-400 */
+  line-height: 1.6;
+  margin: 0;
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .contact-body-inner {

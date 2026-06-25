@@ -12,13 +12,16 @@ interface ContactFormData {
 
 type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
+// ── Destination email ────────────────────────────────────────────────────────
+const SUPPORT_EMAIL = "support@duskyonder.com";
+
 // ── Placeholder submit handler ───────────────────────────────────────────────
 async function submitContactForm(data: ContactFormData): Promise<void> {
-  // TODO: Replace with real API call (e.g. trpc.contact.send.mutateAsync(data))
+  // TODO: Replace with real API call, e.g.:
+  //   await trpc.contact.send.mutateAsync({ ...data, to: SUPPORT_EMAIL });
+  // All submissions are routed to SUPPORT_EMAIL (support@duskyonder.com).
   await new Promise((resolve) => setTimeout(resolve, 1200));
-  // Simulate occasional error for testing:
-  // if (Math.random() < 0.3) throw new Error("Network error");
-  console.log("Contact form submitted:", data);
+  console.log("Contact form submitted to", SUPPORT_EMAIL, data);
 }
 
 // ── Contact info items ───────────────────────────────────────────────────────
@@ -30,8 +33,8 @@ const INFO_ITEMS = [
       </svg>
     ),
     label: "Email",
-    value: "hello@duskyonder.com",
-    href: "mailto:hello@duskyonder.com",
+    value: SUPPORT_EMAIL,
+    href: `mailto:${SUPPORT_EMAIL}`,
   },
   {
     icon: (
@@ -40,7 +43,7 @@ const INFO_ITEMS = [
       </svg>
     ),
     label: "Location",
-    value: "Los Angeles, CA",
+    value: "Hong Kong",
     href: undefined,
   },
   {
@@ -51,7 +54,7 @@ const INFO_ITEMS = [
       </svg>
     ),
     label: "Response Time",
-    value: "Within 24–48 hours",
+    value: "Within 24 hours",
     href: undefined,
   },
 ];
@@ -232,6 +235,16 @@ export default function ContactPage() {
             </p>
           </div>
 
+        </div>
+      </section>
+
+      {/* ── Legal Entity Section (GMC compliance) ── */}
+      <section className="contact-legal">
+        <div className="contact-legal-inner">
+          <p className="contact-legal-name">HINGTO INTERNATIONAL GROUP CO., LIMITED</p>
+          <p className="contact-legal-address">
+            164–166 Hennessy Road, Suite 9A, 9/F, Hennessy Plaza, Wan Chai, Hong Kong Island, Hong Kong
+          </p>
         </div>
       </section>
 
