@@ -32,43 +32,38 @@ const HANDLE_TO_KEY: Record<string, ShopPolicyKey> = {
   "shipping":         "shippingPolicy",
 };
 
-// ---- Scrollspy hook (IntersectionObserver-based) ----
-function useScrollspy(ids: string[]): string {
+// ---- Scrollspy hook (scroll-event based) ----
+// Finds the last heading whose top edge is at or above the activation
+// threshold (header height + small buffer). This fires on every scroll
+// event so the active item always reflects the current scroll position,
+// unlike IntersectionObserver which only fires on boundary crossings.
+function useScrollspy(ids: string[], topOffset = 130): string {
   const [active, setActive] = useState("");
+
   useEffect(() => {
     if (!ids.length) return;
-    // rootMargin: top offset accounts for sticky header (~80px) + small buffer
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Find the topmost visible heading
-        const visible = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible.length > 0) {
-          setActive(visible[0].target.id);
+
+    const update = () => {
+      // Walk backwards: the last heading whose top is <= topOffset is active
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= topOffset) {
+          current = id;
         }
-      },
-      { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
-    );
-    // Small delay to ensure DOM is ready after content renders
-    const timer = setTimeout(() => {
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) observer.observe(el);
-      });
-      // Initialise active to first heading above viewport fold
-      const firstVisible = ids.find(id => {
-        const el = document.getElementById(id);
-        return el && el.getBoundingClientRect().top > 0;
-      });
-      const idx = firstVisible ? ids.indexOf(firstVisible) : -1;
-      setActive(idx > 0 ? ids[idx - 1] : ids[0]);
-    }, 100);
+      }
+      setActive(current);
+    };
+
+    // Run once after a short delay so the DOM is painted
+    const timer = setTimeout(update, 120);
+    window.addEventListener("scroll", update, { passive: true });
     return () => {
       clearTimeout(timer);
-      observer.disconnect();
+      window.removeEventListener("scroll", update);
     };
-  }, [ids]);
+  }, [ids, topOffset]);
+
   return active;
 }
 
