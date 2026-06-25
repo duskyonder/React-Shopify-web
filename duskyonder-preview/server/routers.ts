@@ -262,70 +262,64 @@ export const appRouter = router({
       .input(z.object({ handle: z.string().default("news") }))
       .query(async ({ input }) => {
         const shopifyDomain = ENV.shopifyStoreDomain;
-        const storefrontToken = ENV.shopifyStorefrontToken;
-        console.log(`[getBlog] handle="${input.handle}" domain="${shopifyDomain}" tokenPrefix="${storefrontToken?.slice(0, 4)}"`);
-        if (!shopifyDomain || !storefrontToken) {
-          console.warn("[getBlog] Missing Shopify credentials — returning null");
+        const adminToken = ENV.shopifyAdminToken;
+        console.log(`[getBlog] handle="${input.handle}" domain="${shopifyDomain}" hasAdminToken=${!!adminToken}`);
+        if (!shopifyDomain || !adminToken) {
+          console.warn("[getBlog] Missing Shopify Admin credentials — returning null");
           return null;
         }
-        // ── Minimal connection test: shop { name } ──
+        const baseUrl = `https://${shopifyDomain}/admin/api/2024-10`;
+        const headers = { "X-Shopify-Access-Token": adminToken, "Content-Type": "application/json" };
         try {
-          const testRes = await fetch(`https://${shopifyDomain}/api/2024-10/graphql.json`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Shopify-Storefront-Access-Token": storefrontToken },
-            body: JSON.stringify({ query: "{ shop { name } }" }),
-          });
-          const testJson = await testRes.json() as any;
-          console.log(`[getBlog] shop test -> status=${testRes.status} shop.name="${testJson?.data?.shop?.name}" errors=${JSON.stringify(testJson?.errors ?? null)}`);
-        } catch (e) {
-          console.error("[getBlog] shop test fetch failed:", e instanceof Error ? e.message : e);
-        }
-        const gql = `
-          query GetBlog($handle: String!) {
-            blog(handle: $handle) {
-              id
-              handle
-              title
-              articles(first: 50, sortKey: PUBLISHED_AT, reverse: true) {
-                edges {
-                  node {
-                    id
-                    handle
-                    title
-                    excerpt
-                    publishedAt
-                    image { url altText width height }
-                    author { name }
-                    tags
-                    seo { title description }
-                  }
-                }
-              }
-            }
+          // Step 1: find the blog ID by handle
+          const blogsRes = await fetch(`${baseUrl}/blogs.json?fields=id,handle,title`, { headers });
+          if (!blogsRes.ok) {
+            console.error(`[getBlog] blogs.json HTTP ${blogsRes.status}`);
+            return null;
           }
-        `;
-        try {
-          const res = await fetch(`https://${shopifyDomain}/api/2024-10/graphql.json`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Shopify-Storefront-Access-Token": storefrontToken,
+          const blogsJson = await blogsRes.json() as any;
+          const blog = (blogsJson.blogs as any[]).find((b: any) => b.handle === input.handle);
+          if (!blog) {
+            console.warn(`[getBlog] No blog found with handle "${input.handle}". Available: ${(blogsJson.blogs as any[]).map((b: any) => b.handle).join(", ")}`);
+            return null;
+          }
+          console.log(`[getBlog] found blog id=${blog.id} handle="${blog.handle}"`);
+
+          // Step 2: fetch articles for this blog
+          const articlesRes = await fetch(
+            `${baseUrl}/blogs/${blog.id}/articles.json?limit=50&fields=id,handle,title,excerpt,body_html,published_at,image,author,tags`,
+            { headers }
+          );
+          if (!articlesRes.ok) {
+            console.error(`[getBlog] articles.json HTTP ${articlesRes.status}`);
+            return null;
+          }
+          const articlesJson = await articlesRes.json() as any;
+          const articles = articlesJson.articles as any[];
+          console.log(`[getBlog] fetched ${articles.length} articles`);
+
+          // Return in a shape compatible with the existing BlogIndex adapter
+          return {
+            id: String(blog.id),
+            handle: blog.handle,
+            title: blog.title,
+            articles: {
+              edges: articles
+                .sort((a: any, b: any) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+                .map((a: any) => ({
+                  node: {
+                    id: String(a.id),
+                    handle: a.handle,
+                    title: a.title,
+                    excerpt: a.excerpt ?? "",
+                    publishedAt: a.published_at,
+                    image: a.image ? { url: a.image.src, altText: a.image.alt ?? a.title } : null,
+                    author: { name: a.author ?? "Dusk Yonder" },
+                    tags: typeof a.tags === "string" ? a.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : (a.tags ?? []),
+                  },
+                })),
             },
-            body: JSON.stringify({ query: gql, variables: { handle: input.handle } }),
-          });
-          if (!res.ok) {
-            console.error(`[getBlog] HTTP ${res.status} from Shopify`);
-            return null;
-          }
-          const json = await res.json() as any;
-          console.log("[getBlog] raw response:", JSON.stringify(json).slice(0, 500));
-          if (json.errors) {
-            console.error("[getBlog] Shopify GraphQL errors:", JSON.stringify(json.errors));
-            return null;
-          }
-          const blog = json.data?.blog ?? null;
-          console.log(`[getBlog] blog=${blog ? `"${blog.handle}" articles=${blog.articles?.edges?.length ?? 0}` : "null"}`);
-          return blog;
+          };
         } catch (err) {
           console.error("[getBlog] fetch error:", err instanceof Error ? err.message : err);
           return null;
