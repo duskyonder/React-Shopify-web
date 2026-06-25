@@ -113,7 +113,7 @@ function Router() {
         <Route path={"/search"} component={SearchPage} />
         <Route path={"/contact"} component={ContactPage} />
         <Route path={"/pages/contact"} component={ContactPage} />
-        <Route path={"/faq"} component={FAQPage} />
+        <Route path={"/faq"}><Redirect to="/pages/faq" /></Route>
         <Route path={"/pages/faq"} component={FAQPage} />
         {/* Admin routes */}
         <Route path="/admin" component={() => <AdminLayout><AdminSectionsPage /></AdminLayout>} />
