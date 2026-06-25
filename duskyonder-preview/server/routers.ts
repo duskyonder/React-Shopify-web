@@ -484,9 +484,12 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const SHOP_ID = process.env.SHOPIFY_SHOP_ID ?? "90159776010";
+        // VITE_SHOPIFY_CUSTOMER_ACCOUNT_API_CLIENT_ID is the only env var set in Vercel for this value.
+        // Server-side process.env can read VITE_ prefixed vars on Vercel (they are not stripped server-side).
         const CLIENT_ID =
           process.env.SHOPIFY_CUSTOMER_ACCOUNT_API_CLIENT_ID ??
           process.env.VITE_SHOPIFY_CUSTOMER_ACCOUNT_API_CLIENT_ID ?? "";
+        console.log("[customer.exchangeToken] CLIENT_ID being used:", CLIENT_ID ? CLIENT_ID.slice(0, 8) + "..." : "EMPTY — TOKEN WILL BE INVALID");
         const tokenUrl = `https://shopify.com/${SHOP_ID}/auth/oauth/token`;
         const body = new URLSearchParams({
           grant_type: "authorization_code",
