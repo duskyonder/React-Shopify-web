@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import type { PolicyPagesConfig, PolicyPageConfig } from "@/contexts/ThemeConfigContext";
@@ -118,27 +118,23 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
     undefined,
     { staleTime: 0, retry: false }
   );
+
+  // --- Derive headings from data BEFORE any hooks so useMemo has stable inputs ---
+  // policy.body is stable once loaded (same string reference), so useMemo only
+  // recomputes when the raw HTML actually changes — no new array on every render.
+  const policy = (shop as any)?.[policyKey] as { title: string; body: string; url: string } | null | undefined;
+  const bodyHtml: string = policy?.body ?? "";
+
+  const headings = useMemo(() => extractHeadings(bodyHtml), [bodyHtml]);
+  const headingIds = useMemo(() => headings.map(h => h.id), [headings]);
+
+  // --- All hooks unconditionally, in fixed order ---
   const [mobileOpen, setMobileOpen] = useState(false);
-  // Must be declared unconditionally before any early returns — Rules of Hooks
   const contentRef = useRef<HTMLDivElement>(null);
   const showBackToTop = useShowBackToTop(500);
   const mobileProgress = useScrollProgress(contentRef);
-  // headingIds is derived after data loads, but the hook must be called unconditionally.
-  // We pass an empty array until data is ready — the hook handles that gracefully.
-  const [headingIdsForSpy, setHeadingIdsForSpy] = useState<string[]>([]);
-  const activeId = useScrollspy(headingIdsForSpy);
-
-  // Diagnostic: log the raw shop object so we can verify the mapping and Shopify Admin content
-  useEffect(() => {
-    if (shop !== undefined) {
-      console.log('[PolicyPage] getPolicies returned shop:', shop);
-      console.log('[PolicyPage] policyKey requested:', policyKey);
-      console.log('[PolicyPage] resolved policy:', (shop as any)?.[policyKey] ?? null);
-    }
-    if (error) {
-      console.error('[PolicyPage] getPolicies error:', error);
-    }
-  }, [shop, policyKey, error]);
+  // headingIds is stable (memoised above) — no state/effect needed, pass directly
+  const activeId = useScrollspy(headingIds);
 
   if (isLoading) {
     return (
@@ -150,8 +146,6 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
       </div>
     );
   }
-
-  const policy = shop?.[policyKey] as { title: string; body: string; url: string } | null | undefined;
 
   if (error || !policy) {
     const isTokenMissing = !error && shop === null;
@@ -186,18 +180,11 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
     );
   }
 
-  const bodyHtml: string = policy.body ?? "";
-  const headings = extractHeadings(bodyHtml);
-  const headingIds = headings.map(h => h.id);
   let _hIdx = 0;
   const bodyWithIds = bodyHtml.replace(
     /<h([2-4])([^>]*)>(.*?)<\/h[2-4]>/gi,
     (_, level, attrs, text) => `<h${level}${attrs} id="heading-${_hIdx++}">${text}</h${level}>`
   );
-
-  // Sync headingIds into state so the scrollspy hook gets them after data loads
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setHeadingIdsForSpy(headingIds); }, [headingIds.join(",")]);
 
   return (
     <div className="policy-page">
