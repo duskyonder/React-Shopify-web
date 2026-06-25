@@ -639,6 +639,71 @@ const vercelRouter = router({
       }),
   }),
 
+  contact: router({
+    send: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(1).max(200),
+          email: z.string().email(),
+          subject: z.string().min(1).max(300),
+          message: z.string().min(10).max(5000),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const resendApiKey = process.env.RESEND_API_KEY ?? "";
+        if (!resendApiKey) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "RESEND_API_KEY is not configured in environment variables.",
+          });
+        }
+        const esc = (s: string) =>
+          s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:'Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 0;"><tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+<tr><td style="background:#175C40;padding:28px 40px;"><p style="margin:0;font-size:18px;font-weight:600;color:#fff;">DUSKYONDER</p><p style="margin:6px 0 0;font-size:12px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.08em;">New Contact Form Submission</p></td></tr>
+<tr><td style="padding:36px 40px;">
+<p style="margin:0 0 4px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#999;">From</p>
+<p style="margin:0 0 2px;font-size:15px;color:#1a1a1a;">${esc(input.name)}</p>
+<a href="mailto:${esc(input.email)}" style="font-size:13px;color:#175C40;">${esc(input.email)}</a>
+<hr style="border:none;border-top:1px solid #f0ede8;margin:20px 0;">
+<p style="margin:0 0 4px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#999;">Subject</p>
+<p style="margin:0 0 20px;font-size:15px;color:#1a1a1a;">${esc(input.subject)}</p>
+<p style="margin:0 0 12px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#999;">Message</p>
+<p style="margin:0;font-size:14px;color:#333;line-height:1.7;white-space:pre-wrap;">${esc(input.message)}</p>
+</td></tr>
+<tr><td style="padding:20px 40px;background:#faf9f7;border-top:1px solid #f0ede8;"><p style="margin:0;font-size:11px;color:#aaa;">Sent via duskyonder.com contact form. Reply to respond to ${esc(input.name)}.</p></td></tr>
+</table></td></tr></table></body></html>`;
+        const sendRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: "Duskyonder Contact <noreply@duskyonder.com>",
+            to: ["support@duskyonder.com"],
+            subject: `[Contact Form] ${input.subject}`,
+            html,
+            text: `Name: ${input.name}\nEmail: ${input.email}\nSubject: ${input.subject}\n\n${input.message}`,
+            reply_to: input.email,
+          }),
+        });
+        const resData = (await sendRes.json()) as any;
+        if (!sendRes.ok) {
+          console.error("[contact] Resend error:", resData);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: resData?.message ?? "Failed to send email. Please try again.",
+          });
+        }
+        console.log("[contact] Email sent id:", resData?.id);
+        return { success: true, id: resData?.id as string };
+      }),
+  }),
+
   newsletter: router({
     subscribe: publicProcedure
       .input(z.object({ email: z.string().email(), source: z.enum(["popup", "footer"]).default("footer") }))
