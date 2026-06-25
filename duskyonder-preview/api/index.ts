@@ -831,16 +831,19 @@ const vercelRouter = router({
             }
           }
         `;
-        // Shopify Customer Account API expects: Authorization: Bearer <access_token>
-        const authHeader = input.accessToken.startsWith("Bearer ")
-          ? input.accessToken
-          : `Bearer ${input.accessToken}`;
-        console.log(`[customer.getOrders] token prefix: ${input.accessToken.slice(0, 12)}...`);
+        // Shopify Customer Account API uses the raw shcat_ token as the Authorization value.
+        // DO NOT add "Bearer " prefix — the shcat_ prefix IS the token type indicator.
+        // Authorization: shcat_eyJ... (correct)
+        // Authorization: Bearer shcat_eyJ... (WRONG — causes 401)
+        const rawToken = input.accessToken.startsWith("Bearer ")
+          ? input.accessToken.slice(7)
+          : input.accessToken;
+        console.log(`[customer.getOrders] token prefix: ${rawToken.slice(0, 12)}...`);
         const res = await fetch(CA_API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": authHeader,
+            "Authorization": rawToken,
           },
           body: JSON.stringify({ query: gql }),
         });

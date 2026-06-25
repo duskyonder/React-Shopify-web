@@ -447,18 +447,21 @@ export const appRouter = router({
             }
           }
         `;
-        // Do not use any authHeader variable or constructed headers object
-        // Hardcode the prefix and injection directly into the fetch call
-        console.log('RAW TOKEN JSON:', JSON.stringify(input.accessToken));
-        console.log('TOKEN LENGTH:', input.accessToken.length);
-        console.log("EXACT AUTHORIZATION HEADER VALUE:", "Bearer " + input.accessToken);
+        // Shopify Customer Account API uses the raw shcat_ token as the Authorization value.
+        // DO NOT add "Bearer " prefix — the shcat_ prefix IS the token type indicator.
+        // Authorization: shcat_eyJ... (correct)
+        // Authorization: Bearer shcat_eyJ... (WRONG — causes 401)
+        const rawToken = input.accessToken.startsWith("Bearer ")
+          ? input.accessToken.slice(7)
+          : input.accessToken;
+        console.log(`[customer.getOrders] token: ${rawToken.slice(0, 12)}...`);
         const res = await fetch(CA_API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer " + input.accessToken
+            "Authorization": rawToken,
           },
-          body: JSON.stringify({ query: gql })
+          body: JSON.stringify({ query: gql }),
         });
         if (!res.ok) {
           const text = await res.text().catch(() => "");
