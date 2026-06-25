@@ -44,7 +44,15 @@ function useScrollspy(ids: string[], topOffset = 130): string {
     if (!ids.length) return;
 
     const update = () => {
-      // Walk backwards: the last heading whose top is <= topOffset is active
+      // Option B: if user has scrolled to within 50px of the page bottom,
+      // force the last section active regardless of heading positions.
+      const atBottom =
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 50;
+      if (atBottom && ids.length > 0) {
+        setActive(ids[ids.length - 1]);
+        return;
+      }
+      // Walk forwards: the last heading whose top is <= topOffset is active
       let current = ids[0];
       for (const id of ids) {
         const el = document.getElementById(id);

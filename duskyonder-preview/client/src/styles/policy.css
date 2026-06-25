@@ -274,6 +274,13 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  /* Prevent gap areas from being selectable or clickable */
+  user-select: none;
+  pointer-events: none;
+}
+/* Restore pointer events only on the actual link elements */
+.policy-sidebar__item a {
+  pointer-events: auto;
 }
 .policy-sidebar__item a {
   display: block;
@@ -345,6 +352,13 @@
   margin: 0;
   border-top: 1px solid #ebebeb;
   background: #fafafa;
+  /* Prevent gap areas between items from being selectable or clickable */
+  user-select: none;
+  pointer-events: none;
+}
+/* Restore pointer events only on the actual link elements */
+.policy-mobile-toc__item a {
+  pointer-events: auto;
 }
 .policy-mobile-toc__item a {
   display: block;
