@@ -19,4 +19,6 @@ export const ENV = {
     process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
     process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
     "",
+  // Resend — transactional email (contact form)
+  resendApiKey: process.env.RESEND_API_KEY ?? "",
 };

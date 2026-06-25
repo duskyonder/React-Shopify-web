@@ -358,6 +358,36 @@ export const appRouter = router({
         }
       }),
   }),
+  contact: router({
+    send: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(1).max(200),
+          email: z.string().email(),
+          subject: z.string().min(1).max(300),
+          message: z.string().min(10).max(5000),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { sendEmail, buildContactEmailHtml } = await import("./email");
+        const result = await sendEmail({
+          from: "Duskyonder Contact <noreply@duskyonder.com>",
+          to: "support@duskyonder.com",
+          subject: `[Contact Form] ${input.subject}`,
+          html: buildContactEmailHtml(input),
+          text: `Name: ${input.name}\nEmail: ${input.email}\nSubject: ${input.subject}\n\n${input.message}`,
+          replyTo: input.email,
+        });
+        if (!result.success) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: result.error ?? "Failed to send email. Please try again.",
+          });
+        }
+        return { success: true, id: result.id };
+      }),
+  }),
+
   newsletter: router({
     subscribe: publicProcedure
       .input(z.object({ email: z.string().email(), source: z.enum(["popup", "footer"]).default("footer") }))

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
+import { trpc } from "@/lib/trpc";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface ContactFormData {
@@ -12,17 +13,8 @@ interface ContactFormData {
 
 type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
-// ── Destination email ────────────────────────────────────────────────────────
+// ── Destination email (display only) ────────────────────────────────────────────
 const SUPPORT_EMAIL = "support@duskyonder.com";
-
-// ── Placeholder submit handler ───────────────────────────────────────────────
-async function submitContactForm(data: ContactFormData): Promise<void> {
-  // TODO: Replace with real API call, e.g.:
-  //   await trpc.contact.send.mutateAsync({ ...data, to: SUPPORT_EMAIL });
-  // All submissions are routed to SUPPORT_EMAIL (support@duskyonder.com).
-  await new Promise((resolve) => setTimeout(resolve, 1200));
-  console.log("Contact form submitted to", SUPPORT_EMAIL, data);
-}
 
 // ── Contact info items ───────────────────────────────────────────────────────
 const INFO_ITEMS = [
@@ -62,6 +54,7 @@ const INFO_ITEMS = [
 // ── Main component ───────────────────────────────────────────────────────────
 export default function ContactPage() {
   const [status, setStatus] = useState<SubmitStatus>("idle");
+  const sendContact = trpc.contact.send.useMutation();
 
   const {
     register,
@@ -73,7 +66,7 @@ export default function ContactPage() {
   const onSubmit = async (data: ContactFormData) => {
     setStatus("submitting");
     try {
-      await submitContactForm(data);
+      await sendContact.mutateAsync(data);
       setStatus("success");
       reset();
     } catch {
