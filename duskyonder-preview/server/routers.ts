@@ -444,21 +444,20 @@ export const appRouter = router({
             }
           }
         `;
-        // Shopify Customer Account API expects: Authorization: Bearer <access_token>
-        const authHeader = input.accessToken.startsWith("Bearer ")
-          ? input.accessToken
-          : `Bearer ${input.accessToken}`;
-        const fetchHeaders = {
+        // DIAGNOSTIC: confirm token shape before building headers
+        console.log("[customer.getOrders] input.accessToken (first 20):", input.accessToken.slice(0, 20));
+        // Force Authorization header inline — no intermediate variable — to rule out any scope override
+        const forcedAuthValue = `Bearer ${input.accessToken}`;
+        console.log("FINAL REQUEST HEADERS BEING SENT:", JSON.stringify({
           "Content-Type": "application/json",
-          "Authorization": authHeader,
-        };
-        // DIAGNOSTIC: log the exact headers object sent to Shopify
-        console.log("[customer.getOrders] raw input.accessToken (first 20):", input.accessToken.slice(0, 20));
-        console.log("[customer.getOrders] authHeader (first 30):", authHeader.slice(0, 30));
-        console.log("[customer.getOrders] Final Fetch Headers:", JSON.stringify(fetchHeaders));
+          "Authorization": forcedAuthValue,
+        }));
         const res = await fetch(CA_API_URL, {
           method: "POST",
-          headers: fetchHeaders,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${input.accessToken}`, // Force this exact format
+          },
           body: JSON.stringify({ query: gql }),
         });
         if (!res.ok) {
