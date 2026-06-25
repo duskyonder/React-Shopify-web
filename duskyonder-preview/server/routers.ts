@@ -413,6 +413,9 @@ export const appRouter = router({
         const CA_API_URL = `https://shopify.com/${SHOP_ID}/account/customer/api/2024-10/graphql`;
         console.log('DEBUG: SHOPIFY_SHOP_ID env var:', process.env.SHOPIFY_SHOP_ID ?? '(not set, using default)');
         console.log('DEBUG: The API URL is:', CA_API_URL ?? null);
+        // NOTE: CA_API_URL is a local code constant, not an env var — process.env.CA_API_URL will always be UNDEFINED
+        console.log('CRITICAL DEBUG: Connecting to Shopify API URL:', process.env.CA_API_URL || 'UNDEFINED');
+        console.log('CRITICAL DEBUG: Actual constructed URL being used:', CA_API_URL);
         const gql = `
           query GetCustomerOrders {
             customer {
