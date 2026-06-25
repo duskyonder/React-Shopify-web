@@ -263,10 +263,22 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const shopifyDomain = ENV.shopifyStoreDomain;
         const storefrontToken = ENV.shopifyStorefrontToken;
-        console.log(`[getBlog] handle="${input.handle}" domain="${shopifyDomain}" hasToken=${!!storefrontToken}`);
+        console.log(`[getBlog] handle="${input.handle}" domain="${shopifyDomain}" tokenPrefix="${storefrontToken?.slice(0, 4)}"`);
         if (!shopifyDomain || !storefrontToken) {
           console.warn("[getBlog] Missing Shopify credentials — returning null");
           return null;
+        }
+        // ── Minimal connection test: shop { name } ──
+        try {
+          const testRes = await fetch(`https://${shopifyDomain}/api/2024-10/graphql.json`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Shopify-Storefront-Access-Token": storefrontToken },
+            body: JSON.stringify({ query: "{ shop { name } }" }),
+          });
+          const testJson = await testRes.json() as any;
+          console.log(`[getBlog] shop test -> status=${testRes.status} shop.name="${testJson?.data?.shop?.name}" errors=${JSON.stringify(testJson?.errors ?? null)}`);
+        } catch (e) {
+          console.error("[getBlog] shop test fetch failed:", e instanceof Error ? e.message : e);
         }
         const gql = `
           query GetBlog($handle: String!) {
