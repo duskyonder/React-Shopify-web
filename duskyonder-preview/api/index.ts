@@ -580,7 +580,12 @@ const vercelRouter = router({
                     id: String(a.id),
                     handle: a.handle,
                     title: a.title,
-                    excerpt: a.excerpt ?? "",
+                    excerpt: (() => {
+                      if (a.excerpt && a.excerpt.trim()) return a.excerpt.trim();
+                      // Fallback: strip HTML tags from body_html and take first 150 chars
+                      const stripped = (a.body_html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+                      return stripped.length > 150 ? stripped.slice(0, 150).trimEnd() + "…" : stripped;
+                    })(),
                     publishedAt: a.published_at,
                     image: a.image ? { url: a.image.src, altText: a.image.alt ?? a.title } : null,
                     author: { name: a.author ?? "Dusk Yonder" },
