@@ -446,6 +446,8 @@ export const appRouter = router({
         `;
         // Do not use any authHeader variable or constructed headers object
         // Hardcode the prefix and injection directly into the fetch call
+        console.log('RAW TOKEN JSON:', JSON.stringify(input.accessToken));
+        console.log('TOKEN LENGTH:', input.accessToken.length);
         console.log("EXACT AUTHORIZATION HEADER VALUE:", "Bearer " + input.accessToken);
         const res = await fetch(CA_API_URL, {
           method: "POST",
