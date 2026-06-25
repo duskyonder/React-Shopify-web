@@ -123,6 +123,10 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const showBackToTop = useShowBackToTop(500);
   const mobileProgress = useScrollProgress(contentRef);
+  // headingIds is derived after data loads, but the hook must be called unconditionally.
+  // We pass an empty array until data is ready — the hook handles that gracefully.
+  const [headingIdsForSpy, setHeadingIdsForSpy] = useState<string[]>([]);
+  const activeId = useScrollspy(headingIdsForSpy);
 
   // Diagnostic: log the raw shop object so we can verify the mapping and Shopify Admin content
   useEffect(() => {
@@ -191,6 +195,10 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
     (_, level, attrs, text) => `<h${level}${attrs} id="heading-${_hIdx++}">${text}</h${level}>`
   );
 
+  // Sync headingIds into state so the scrollspy hook gets them after data loads
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setHeadingIdsForSpy(headingIds); }, [headingIds.join(",")]);
+
   return (
     <div className="policy-page">
       <SFPromoBar />
@@ -216,7 +224,7 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
 
           {/* Desktop sticky sidebar */}
           {headings.length > 0 && (
-            <PolicySidebar headings={headings} headingIds={headingIds} contentRef={contentRef} />
+            <PolicySidebar headings={headings} activeId={activeId} contentRef={contentRef} />
           )}
 
           {/* Main content */}
@@ -237,7 +245,10 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
                 {mobileOpen && (
                   <ul className="policy-mobile-toc__list">
                     {headings.map(h => (
-                      <li key={h.id} className={`policy-mobile-toc__item policy-mobile-toc__item--h${h.level}`}>
+                      <li
+                        key={h.id}
+                        className={`policy-mobile-toc__item policy-mobile-toc__item--h${h.level}${activeId === h.id ? " active" : ""}`}
+                      >
                         <a
                           href={`#${h.id}`}
                           onClick={e => {
@@ -283,14 +294,13 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
 // ---- Desktop Sidebar with Scrollspy + Progress Bar ----
 function PolicySidebar({
   headings,
-  headingIds,
+  activeId,
   contentRef,
 }: {
   headings: { id: string; text: string; level: number }[];
-  headingIds: string[];
+  activeId: string;
   contentRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  const activeId = useScrollspy(headingIds);
   const progress = useScrollProgress(contentRef);
   return (
     <aside className="policy-sidebar">

@@ -307,9 +307,12 @@
   border-radius: 6px;
   /* overflow: hidden removed — let the dropdown push content down */
   position: sticky;
-  /* Match header height so TOC sits flush below it */
-  top: 80px;
-  z-index: 10;
+  /*
+   * Mobile header = promo bar (36px default) + nav inner (64px) = 100px.
+   * Add 4px breathing room = 104px. This keeps the TOC flush below the nav.
+   */
+  top: 104px;
+  z-index: 20;
   background: #fff;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
@@ -356,6 +359,17 @@
 .policy-mobile-toc__item a:hover { background: #f0f7f3; color: #175C40; }
 .policy-mobile-toc__item--h3 a { padding-left: 28px; font-size: 0.78rem; color: #888; }
 .policy-mobile-toc__item--h4 a { padding-left: 40px; font-size: 0.75rem; color: #aaa; }
+
+/* Active state: full-width block highlight on the <li> element */
+.policy-mobile-toc__item.active {
+  background: #f0f7f3;
+}
+.policy-mobile-toc__item.active a {
+  color: #175C40;
+  font-weight: 600;
+  /* Left accent bar — replaces the border-left trick that caused the thin broken line */
+  box-shadow: inset 3px 0 0 #175C40;
+}
 
 /* Mobile progress bar — 2px strip at the very bottom of the TOC widget */
 .policy-mobile-toc__progress-bar {
