@@ -831,11 +831,16 @@ const vercelRouter = router({
             }
           }
         `;
+        // Shopify Customer Account API expects: Authorization: Bearer <access_token>
+        const authHeader = input.accessToken.startsWith("Bearer ")
+          ? input.accessToken
+          : `Bearer ${input.accessToken}`;
+        console.log(`[customer.getOrders] token prefix: ${input.accessToken.slice(0, 12)}...`);
         const res = await fetch(CA_API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": input.accessToken,
+            "Authorization": authHeader,
           },
           body: JSON.stringify({ query: gql }),
         });
