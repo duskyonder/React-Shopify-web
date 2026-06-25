@@ -146,8 +146,8 @@ export default function BlogIndex() {
 
   const heroTitle = blogCfg?.heroTitle ?? mockBlogMeta.title;
   const heroSubtitle = blogCfg?.heroSubtitle ?? "Stories about movement, wellness, and the life you're building.";
-  const heroBgColor = blogCfg?.heroBgColor ?? "#0D3D2B";
-  const heroTextColor = blogCfg?.heroTextColor ?? "#FFFFFF";
+  const heroBgColor = blogCfg?.heroBgColor ?? "#F7F5F2";
+  const heroTextColor = blogCfg?.heroTextColor ?? "#1a1a1a";
   const showFeatured = blogCfg?.showFeatured ?? true;
   const showCategoryFilter = blogCfg?.showCategoryFilter ?? true;
   const footerCtaTitle = blogCfg?.footerCtaTitle ?? "Stay in the Loop";
