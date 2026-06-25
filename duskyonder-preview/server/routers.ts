@@ -411,6 +411,8 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const SHOP_ID = process.env.SHOPIFY_SHOP_ID ?? "90159776010";
         const CA_API_URL = `https://shopify.com/${SHOP_ID}/account/customer/api/2024-10/graphql`;
+        console.log('DEBUG: SHOPIFY_SHOP_ID env var:', process.env.SHOPIFY_SHOP_ID ?? '(not set, using default)');
+        console.log('DEBUG: The API URL is:', CA_API_URL ?? null);
         const gql = `
           query GetCustomerOrders {
             customer {
