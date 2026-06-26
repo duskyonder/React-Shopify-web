@@ -200,17 +200,20 @@ export function CartDrawer() {
   const SHOPIFY_STOREFRONT_TOKEN = import.meta.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN as string;
   const [autoRecommendedProducts, setAutoRecommendedProducts] = useState<typeof manualRecommendedProducts>([]);
   const [autoLoading, setAutoLoading] = useState(false);
-  const firstCartItemId = items[0]?.id ?? null;
+  // Use productId (product GID) from the cart item — NOT items[0].id which is the cart line ID
+  const firstCartProductId = items[0]?.productId ?? null;
 
   useEffect(() => {
-    if (recommendationMode !== 'auto' || !firstCartItemId || !isOpen) return;
+    if (recommendationMode !== 'auto' || !firstCartProductId || !isOpen) return;
     let cancelled = false;
     setAutoLoading(true);
-    // Normalize to full Shopify GID — the Storefront API requires gid://shopify/Product/{id}
-    const rawId = firstCartItemId;
-    const productGid = rawId.startsWith('gid://')
+    // Normalize to full Shopify product GID — the Storefront API requires gid://shopify/Product/{numericId}
+    const rawId = firstCartProductId;
+    const productGid = rawId.startsWith('gid://shopify/Product/')
       ? rawId
-      : `gid://shopify/Product/${rawId.replace(/[^0-9]/g, '')}`;
+      : rawId.startsWith('gid://')
+        ? rawId // some other GID format — pass as-is
+        : `gid://shopify/Product/${rawId.replace(/[^0-9]/g, '')}`;
     const gql = `
       query GetRecommendations($productId: ID!) {
         productRecommendations(productId: $productId) {
@@ -252,7 +255,7 @@ export function CartDrawer() {
       })
       .finally(() => { if (!cancelled) setAutoLoading(false); });
     return () => { cancelled = true; };
-  }, [recommendationMode, firstCartItemId, isOpen, cartIds, SHOPIFY_STORE_DOMAIN, SHOPIFY_STOREFRONT_TOKEN, manualRecommendedProducts]);
+  }, [recommendationMode, firstCartProductId, isOpen, cartIds, SHOPIFY_STORE_DOMAIN, SHOPIFY_STOREFRONT_TOKEN, manualRecommendedProducts]);
 
   // In auto mode: prefer AI results; fall back to manual if auto is still empty after load
   const recommendedProducts = recommendationMode === 'auto'

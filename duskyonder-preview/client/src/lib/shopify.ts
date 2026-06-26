@@ -308,6 +308,7 @@ const CART_FRAGMENT = `
               altText
             }
             product {
+              id
               title
               handle
             }
@@ -401,7 +402,7 @@ export interface ShopifyCartLine {
     price: { amount: string; currencyCode: string };
     compareAtPrice?: { amount: string; currencyCode: string } | null;
     image?: { url: string; altText?: string } | null;
-    product: { title: string; handle: string };
+    product: { id: string; title: string; handle: string };
     selectedOptions: { name: string; value: string }[];
   };
 }

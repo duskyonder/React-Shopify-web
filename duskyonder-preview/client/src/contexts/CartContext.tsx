@@ -12,6 +12,7 @@ import {
 export interface CartItem {
   id: string; // Shopify cart line ID
   variantId?: string; // Shopify variant GID
+  productId?: string; // Shopify product GID (gid://shopify/Product/...)
   name: string; // Product title
   variantTitle?: string; // Variant title (e.g. "Black / M")
   price: string;
@@ -76,6 +77,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return {
         id: line.id, // cart line ID
         variantId: line.merchandise.id,
+        productId: line.merchandise.product.id, // Shopify product GID
         name: line.merchandise.product.title,
         variantTitle: line.merchandise.title,
         price: `$${parseFloat(line.merchandise.price.amount).toFixed(0)}`,

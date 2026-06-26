@@ -227,7 +227,7 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
     const whiteUrl = config.logoImageUrlWhite || config.logoImageUrl;
     if (greenUrl || whiteUrl) {
       return (
-        <a href="/" className="sf-logo sf-logo-center" style={{ display: "flex", alignItems: "center", position: "relative" }}>
+        <a href="/" className="sf-logo sf-logo-center" style={{ display: "flex", alignItems: "center" }}>
           {/* 绿色 Logo：白底导航栏时显示 */}
           {greenUrl && (
             <img src={greenUrl} alt={config.logoText}
