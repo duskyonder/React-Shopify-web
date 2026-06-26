@@ -1485,6 +1485,7 @@ interface ThemeConfigContextType {
   updateSectionAlign: (uid: string, align: "left" | "center" | "right") => void;
   addSectionByKey: (key: SectionKey) => void;
   isSaving: boolean;
+  isConfigReady: boolean;
   // Collections
   addCollection: () => void;
   removeCollection: (id: string) => void;
@@ -1541,7 +1542,10 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const setConfigMutation = trpc.siteConfig.set.useMutation();
-  const { data: shopifyData } = trpc.siteConfig.getAll.useQuery();
+  const { data: shopifyData, isLoading: isConfigLoading } = trpc.siteConfig.getAll.useQuery();
+  // True once the first real config has been applied (or the query settled with no data).
+  // Used by the homepage to hide the default-config flash during the initial network round-trip.
+  const [isConfigReady, setIsConfigReady] = useState(false);
   useEffect(() => {
     const rawThemeConfig = shopifyData?.themeConfig;
     if (rawThemeConfig && typeof rawThemeConfig === 'object') {
@@ -1635,6 +1639,8 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
         return next;
       });
     }
+    // Mark config as ready once shopifyData has settled (data present or absent)
+    setIsConfigReady(true);
   }, [shopifyData]);
 
   // Load Banner data: prefer themeConfig saved slides, fallback to homepage_banner metaobjects
@@ -2396,6 +2402,7 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
       addFeaturedSection, removeFeaturedSection, updateFeaturedInstance,
       updateSectionAlign, addSectionByKey,
       isSaving,
+      isConfigReady,
       addCollection, removeCollection, updateCollection,
       addCollectionProduct, removeCollectionProduct, updateCollectionProduct,
       addCollectionColorFilter, removeCollectionColorFilter, updateCollectionColorFilter,
