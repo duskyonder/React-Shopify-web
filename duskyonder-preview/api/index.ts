@@ -815,9 +815,9 @@ const vercelRouter = router({
                     nodes {
                       title
                       quantity
-                       price { amount currencyCode }
-                       image(width: 400) { url altText }
-                       variantTitle
+                      price { amount currencyCode }
+                      image { url altText }
+                      variantTitle
                     }
                   }
                 }
