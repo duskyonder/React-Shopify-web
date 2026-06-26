@@ -478,6 +478,11 @@ export interface ThemeConfig {
   freeShippingThreshold?: number; // default 150
   freeShippingText?: string; // default "Add {{amount}} more for free shipping"
   freeShippingAchievedText?: string; // default "You've unlocked free shipping! 🎉"
+  showShippingBar?: boolean; // default true
+  showRecommendations?: boolean; // default true
+  recommendationTitle?: string; // default "PAIR IT PERFECTLY WITH"
+  recommendationMode?: 'manual' | 'auto'; // default 'manual'
+  cartManualProductIds?: string[]; // IDs of manually curated recommendation products (manual mode)
   // ---- Section Layout Controls ----
   // Products section
   productsMaxWidth?: number; // px, 800-1920, desktop max-width, default 1680
@@ -1429,6 +1434,11 @@ const defaultConfig: ThemeConfig = {
   freeShippingThreshold: 150,
   freeShippingText: "Add {{amount}} more for free shipping",
   freeShippingAchievedText: "You've unlocked free shipping! 🎉",
+  showShippingBar: true,
+  showRecommendations: true,
+  recommendationTitle: "PAIR IT PERFECTLY WITH",
+  recommendationMode: 'manual' as const,
+  cartManualProductIds: [],
   productsMaxWidth: 1680,
   productCardHeight: 0,
   productsMobileMaxWidth: 0,

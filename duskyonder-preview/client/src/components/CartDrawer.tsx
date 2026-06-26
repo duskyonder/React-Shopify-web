@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { Link } from "wouter";
 import { useCart } from "@/contexts/CartContext";
@@ -158,32 +158,94 @@ export function CartDrawer() {
   const currencySymbol = items[0]?.price?.replace(/[\d.,\s]/g, "").trim() || "$";
 
   const cartIds = useMemo(() => new Set(items.map(i => i.id)), [items]);
-  const recommendedProducts = useMemo(() => {
+  const recommendationMode = config.recommendationMode ?? 'manual';
+  const showRecommendations = config.showRecommendations ?? true;
+  const recommendationTitle = config.recommendationTitle ?? 'PAIR IT PERFECTLY WITH';
+
+  // --- Manual mode: resolve products from cartManualProductIds ---
+  const manualRecommendedProducts = useMemo(() => {
+    if (recommendationMode !== 'manual') return [];
     const allProducts = config.products || [];
+    const manualIds: string[] = (config as any).cartManualProductIds ?? [];
+    if (manualIds.length > 0) {
+      // Use manually curated list, filtering out items already in cart
+      const productMap = new Map(allProducts.map(p => [p.id, p]));
+      return manualIds
+        .filter(id => !cartIds.has(id))
+        .map(id => productMap.get(id))
+        .filter(Boolean) as typeof allProducts;
+    }
+    // Fallback to relatedProductIds when no manual list is set
     const productMap = new Map(allProducts.map(p => [p.id, p]));
-    // Step 1: collect relatedProductIds from all cart items (preserving order, deduped)
     const relatedIds: string[] = [];
     const seen = new Set<string>();
     for (const item of items) {
       const cartProduct = allProducts.find(p => p.id === item.id);
       if (cartProduct?.relatedProductIds) {
         for (const rid of cartProduct.relatedProductIds) {
-          if (!seen.has(rid) && !cartIds.has(rid)) {
-            seen.add(rid);
-            relatedIds.push(rid);
-          }
+          if (!seen.has(rid) && !cartIds.has(rid)) { seen.add(rid); relatedIds.push(rid); }
         }
       }
     }
-    // Step 2: resolve related products that exist in allProducts
     const related = relatedIds.map(id => productMap.get(id)).filter(Boolean) as typeof allProducts;
-    // Step 3: if fewer than 4, fill up with non-cart products not already included
     if (related.length < 4) {
       const fallback = allProducts.filter(p => !cartIds.has(p.id) && !seen.has(p.id));
       return [...related, ...fallback].slice(0, 6);
     }
     return related.slice(0, 6);
-  }, [config.products, cartIds, items]);
+  }, [config.products, (config as any).cartManualProductIds, cartIds, items, recommendationMode]);
+
+  // --- Auto mode: fetch Shopify productRecommendations for first cart item ---
+  const SHOPIFY_STORE_DOMAIN = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN as string;
+  const SHOPIFY_STOREFRONT_TOKEN = import.meta.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN as string;
+  const [autoRecommendedProducts, setAutoRecommendedProducts] = useState<typeof manualRecommendedProducts>([]);
+  const [autoLoading, setAutoLoading] = useState(false);
+  const firstCartItemId = items[0]?.id ?? null;
+
+  useEffect(() => {
+    if (recommendationMode !== 'auto' || !firstCartItemId || !isOpen) return;
+    let cancelled = false;
+    setAutoLoading(true);
+    const gql = `
+      query GetRecommendations($productId: ID!) {
+        productRecommendations(productId: $productId) {
+          id handle title
+          priceRange { minVariantPrice { amount currencyCode } }
+          images(first: 1) { nodes { url altText } }
+        }
+      }
+    `;
+    fetch(`https://${SHOPIFY_STORE_DOMAIN}/api/2024-10/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_TOKEN,
+      },
+      body: JSON.stringify({ query: gql, variables: { productId: firstCartItemId } }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (cancelled) return;
+        const nodes = json.data?.productRecommendations ?? [];
+        const mapped = nodes
+          .filter((p: any) => !cartIds.has(p.id))
+          .slice(0, 6)
+          .map((p: any) => ({
+            id: p.id,
+            name: p.title,
+            price: `$${parseFloat(p.priceRange.minVariantPrice.amount).toFixed(2)}`,
+            imageUrl: p.images.nodes[0]?.url ?? '',
+            colors: [],
+            detailUrl: `/products/${p.handle}`,
+          }));
+        setAutoRecommendedProducts(mapped);
+      })
+      .catch(() => { if (!cancelled) setAutoRecommendedProducts([]); })
+      .finally(() => { if (!cancelled) setAutoLoading(false); });
+    return () => { cancelled = true; };
+  }, [recommendationMode, firstCartItemId, isOpen, cartIds, SHOPIFY_STORE_DOMAIN, SHOPIFY_STOREFRONT_TOKEN]);
+
+  const recommendedProducts = recommendationMode === 'auto' ? autoRecommendedProducts : manualRecommendedProducts;
 
   const handleCheckout = () => {
     setCheckoutLoading(true);
@@ -265,7 +327,7 @@ export function CartDrawer() {
         </div>
 
         {/* ---- Free Shipping Progress ---- */}
-        {items.length > 0 && (
+        {items.length > 0 && (config.showShippingBar ?? true) && (
           <FreeShippingBar
             subtotal={subtotal} threshold={threshold}
             text={freeShippingText} achievedText={freeShippingAchievedText}
@@ -396,17 +458,24 @@ export function CartDrawer() {
               })}
 
               {/* ---- Recommended (PAIR IT PERFECTLY WITH) ---- */}
-              {recommendedProducts.length > 0 && (
+              {showRecommendations && (recommendedProducts.length > 0 || autoLoading) && (
                 <div style={{ padding: "16px 0 8px", background: RECOMMEND_BG, borderRadius: 8, marginTop: 4 }}>
                   <p style={{
                     fontSize: 10, fontWeight: 700, color: TEXT_SECONDARY,
                     letterSpacing: "0.18em", textTransform: "uppercase" as const,
                     marginBottom: 12, paddingLeft: 16,
                   }}>
-                    Pair It Perfectly With
+                    {recommendationTitle}
                   </p>
-                  {/* Scroll container with desktop arrows */}
-                  <div style={{ position: "relative" }}>
+                  {autoLoading && (
+                    <div style={{ display: 'flex', gap: 10, paddingLeft: 16, paddingRight: 16, paddingBottom: 4 }}>
+                      {[1,2,3].map(i => (
+                        <div key={i} style={{ width: 130, flexShrink: 0, height: 170, background: '#e8e2d9', borderRadius: 6, opacity: 0.5 }} />
+                      ))}
+                    </div>
+                  )}
+                  {/* Scroll container with desktop arrows — hidden while auto-loading */}
+                  {!autoLoading && <div style={{ position: "relative" }}>
                     {/* Left arrow (desktop only) */}
                     <button
                       onClick={scrollLeft}
@@ -460,7 +529,7 @@ export function CartDrawer() {
                     >
                       <ChevronIcon dir="right" />
                     </button>
-                  </div>
+                  </div>}
                 </div>
               )}
             </div>

@@ -11,7 +11,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   LayoutDashboard, Image, Megaphone, Grid3X3, ShoppingBag, Video,
-  Layers, Shirt, PanelBottom, Navigation, LogOut, PanelLeft, Loader2, Mail,
+  Layers, Shirt, PanelBottom, Navigation, LogOut, PanelLeft, Loader2, Mail, ShoppingCart,
 } from "lucide-react";
 
 const menuItems = [
@@ -26,6 +26,7 @@ const menuItems = [
   { icon: PanelBottom, label: "页脚", path: "/admin/footer" },
   { icon: Navigation, label: "导航栏", path: "/admin/navigation" },
   { icon: Mail, label: "订阅弹框", path: "/admin/newsletter" },
+  { icon: ShoppingCart, label: "购物车设置", path: "/admin/cart" },
 ];
 
 interface AdminLayoutProps {

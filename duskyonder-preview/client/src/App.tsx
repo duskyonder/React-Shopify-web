@@ -63,6 +63,7 @@ const AdminFabricPage = lazy(() => import("./admin/pages/FabricPage"));
 const AdminFooterPage = lazy(() => import("./admin/pages/FooterPage"));
 const AdminNavigationPage = lazy(() => import("./admin/pages/NavigationPage"));
 const AdminNewsletterPage = lazy(() => import("./admin/pages/NewsletterPage"));
+const AdminCartPage = lazy(() => import("./admin/pages/CartPage"));
 
 // 页面加载中的骨架屏（轻量占位）
 function PageSkeleton() {
@@ -127,6 +128,7 @@ function Router() {
         <Route path="/admin/footer" component={() => <AdminLayout><AdminFooterPage /></AdminLayout>} />
         <Route path="/admin/navigation" component={() => <AdminLayout><AdminNavigationPage /></AdminLayout>} />
         <Route path="/admin/newsletter" component={() => <AdminLayout><AdminNewsletterPage /></AdminLayout>} />
+        <Route path="/admin/cart" component={() => <AdminLayout><AdminCartPage /></AdminLayout>} />
         {/* Generic Shopify page catch-all — fetches live content by handle */}
         <Route path={"/pages/:handle"} component={() => <PolicyPage />} />
         {/* 301 Redirects — generated from REDIRECT_MAP */}
