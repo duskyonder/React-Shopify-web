@@ -241,42 +241,64 @@ function OverviewTab({
 function BuyAgainButton({ item }: { item: LineItem }) {
   const cartCtx = useCart();
   const [added, setAdded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const resolveVariant = trpc.customer.resolveVariantByTitle.useQuery(
+    { productTitle: item.title, variantTitle: item.variantTitle ?? undefined },
+    { enabled: false } // only fetch on demand
+  );
 
-  const handleBuyAgain = () => {
-    if (!cartCtx) return;
-    cartCtx.addItem({
-      name: item.title,
-      variantTitle: item.variantTitle ?? undefined,
-      price: formatCurrency(item.price.amount, item.price.currencyCode),
-      imageUrl: item.image?.url ?? undefined,
-    });
-    cartCtx.openCart();
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+  const handleBuyAgain = async () => {
+    if (!cartCtx || loading || added) return;
+    setLoading(true);
+    try {
+      const result = await resolveVariant.refetch();
+      const variant = result.data;
+      if (variant?.variantId) {
+        cartCtx.addItem({
+          name: variant.productTitle,
+          variantId: variant.variantId,
+          variantTitle: variant.variantTitle !== "Default Title" ? variant.variantTitle : undefined,
+          price: formatCurrency(variant.price.amount, variant.price.currencyCode),
+          imageUrl: variant.imageUrl ?? item.image?.url ?? undefined,
+        });
+        cartCtx.openCart();
+        setAdded(true);
+        setTimeout(() => setAdded(false), 2500);
+      } else {
+        // Fallback: open cart anyway so user can search manually
+        cartCtx.openCart();
+      }
+    } catch {
+      cartCtx.openCart();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <button
       onClick={handleBuyAgain}
+      disabled={loading || added}
       style={{
         background: "transparent",
         border: "1px solid #d0ccc7",
-        color: added ? "#175C40" : "#555",
-        borderColor: added ? "#175C40" : "#d0ccc7",
+        color: added ? "#175C40" : loading ? "#aaa" : "#555",
+        borderColor: added ? "#175C40" : loading ? "#e4e4e7" : "#d0ccc7",
         padding: "5px 14px",
         borderRadius: 2,
         fontSize: "0.72rem",
         fontWeight: 600,
         letterSpacing: "0.07em",
         textTransform: "uppercase" as const,
-        cursor: "pointer",
+        cursor: loading || added ? "default" : "pointer",
         transition: "all 0.3s ease-in-out",
         whiteSpace: "nowrap" as const,
+        opacity: loading ? 0.7 : 1,
       }}
-      onMouseEnter={e => { if (!added) { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#1a1a1a"; } }}
-      onMouseLeave={e => { if (!added) { e.currentTarget.style.borderColor = "#d0ccc7"; e.currentTarget.style.color = "#555"; } }}
+      onMouseEnter={e => { if (!added && !loading) { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#1a1a1a"; } }}
+      onMouseLeave={e => { if (!added && !loading) { e.currentTarget.style.borderColor = "#d0ccc7"; e.currentTarget.style.color = "#555"; } }}
     >
-      {added ? "Added ✓" : "Buy Again"}
+      {added ? "Added ✓" : loading ? "Adding..." : "Buy Again"}
     </button>
   );
 }
@@ -352,9 +374,9 @@ function OrdersTab({ orders }: { orders: ShopifyOrder[] }) {
                     }}>
                       {item.image?.url ? (
                         <img src={item.image.url} alt={item.image.altText ?? item.title}
-                          style={{ width: 56, height: 70, objectFit: "cover", borderRadius: 2, flexShrink: 0 }} />
+                          style={{ width: "clamp(96px, 10vw, 112px)", height: "clamp(128px, 13vw, 148px)", objectFit: "cover", borderRadius: 2, flexShrink: 0, background: "#f9f9f8" }} />
                       ) : (
-                        <div style={{ width: 56, height: 70, background: "#f4f4f5", borderRadius: 2, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem" }}>
+                        <div style={{ width: "clamp(96px, 10vw, 112px)", height: "clamp(128px, 13vw, 148px)", background: "#f4f4f5", borderRadius: 2, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }}>
                           📦
                         </div>
                       )}
@@ -693,7 +715,7 @@ function AccountDashboard() {
 
       {/* Page header */}
       <div style={{
-        background: "#fff", borderBottom: "1px solid #eee",
+        background: "#fff",
         padding: "32px 24px 0",
         marginTop: "calc(var(--promo-height, 40px) + 64px)",
       }}>
@@ -738,7 +760,7 @@ function AccountDashboard() {
           </div>
 
           {/* Tabs */}
-          <div style={{ display: "flex", gap: 0, overflowX: "auto" }}>
+          <div style={{ display: "flex", gap: 0, overflowX: "auto", borderBottom: "1px solid #eee" }}>
             {TABS.map((tab) => (
               <button
                 key={tab.id}

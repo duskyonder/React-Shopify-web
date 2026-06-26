@@ -473,6 +473,58 @@ export const appRouter = router({
         return json.data?.customer ?? null;
       }),
 
+    // Resolve a Storefront variant GID by product title — used by "Buy Again"
+    resolveVariantByTitle: publicProcedure
+      .input(z.object({ productTitle: z.string(), variantTitle: z.string().optional() }))
+      .query(async ({ input }) => {
+        const domain = process.env.SHOPIFY_STORE_DOMAIN ?? process.env.VITE_SHOPIFY_STORE_DOMAIN ?? "";
+        const token = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN ?? process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN ?? "";
+        if (!domain || !token) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Storefront API not configured" });
+        }
+        const url = `https://${domain}/api/2024-10/graphql.json`;
+        const gql = `
+          query ResolveVariant($title: String!) {
+            products(first: 3, query: $title) {
+              nodes {
+                title
+                variants(first: 10) {
+                  nodes {
+                    id
+                    title
+                    availableForSale
+                    image { url }
+                    price { amount currencyCode }
+                  }
+                }
+              }
+            }
+          }
+        `;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Storefront-Access-Token": token,
+          },
+          body: JSON.stringify({ query: gql, variables: { title: input.productTitle } }),
+        });
+        const json = (await res.json()) as { data?: { products?: { nodes?: { title: string; variants: { nodes: { id: string; title: string; availableForSale: boolean; image: { url: string } | null; price: { amount: string; currencyCode: string } }[] } }[] } }; errors?: { message: string }[] };
+        if (!res.ok || json.errors?.length) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: json.errors?.[0]?.message ?? "Storefront query failed" });
+        }
+        const products = json.data?.products?.nodes ?? [];
+        // Find the best-matching product (case-insensitive title match)
+        const product = products.find(p => p.title.toLowerCase() === input.productTitle.toLowerCase()) ?? products[0];
+        if (!product) return null;
+        const variants = product.variants.nodes;
+        // Try to match the specific variantTitle, otherwise return first available
+        const match = input.variantTitle
+          ? (variants.find(v => v.title === input.variantTitle && v.availableForSale) ?? variants.find(v => v.availableForSale) ?? variants[0])
+          : (variants.find(v => v.availableForSale) ?? variants[0]);
+        return match ? { variantId: match.id, variantTitle: match.title, price: match.price, imageUrl: match.image?.url ?? null, productTitle: product.title } : null;
+      }),
+
     exchangeToken: publicProcedure
       .input(z.object({
         code: z.string(),
