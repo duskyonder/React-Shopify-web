@@ -93,7 +93,7 @@ function FreeShippingBar({ subtotal, threshold, text, achievedText }: {
 
 // ---- Recommended product card ----
 function RecommendedCard({ product, onAdd }: {
-  product: { id: string; name: string; price: string; imageUrl?: string };
+  product: { id: string; name: string; price: string; imageUrl?: string; variants?: Array<{ id: string }>; variantId?: string };
   onAdd: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
@@ -576,14 +576,25 @@ export function CartDrawer() {
                           key={prod.id}
                           product={prod}
                           onAdd={() => {
-                            const variantId = (prod as any).variants?.[0]?.id || prod.id;
+                            // DEBUG: Let's see the full object
+                            console.log("Full product object for adding:", JSON.stringify(prod, null, 2));
+
+                            // Determine Variant ID safely
+                            const variantId = (prod.variants && prod.variants.length > 0)
+                              ? prod.variants[0].id
+                              : ((prod as any).variantId || prod.id);
+
                             if (!variantId) {
-                              console.error('Critical: Could not resolve variant ID for product:', prod);
+                              console.error("FAILED to resolve variant ID. Product object:", prod);
                               return;
                             }
+
                             addItem({
-                              id: variantId, name: prod.name, price: prod.price,
-                              imageUrl: prod.imageUrl, productUrl: prod.detailUrl,
+                              id: variantId,
+                              name: prod.name,
+                              price: prod.price,
+                              imageUrl: prod.imageUrl,
+                              productUrl: prod.detailUrl,
                             });
                           }}
                         />
