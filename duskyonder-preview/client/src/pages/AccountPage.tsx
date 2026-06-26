@@ -374,9 +374,9 @@ function OrdersTab({ orders }: { orders: ShopifyOrder[] }) {
                     }}>
                       {item.image?.url ? (
                         <img src={item.image.url} alt={item.image.altText ?? item.title}
-                          style={{ width: "clamp(96px, 10vw, 112px)", height: "clamp(128px, 13vw, 148px)", objectFit: "cover", borderRadius: 2, flexShrink: 0, background: "#f9f9f8" }} />
+                          style={{ width: "clamp(96px, 12vw, 144px)", height: "clamp(128px, 16vw, 192px)", objectFit: "cover", borderRadius: 2, flexShrink: 0, background: "#f9f9f8" }} />
                       ) : (
-                        <div style={{ width: "clamp(96px, 10vw, 112px)", height: "clamp(128px, 13vw, 148px)", background: "#f4f4f5", borderRadius: 2, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }}>
+                        <div style={{ width: "clamp(96px, 12vw, 144px)", height: "clamp(128px, 16vw, 192px)", background: "#f4f4f5", borderRadius: 2, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }}>
                           📦
                         </div>
                       )}
@@ -427,7 +427,7 @@ function ProfileTab({ customer }: { customer: CustomerData }) {
             { label: "Last Name", value: lastName },
           ].map((field) => (
             <div key={field.label}>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#888", marginBottom: 6 }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: "#666", marginBottom: 6 }}>
                 {field.label}
               </label>
               <input
@@ -439,7 +439,7 @@ function ProfileTab({ customer }: { customer: CustomerData }) {
           ))}
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#888", marginBottom: 6 }}>
+          <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: "#666", marginBottom: 6 }}>
             Email
           </label>
           <input
@@ -499,7 +499,7 @@ function PreferencesTab() {
 
         {/* Topics */}
         <div style={{ opacity: marketing ? 1 : 0.4, transition: "opacity 0.2s", pointerEvents: marketing ? "auto" : "none" }}>
-          <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#888", marginBottom: 14 }}>
+          <div style={{ fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "#666", marginBottom: 14 }}>
             Email Topics
           </div>
           {(Object.keys(prefs) as Array<keyof typeof prefs>).map((key) => {
@@ -760,7 +760,7 @@ function AccountDashboard() {
           </div>
 
           {/* Tabs */}
-          <div style={{ display: "flex", gap: 0, overflowX: "auto", borderBottom: "1px solid #eee" }}>
+          <div style={{ display: "flex", gap: 0, overflowX: "auto", paddingBottom: 0 }}>
             {TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -782,7 +782,7 @@ function AccountDashboard() {
       </div>
 
       {/* Tab content */}
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 24px 80px" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 24px 80px", minHeight: "65vh" }}>
         {renderTab()}
       </div>
 

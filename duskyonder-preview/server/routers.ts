@@ -432,7 +432,7 @@ export const appRouter = router({
                       title
                       quantity
                       price { amount currencyCode }
-                      image { url altText }
+                      image(width: 400) { url altText }
                       variantTitle
                     }
                   }
