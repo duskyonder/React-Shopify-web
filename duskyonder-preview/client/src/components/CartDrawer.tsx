@@ -576,21 +576,21 @@ export function CartDrawer() {
                           key={prod.id}
                           product={prod}
                           onAdd={() => {
-                            // DEBUG: Let's see the full object
-                            console.log("Full product object for adding:", JSON.stringify(prod, null, 2));
-
-                            // Determine Variant ID safely
-                            const variantId = (prod.variants && prod.variants.length > 0)
+                            // Extract variant GID using verified path from diagnostic
+                            const resolvedVariantId = (prod.variants && prod.variants[0]?.id)
                               ? prod.variants[0].id
-                              : ((prod as any).variantId || prod.id);
+                              : prod.id;
 
-                            if (!variantId) {
-                              console.error("FAILED to resolve variant ID. Product object:", prod);
+                            console.log("Resolved Variant ID:", resolvedVariantId);
+
+                            if (!resolvedVariantId) {
+                              console.error("Critical: Could not resolve variant ID.");
                               return;
                             }
 
+                            // addItem reads newItem.variantId — must pass as variantId field
                             addItem({
-                              id: variantId,
+                              variantId: resolvedVariantId,
                               name: prod.name,
                               price: prod.price,
                               imageUrl: prod.imageUrl,
