@@ -576,6 +576,8 @@ export function CartDrawer() {
                           onAdd={() => {
                             // Use first variant ID if available, otherwise fallback to prod.id
                             const variantId = (prod as any).variants?.[0]?.id || (prod as any).variantId || prod.id;
+                            console.log('Attempting to add:', variantId);
+                            console.log('prod object:', JSON.stringify(prod, null, 2));
                             addItem({
                               id: variantId, name: prod.name, price: prod.price,
                               imageUrl: prod.imageUrl, productUrl: prod.detailUrl,
