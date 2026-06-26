@@ -433,13 +433,7 @@ export const appRouter = router({
                       quantity
                       price { amount currencyCode }
                       image { url altText }
-                      merchandise {
-                        ... on ProductVariant {
-                          id
-                          title
-                          product { handle }
-                        }
-                      }
+                      variantTitle
                     }
                   }
                 }
