@@ -98,8 +98,8 @@ function RecommendedCard({ product, onAdd }: {
 }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <div style={{ flexShrink: 0, width: 150, display: "flex", flexDirection: "column", gap: 8, background: CARD_BG, borderRadius: 6, padding: 10, border: `1px solid ${CARD_BORDER}` }}>
-      <div style={{ width: "100%", height: 160, borderRadius: 4, overflow: "hidden", background: "#f0ece5" }}>
+    <div style={{ flexShrink: 0, width: 150, display: "flex", flexDirection: "column", background: CARD_BG, borderRadius: 6, padding: 10, border: `1px solid ${CARD_BORDER}` }}>
+      <div style={{ width: "100%", height: 160, borderRadius: 4, overflow: "hidden", background: "#f0ece5", marginBottom: 8 }}>
         {product.imageUrl ? (
           <img src={product.imageUrl} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
@@ -112,8 +112,10 @@ function RecommendedCard({ product, onAdd }: {
         fontSize: 11.5, color: TEXT_PRIMARY, lineHeight: 1.35, letterSpacing: "0.01em",
         fontFamily: "'Tenor Sans', sans-serif",
         display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden", margin: 0,
+        flexGrow: 1,
       }}>{product.name}</p>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+      {/* Price + button pushed to bottom via marginTop: auto */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginTop: "auto", paddingTop: 8 }}>
         <span style={{ fontSize: 12, color: TEXT_PRIMARY, fontWeight: 600 }}>{product.price}</span>
         <button
           onClick={onAdd}
@@ -574,10 +576,11 @@ export function CartDrawer() {
                           key={prod.id}
                           product={prod}
                           onAdd={() => {
-                            // Use first variant ID if available, otherwise fallback to prod.id
-                            const variantId = (prod as any).variants?.[0]?.id || (prod as any).variantId || prod.id;
-                            console.log('Attempting to add:', variantId);
-                            console.log('prod object:', JSON.stringify(prod, null, 2));
+                            const variantId = (prod as any).variants?.[0]?.id || prod.id;
+                            if (!variantId) {
+                              console.error('Critical: Could not resolve variant ID for product:', prod);
+                              return;
+                            }
                             addItem({
                               id: variantId, name: prod.name, price: prod.price,
                               imageUrl: prod.imageUrl, productUrl: prod.detailUrl,
