@@ -760,7 +760,12 @@ function AccountDashboard() {
           </div>
 
           {/* Tabs */}
-          <div style={{ display: "flex", gap: 0, overflowX: "auto", paddingBottom: 0 }}>
+          {/* scrollbar-hiding: msOverflowStyle + scrollbarWidth hide it on IE/Edge/Firefox;
+              the [&::-webkit-scrollbar]:hidden Tailwind arbitrary variant hides it on Chrome/Safari */}
+          <div
+            style={{ display: "flex", gap: 0, overflowX: "auto", paddingBottom: 0, msOverflowStyle: "none", scrollbarWidth: "none" }}
+            className="[&::-webkit-scrollbar]:hidden"
+          >
             {TABS.map((tab) => (
               <button
                 key={tab.id}
