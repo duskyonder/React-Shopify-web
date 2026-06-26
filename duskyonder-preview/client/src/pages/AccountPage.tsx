@@ -11,6 +11,7 @@ import { trpc } from "@/lib/trpc";
 // ── Token helpers ──────────────────────────────────────────────────────────────
 const TOKEN_KEY = "shopify_customer_token";
 const TOKEN_EXPIRY_KEY = "shopify_customer_token_expiry";
+const ID_TOKEN_KEY = "shopify_customer_id_token";
 
 function getStoredToken(): string | null {
   try {
@@ -549,6 +550,7 @@ function AccountDashboard() {
           try {
             localStorage.setItem(TOKEN_KEY, data.accessToken);
             localStorage.setItem(TOKEN_EXPIRY_KEY, String(Date.now() + data.expiresIn * 1000));
+            if (data.idToken) localStorage.setItem(ID_TOKEN_KEY, data.idToken);
           } catch { /* ignore */ }
           sessionStorage.removeItem("shopify_code_verifier");
           sessionStorage.removeItem("shopify_auth_state");
@@ -678,8 +680,10 @@ function AccountDashboard() {
             </div>
             <button
               onClick={() => {
+                const idToken = localStorage.getItem(ID_TOKEN_KEY) ?? "";
                 clearStoredToken();
-                const logoutUrl = getCustomerLogoutUrl(window.location.origin);
+                localStorage.removeItem(ID_TOKEN_KEY);
+                const logoutUrl = getCustomerLogoutUrl(window.location.origin, idToken);
                 window.location.href = logoutUrl;
               }}
               style={{

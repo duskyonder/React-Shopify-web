@@ -631,9 +631,17 @@ export function getCustomerRegisterUrl(redirectUri: string): string {
 
 /**
  * 生成 Shopify Customer Account 登出 URL
+ * Shopify Customer Account API requires id_token_hint to be present.
+ * Without it, Shopify shows "Invalid id_token" error.
  */
-export function getCustomerLogoutUrl(redirectUri: string): string {
-  return `${SHOPIFY_AUTH_LOGOUT_URL}?return_to=${encodeURIComponent(redirectUri)}`;
+export function getCustomerLogoutUrl(redirectUri: string, idToken?: string): string {
+  const params = new URLSearchParams({
+    post_logout_redirect_uri: redirectUri,
+  });
+  if (idToken) {
+    params.set("id_token_hint", idToken);
+  }
+  return `${SHOPIFY_AUTH_LOGOUT_URL}?${params.toString()}`;
 }
 
 // Utility: generate random state for OAuth

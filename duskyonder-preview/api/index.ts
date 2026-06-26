@@ -884,6 +884,7 @@ const vercelRouter = router({
         });
         const json = (await res.json()) as {
           access_token?: string;
+          id_token?: string;
           expires_in?: number;
           token_type?: string;
           error?: string;
@@ -898,6 +899,7 @@ const vercelRouter = router({
         }
         return {
           accessToken: json.access_token!,
+          idToken: json.id_token ?? "",
           expiresIn: json.expires_in ?? 3600,
           tokenType: json.token_type ?? "Bearer",
         };
