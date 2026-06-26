@@ -33,6 +33,13 @@ async function shopifyAdminGraphQL(query: string, variables?: Record<string, unk
     }
   );
   if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error(
+        `Shopify Admin API 401 Unauthorized. The SHOPIFY_ADMIN_TOKEN is set but is invalid, expired, or missing required scopes. ` +
+        `For file upload/listing, ensure the Shopify app has 'read_files' and 'write_files' scopes enabled in the Partner Dashboard, ` +
+        `then reinstall the app to generate a new token with the updated scopes.`
+      );
+    }
     throw new Error(`Shopify Admin API error: ${res.status} ${res.statusText}`);
   }
   const json = (await res.json()) as { data?: unknown; errors?: unknown[] };

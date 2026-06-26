@@ -206,6 +206,11 @@ export function CartDrawer() {
     if (recommendationMode !== 'auto' || !firstCartItemId || !isOpen) return;
     let cancelled = false;
     setAutoLoading(true);
+    // Normalize to full Shopify GID — the Storefront API requires gid://shopify/Product/{id}
+    const rawId = firstCartItemId;
+    const productGid = rawId.startsWith('gid://')
+      ? rawId
+      : `gid://shopify/Product/${rawId.replace(/[^0-9]/g, '')}`;
     const gql = `
       query GetRecommendations($productId: ID!) {
         productRecommendations(productId: $productId) {
@@ -221,7 +226,7 @@ export function CartDrawer() {
         'Content-Type': 'application/json',
         'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_TOKEN,
       },
-      body: JSON.stringify({ query: gql, variables: { productId: firstCartItemId } }),
+      body: JSON.stringify({ query: gql, variables: { productId: productGid } }),
     })
       .then(r => r.json())
       .then(json => {
@@ -238,14 +243,21 @@ export function CartDrawer() {
             colors: [],
             detailUrl: `/products/${p.handle}`,
           }));
-        setAutoRecommendedProducts(mapped);
+        // Fallback: if Shopify AI returns empty (cold-start / dev store), use manual curated list
+        setAutoRecommendedProducts(mapped.length > 0 ? mapped : manualRecommendedProducts);
       })
-      .catch(() => { if (!cancelled) setAutoRecommendedProducts([]); })
+      .catch(() => {
+        // On any API error, fall back to manual curated products so the section is never blank
+        if (!cancelled) setAutoRecommendedProducts(manualRecommendedProducts);
+      })
       .finally(() => { if (!cancelled) setAutoLoading(false); });
     return () => { cancelled = true; };
-  }, [recommendationMode, firstCartItemId, isOpen, cartIds, SHOPIFY_STORE_DOMAIN, SHOPIFY_STOREFRONT_TOKEN]);
+  }, [recommendationMode, firstCartItemId, isOpen, cartIds, SHOPIFY_STORE_DOMAIN, SHOPIFY_STOREFRONT_TOKEN, manualRecommendedProducts]);
 
-  const recommendedProducts = recommendationMode === 'auto' ? autoRecommendedProducts : manualRecommendedProducts;
+  // In auto mode: prefer AI results; fall back to manual if auto is still empty after load
+  const recommendedProducts = recommendationMode === 'auto'
+    ? (autoRecommendedProducts.length > 0 ? autoRecommendedProducts : (!autoLoading ? manualRecommendedProducts : []))
+    : manualRecommendedProducts;
 
   const handleCheckout = () => {
     setCheckoutLoading(true);
