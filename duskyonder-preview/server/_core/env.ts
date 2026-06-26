@@ -7,7 +7,12 @@ export const ENV = {
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
-  shopifyAdminToken: process.env.SHOPIFY_ADMIN_TOKEN ?? "",
+  // Use a getter so the token is read from process.env at call time, not at module
+  // initialization. This prevents Vercel serverless cold-start races where the env
+  // var may not be injected yet when the module is first evaluated.
+  get shopifyAdminToken(): string {
+    return process.env.SHOPIFY_ADMIN_TOKEN ?? "";
+  },
   // Shopify Storefront API (public) — used for collection/product/page queries.
   // The server process has access to ALL env vars at runtime (VITE_ prefix is only
   // stripped from the client bundle by Vite, not from the server process.env).
