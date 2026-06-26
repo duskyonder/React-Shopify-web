@@ -15,87 +15,27 @@ const SHOPIFY_API_VERSION = "2024-10";
 const METAOBJECT_TYPE = "duskyonder_site_config";
 
 /**
- * In-memory token cache for the current serverless instance.
- * Shopify issues tokens with expires_in ~86399s (24 h). We refresh
- * 5 minutes early to avoid using a token that is about to expire.
- */
-let _cachedToken: string | null = null;
-let _tokenExpiresAt = 0; // Unix ms
-const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
-
-/**
  * Returns Shopify Admin API request headers.
- *
- * Strategy (in priority order):
- * 1. Use the in-memory cached token if it is still valid.
- * 2. Exchange SHOPIFY_CLIENT_ID + SHOPIFY_CLIENT_SECRET for a fresh token
- *    via the Shopify OAuth client_credentials grant.
- * 3. Fall back to a static token from env vars (SHOPIFY_ADMIN_API_ACCESS_TOKEN
- *    or SHOPIFY_ADMIN_TOKEN) if client credentials are not configured.
- *
- * The token is read from process.env at call time — never at module init —
- * to prevent Vercel cold-start races from freezing a stale/empty value.
+ * Reads SHOPIFY_ADMIN_TOKEN directly from process.env at call time (never
+ * cached at module init) to work correctly with Vercel's serverless model.
+ * Custom Apps use a permanent shpat_ token — no OAuth exchange needed.
  */
-export async function getShopifyAdminHeaders(): Promise<Record<string, string>> {
-  // 1. Return cached token if still valid
-  if (_cachedToken && Date.now() < _tokenExpiresAt - TOKEN_REFRESH_BUFFER_MS) {
-    return {
-      "Content-Type": "application/json",
-      "X-Shopify-Access-Token": _cachedToken,
-    };
-  }
-
-  // 2. Try client credentials exchange
-  const clientId = process.env.SHOPIFY_CLIENT_ID;
-  const clientSecret = process.env.SHOPIFY_CLIENT_SECRET;
-
-  if (clientId && clientSecret) {
-    const res = await fetch(
-      `https://${SHOPIFY_DOMAIN}/admin/oauth/access_token`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          grant_type: "client_credentials",
-          client_id: clientId,
-          client_secret: clientSecret,
-        }),
-      }
+export function getShopifyAdminHeaders(): Record<string, string> {
+  const token = process.env.SHOPIFY_ADMIN_TOKEN;
+  if (!token) {
+    throw new Error(
+      "Vercel Runtime Error: SHOPIFY_ADMIN_TOKEN is missing from process.env. " +
+      "Set the permanent shpat_ token in Vercel Project Settings → Environment Variables."
     );
-    const data = (await res.json()) as { access_token?: string; expires_in?: number; error?: string };
-    if (data.access_token) {
-      _cachedToken = data.access_token;
-      // expires_in is in seconds; default to 23 h if not provided
-      const expiresInMs = (data.expires_in ?? 82800) * 1000;
-      _tokenExpiresAt = Date.now() + expiresInMs;
-      return {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": _cachedToken,
-      };
-    }
-    // Log but don't throw — fall through to static token fallback
-    console.error("[shopifyConfig] Client credentials exchange failed:", data);
   }
-
-  // 3. Static token fallback (SHOPIFY_ADMIN_API_ACCESS_TOKEN or SHOPIFY_ADMIN_TOKEN)
-  const staticToken =
-    (process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN || process.env.SHOPIFY_ADMIN_TOKEN)?.trim();
-  if (staticToken) {
-    return {
-      "Content-Type": "application/json",
-      "X-Shopify-Access-Token": staticToken,
-    };
-  }
-
-  throw new Error(
-    "Vercel Runtime Error: No Shopify Admin token available. " +
-    "Set SHOPIFY_CLIENT_ID + SHOPIFY_CLIENT_SECRET for automatic token refresh, " +
-    "or set SHOPIFY_ADMIN_API_ACCESS_TOKEN as a static fallback."
-  );
+  return {
+    "Content-Type": "application/json",
+    "X-Shopify-Access-Token": token.trim(),
+  };
 }
 
 async function shopifyAdminGraphQL(query: string, variables?: Record<string, unknown>) {
-  const headers = await getShopifyAdminHeaders();
+  const headers = getShopifyAdminHeaders();
   const res = await fetch(
     `https://${SHOPIFY_DOMAIN}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
     {
