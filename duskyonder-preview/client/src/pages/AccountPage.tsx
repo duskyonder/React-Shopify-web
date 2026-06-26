@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
 import { getCustomerLoginUrlAsync, getCustomerLogoutUrl } from "@/lib/shopify";
 import { trpc } from "@/lib/trpc";
+import { useCart } from "@/contexts/CartContext";
 
 // ==================== ACCOUNT PAGE ====================
 // Shopify Customer Account API integration
@@ -44,7 +45,8 @@ interface LineItem {
   quantity: number;
   price: { amount: string; currencyCode: string };
   image: { url: string; altText: string | null } | null;
-  merchandise: {
+  variantTitle?: string | null;
+  merchandise?: {
     id: string;
     title: string;
     product: { handle: string };
@@ -79,10 +81,11 @@ function getInitials(displayName: string): string {
 function formatOrderStatus(order: ShopifyOrder): { label: string; bg: string; color: string } {
   const raw = (order.fulfillmentStatus ?? order.financialStatus ?? "").toLowerCase();
   if (raw === "fulfilled" || raw === "paid") return { label: "Fulfilled", bg: "#E8F3F0", color: "#175C40" };
-  if (raw === "partially_fulfilled") return { label: "Partial", bg: "#FFF3CD", color: "#856404" };
+  if (raw === "partially_fulfilled") return { label: "Partial", bg: "#f0f0f0", color: "#52525b" };
   if (raw === "cancelled" || raw === "canceled") return { label: "Cancelled", bg: "#F8D7DA", color: "#721C24" };
   if (raw === "refunded") return { label: "Refunded", bg: "#f0f0f0", color: "#555" };
-  return { label: "Processing", bg: "#FFF3CD", color: "#856404" };
+  // Processing — muted neutral, no bright yellow
+  return { label: "Processing", bg: "#f4f4f5", color: "#3f3f46" };
 }
 
 function formatDate(iso: string): string {
@@ -235,16 +238,59 @@ function OverviewTab({
 }
 
 // ── Orders Tab ─────────────────────────────────────────────────────────────────
+function BuyAgainButton({ item }: { item: LineItem }) {
+  const cartCtx = useCart();
+  const [added, setAdded] = useState(false);
+
+  const handleBuyAgain = () => {
+    if (!cartCtx) return;
+    cartCtx.addItem({
+      name: item.title,
+      variantTitle: item.variantTitle ?? undefined,
+      price: formatCurrency(item.price.amount, item.price.currencyCode),
+      imageUrl: item.image?.url ?? undefined,
+    });
+    cartCtx.openCart();
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
+
+  return (
+    <button
+      onClick={handleBuyAgain}
+      style={{
+        background: "transparent",
+        border: "1px solid #d0ccc7",
+        color: added ? "#175C40" : "#555",
+        borderColor: added ? "#175C40" : "#d0ccc7",
+        padding: "5px 14px",
+        borderRadius: 2,
+        fontSize: "0.72rem",
+        fontWeight: 600,
+        letterSpacing: "0.07em",
+        textTransform: "uppercase" as const,
+        cursor: "pointer",
+        transition: "all 0.3s ease-in-out",
+        whiteSpace: "nowrap" as const,
+      }}
+      onMouseEnter={e => { if (!added) { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#1a1a1a"; } }}
+      onMouseLeave={e => { if (!added) { e.currentTarget.style.borderColor = "#d0ccc7"; e.currentTarget.style.color = "#555"; } }}
+    >
+      {added ? "Added ✓" : "Buy Again"}
+    </button>
+  );
+}
+
 function OrdersTab({ orders }: { orders: ShopifyOrder[] }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   if (orders.length === 0) {
     return (
       <div>
-        <h2 style={{ fontFamily: "'Tenor Sans', sans-serif", fontSize: "1.6rem", fontWeight: 400, margin: "0 0 24px" }}>
+        <h2 style={{ fontFamily: "'Tenor Sans', sans-serif", fontSize: "1.6rem", fontWeight: 400, margin: "0 0 32px" }}>
           Order History
         </h2>
-        <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: 4, padding: "60px 24px", textAlign: "center", color: "#888" }}>
+        <div style={{ padding: "60px 0", textAlign: "center", color: "#888", borderTop: "1px solid #e4e4e7" }}>
           <div style={{ fontSize: "2.5rem", marginBottom: 14 }}>📦</div>
           <p style={{ margin: 0, fontSize: "0.9rem" }}>You haven't placed any orders yet.</p>
           <a href="/collections/all" style={{
@@ -262,33 +308,34 @@ function OrdersTab({ orders }: { orders: ShopifyOrder[] }) {
 
   return (
     <div>
-      <h2 style={{ fontFamily: "'Tenor Sans', sans-serif", fontSize: "1.6rem", fontWeight: 400, margin: "0 0 24px" }}>
+      <h2 style={{ fontFamily: "'Tenor Sans', sans-serif", fontSize: "1.6rem", fontWeight: 400, margin: "0 0 8px" }}>
         Order History
       </h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Clean divider list — no card boxes */}
+      <div style={{ borderTop: "1px solid #e4e4e7" }}>
         {orders.map((order) => {
           const status = formatOrderStatus(order);
           const isExpanded = expanded === order.id;
           return (
-            <div key={order.id} style={{ background: "#fff", border: "1px solid #eee", borderRadius: 4, overflow: "hidden" }}>
-              {/* Order header */}
+            <div key={order.id} style={{ borderBottom: "1px solid #e4e4e7" }}>
+              {/* Order header row */}
               <div
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", cursor: "pointer" }}
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "28px 0", cursor: "pointer" }}
                 onClick={() => setExpanded(isExpanded ? null : order.id)}
               >
                 <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>{order.name}</div>
-                    <div style={{ fontSize: "0.78rem", color: "#888", marginTop: 2 }}>{formatDate(order.processedAt)}</div>
+                    <div style={{ fontWeight: 500, fontSize: "0.9rem", color: "#1a1a1a" }}>{order.name}</div>
+                    <div style={{ fontSize: "0.78rem", color: "#71717a", marginTop: 3 }}>{formatDate(order.processedAt)}</div>
                   </div>
                   <StatusBadge {...status} />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#0D3D2B" }}>
+                  <span style={{ fontWeight: 500, fontSize: "0.95rem", color: "#0D3D2B" }}>
                     {formatCurrency(order.totalPrice.amount, order.totalPrice.currencyCode)}
                   </span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                    style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", color: "#888" }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+                    style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease-in-out", color: "#a1a1aa", flexShrink: 0 }}>
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </div>
@@ -296,48 +343,36 @@ function OrdersTab({ orders }: { orders: ShopifyOrder[] }) {
 
               {/* Line items (expanded) */}
               {isExpanded && (
-                <div style={{ borderTop: "1px solid #f0f0f0", padding: "16px 20px" }}>
+                <div style={{ paddingBottom: 28 }}>
                   {order.lineItems.nodes.map((item, i) => (
                     <div key={i} style={{
-                      display: "flex", gap: 12, alignItems: "center", padding: "10px 0",
-                      borderBottom: i < order.lineItems.nodes.length - 1 ? "1px solid #f5f5f5" : "none",
+                      display: "flex", gap: 16, alignItems: "center", padding: "14px 0",
+                      borderTop: i === 0 ? "1px solid #f4f4f5" : "none",
+                      borderBottom: "1px solid #f4f4f5",
                     }}>
                       {item.image?.url ? (
                         <img src={item.image.url} alt={item.image.altText ?? item.title}
-                          style={{ width: 52, height: 64, objectFit: "cover", borderRadius: 3, flexShrink: 0 }} />
+                          style={{ width: 56, height: 70, objectFit: "cover", borderRadius: 2, flexShrink: 0 }} />
                       ) : (
-                        <div style={{ width: 52, height: 64, background: "#f5f5f5", borderRadius: 3, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem" }}>
-                          👕
+                        <div style={{ width: 56, height: 70, background: "#f4f4f5", borderRadius: 2, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem" }}>
+                          📦
                         </div>
                       )}
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, fontSize: "0.88rem" }}>{item.title}</div>
-                        {item.merchandise?.title && item.merchandise.title !== "Default Title" && (
-                          <div style={{ fontSize: "0.78rem", color: "#888", marginTop: 2 }}>{item.merchandise.title}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 400, fontSize: "0.88rem", color: "#1a1a1a" }}>{item.title}</div>
+                        {item.variantTitle && item.variantTitle !== "Default Title" && (
+                          <div style={{ fontSize: "0.76rem", color: "#71717a", marginTop: 2 }}>{item.variantTitle}</div>
                         )}
-                        <div style={{ fontSize: "0.78rem", color: "#888", marginTop: 2 }}>Qty: {item.quantity}</div>
+                        <div style={{ fontSize: "0.76rem", color: "#71717a", marginTop: 2 }}>Qty: {item.quantity}</div>
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "#0D3D2B", whiteSpace: "nowrap" }}>
-                        {formatCurrency(item.price.amount, item.price.currencyCode)}
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, flexShrink: 0 }}>
+                        <div style={{ fontWeight: 400, fontSize: "0.88rem", color: "#3f3f46" }}>
+                          {formatCurrency(item.price.amount, item.price.currencyCode)}
+                        </div>
+                        <BuyAgainButton item={item} />
                       </div>
                     </div>
                   ))}
-                  {/* Buy again */}
-                  {order.lineItems.nodes[0]?.merchandise?.product?.handle && (
-                    <div style={{ marginTop: 16 }}>
-                      <a
-                        href={`/products/${order.lineItems.nodes[0].merchandise.product.handle}`}
-                        style={{
-                          display: "inline-block", padding: "9px 18px",
-                          background: "#0D3D2B", color: "#fff", border: "none", borderRadius: 2,
-                          fontSize: "0.78rem", fontWeight: 600, letterSpacing: "0.08em",
-                          textTransform: "uppercase", textDecoration: "none",
-                        }}
-                      >
-                        Buy Again
-                      </a>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -683,7 +718,9 @@ function AccountDashboard() {
                 const idToken = localStorage.getItem(ID_TOKEN_KEY) ?? "";
                 clearStoredToken();
                 localStorage.removeItem(ID_TOKEN_KEY);
-                const logoutUrl = getCustomerLogoutUrl(window.location.origin, idToken);
+                // Shopify Customer Account API requires id_token_hint + post_logout_redirect_uri
+                const postLogoutUri = "https://react-shopify-web.vercel.app";
+                const logoutUrl = getCustomerLogoutUrl(postLogoutUri, idToken);
                 window.location.href = logoutUrl;
               }}
               style={{
@@ -691,7 +728,10 @@ function AccountDashboard() {
                 color: "#555", border: "1px solid #d0ccc7", borderRadius: 2,
                 fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.06em",
                 textTransform: "uppercase", cursor: "pointer",
+                transition: "all 0.3s ease-in-out",
               }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#1a1a1a"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#d0ccc7"; e.currentTarget.style.color = "#555"; }}
             >
               Log Out
             </button>
