@@ -20,18 +20,21 @@ const METAOBJECT_TYPE = "duskyonder_site_config";
  * where a static ENV object may have captured an undefined value at module init.
  */
 export function getShopifyAdminHeaders(): Record<string, string> {
-  // Read directly from process.env every time — never cache at module scope
-  const token = process.env.SHOPIFY_ADMIN_TOKEN;
+  // Prefer the canonical Vercel key name; fall back to the shorter variation for compatibility.
+  // Both are read directly from process.env at call time — never cached at module scope.
+  const token =
+    process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN ||
+    process.env.SHOPIFY_ADMIN_TOKEN;
   if (!token) {
     throw new Error(
-      "Vercel Runtime Error: SHOPIFY_ADMIN_TOKEN is undefined or missing from process.env. " +
+      "Vercel Runtime Error: SHOPIFY_ADMIN_API_ACCESS_TOKEN is missing from process.env. " +
       "Ensure the variable is set in Vercel Project Settings → Environment Variables and " +
       "that the deployment has been redeployed after the variable was added."
     );
   }
   return {
     "Content-Type": "application/json",
-    "X-Shopify-Access-Token": token,
+    "X-Shopify-Access-Token": token.trim(),
   };
 }
 
