@@ -220,6 +220,7 @@ export function CartDrawer() {
           id handle title
           priceRange { minVariantPrice { amount currencyCode } }
           images(first: 1) { nodes { url altText } }
+          variants(first: 1) { nodes { id } }
         }
       }
     `;
@@ -245,6 +246,7 @@ export function CartDrawer() {
             imageUrl: p.images.nodes[0]?.url ?? '',
             colors: [],
             detailUrl: `/products/${p.handle}`,
+            variantId: p.variants?.nodes?.[0]?.id ?? null, // first variant GID for addItem
           }));
         // Fallback: if Shopify AI returns empty (cold-start / dev store), use manual curated list
         setAutoRecommendedProducts(mapped.length > 0 ? mapped : manualRecommendedProducts);
@@ -520,10 +522,15 @@ export function CartDrawer() {
                         <RecommendedCard
                           key={prod.id}
                           product={prod}
-                          onAdd={() => addItem({
-                            id: prod.id, name: prod.name, price: prod.price,
-                            imageUrl: prod.imageUrl, productUrl: prod.detailUrl,
-                          })}
+                          onAdd={() => {
+                            // Use first variant GID if available (auto mode fetches it),
+                            // otherwise fall back to prod.id (manual mode uses product GID)
+                            const variantId = (prod as any).variantId || prod.id;
+                            addItem({
+                              id: variantId, name: prod.name, price: prod.price,
+                              imageUrl: prod.imageUrl, productUrl: prod.detailUrl,
+                            });
+                          }}
                         />
                       ))}
                     </div>

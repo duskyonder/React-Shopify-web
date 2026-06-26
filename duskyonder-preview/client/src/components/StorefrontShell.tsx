@@ -354,7 +354,7 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
             </button>
           </div>
           {(config.logoImageUrl || config.logoImageUrlWhite) ? (
-            <a href="/" className="sf-logo sf-logo-center" style={{ display: "flex", alignItems: "center", position: "relative" }}>
+            <a href="/" className="sf-logo sf-logo-center">
               {(config.logoImageUrl || config.logoImageUrlWhite) && (
                 <img src={config.logoImageUrl || config.logoImageUrlWhite!} alt={config.logoText}
                   style={{ height: logoMobileH, maxWidth: 140, objectFit: "contain",
