@@ -23,18 +23,8 @@ const POSITION_MAP: Record<string, React.CSSProperties> = {
 function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "left" | "center" | "right" }) {
   const { config } = useThemeConfig();
   const [current, setCurrent] = useState(0);
-  // Initialise synchronously so the hero renders at the correct height on the very first paint.
-  // Avoids a 100vh → 100svh layout shift on mobile that delays LCP.
-  const [isMobileHero, setIsMobileHero] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth < 768 : false
-  );
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const total = config.slides.length;
-  useEffect(() => {
-    const check = () => setIsMobileHero(window.innerWidth < 768);
-    window.addEventListener("resize", check, { passive: true });
-    return () => window.removeEventListener("resize", check);
-  }, []);
   const startTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (config.slideshowAutoplay && total > 1) {
@@ -47,7 +37,7 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
   // Mobile uses 100svh (safe viewport height avoids mobile browser chrome).
   // Desktop uses 100vh — CSS-driven, no admin height dependency.
   return (
-    <section className="sf-hero" style={{ height: isMobileHero ? '100svh' : '100vh' }}>
+    <section className="sf-hero">
       {config.slides.map((slide, i) => {
         // ── Resolve alignment: per-slide editorial controls take priority over nine-grid ──
         // getVar: returns a CSS-ready string or undefined (no var injected when absent/zero/default)
@@ -170,18 +160,44 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
           "--hero-m-text": mText ?? "center",
         } as React.CSSProperties;
 
-        // Inner text wrapper — text-align only; no max-width or align-items hardcoded
+        // Inner text wrapper — full-width so text can reach edges (e.g. bottom-right flush).
+        // align-items is inherited from the parent container via --hero-align-h CSS var.
         const innerStyle: React.CSSProperties = hasEditorialLayout ? {
           display: "flex", flexDirection: "column", gap: 12,
+          width: "100%",
           textAlign: slideTextAlign as React.CSSProperties['textAlign'],
         } : {};
 
-        // 移动端优先使用 mobileImageUrl，未设置则回退到 imageUrl
-        const activeImgUrl = isMobileHero ? (slide.mobileImageUrl || slide.imageUrl) : slide.imageUrl;
+        // Render both mobile and desktop images in HTML; CSS hides the inactive one.
+        // This avoids any JS/SSR mismatch and lets the browser fetch the correct image
+        // on the very first paint without waiting for client-side hydration.
+        const desktopImgUrl = slide.imageUrl;
+        const mobileImgUrl  = slide.mobileImageUrl || slide.imageUrl;
         return (
           <div key={slide.id} className={`sf-hero-slide${i === current ? " active" : ""}`} style={slideCssVars}>
-            {activeImgUrl ? (
-              <img src={activeImgUrl} alt={slide.title} className="sf-hero-img" fetchPriority="high" />
+            {desktopImgUrl || mobileImgUrl ? (
+              <>
+                {/* Desktop image — hidden on mobile via CSS */}
+                {desktopImgUrl && (
+                  <img
+                    src={desktopImgUrl}
+                    alt={slide.title}
+                    className="sf-hero-img sf-hero-img-desktop"
+                    fetchPriority="high"
+                    loading="eager"
+                  />
+                )}
+                {/* Mobile image — hidden on desktop via CSS; only rendered when a separate mobile URL exists */}
+                {slide.mobileImageUrl && (
+                  <img
+                    src={slide.mobileImageUrl}
+                    alt={slide.title}
+                    className="sf-hero-img sf-hero-img-mobile"
+                    fetchPriority="high"
+                    loading="eager"
+                  />
+                )}
+              </>
             ) : (
               <div className="sf-hero-bg" />
             )}

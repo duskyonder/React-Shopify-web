@@ -414,6 +414,15 @@
   height: 100%;
   object-fit: cover;
 }
+/* CSS-driven image switching — no JS required */
+.sf-hero-img-desktop { display: block; }
+.sf-hero-img-mobile  { display: none; }
+@media (max-width: 767px) {
+  .sf-hero-img-desktop { display: none; }
+  .sf-hero-img-mobile  { display: block; }
+  /* Fallback: if desktop is the only image rendered (no separate mobile URL), keep it visible */
+  .sf-hero-img-desktop:only-child { display: block; }
+}
 .sf-hero-dots {
   position: absolute;
   bottom: 24px;
