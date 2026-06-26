@@ -203,16 +203,64 @@ export function CartDrawer() {
   // Use productId (product GID) from the cart item — NOT items[0].id which is the cart line ID
   const firstCartProductId = items[0]?.productId ?? null;
 
+  // Helper: map a raw Storefront API product node to our internal shape
+  const mapStorefrontProduct = (p: any) => ({
+    id: p.id,
+    name: p.title,
+    price: `$${parseFloat(p.priceRange.minVariantPrice.amount).toFixed(2)}`,
+    imageUrl: p.images.nodes[0]?.url ?? '',
+    colors: [],
+    detailUrl: `/products/${p.handle}`,
+    // Store variants array so onAdd can use prod.variants?.[0]?.id
+    variants: p.variants?.nodes ?? [],
+  });
+
+  // Helper: fetch best-seller collection as fallback
+  const fetchBestSellers = async (): Promise<ReturnType<typeof mapStorefrontProduct>[]> => {
+    const gql = `
+      query GetBestSellers {
+        collection(handle: "best-sellers") {
+          products(first: 6) {
+            nodes {
+              id handle title
+              priceRange { minVariantPrice { amount currencyCode } }
+              images(first: 1) { nodes { url altText } }
+              variants(first: 1) { nodes { id } }
+            }
+          }
+        }
+      }
+    `;
+    try {
+      const res = await fetch(`https://${SHOPIFY_STORE_DOMAIN}/api/2024-10/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_TOKEN,
+        },
+        body: JSON.stringify({ query: gql }),
+      });
+      const json = await res.json();
+      const nodes: any[] = json.data?.collection?.products?.nodes ?? [];
+      return nodes
+        .filter((p: any) => !cartIds.has(p.id))
+        .slice(0, 6)
+        .map(mapStorefrontProduct);
+    } catch {
+      return [];
+    }
+  };
+
   useEffect(() => {
     if (recommendationMode !== 'auto' || !firstCartProductId || !isOpen) return;
     let cancelled = false;
     setAutoLoading(true);
-    // Normalize to full Shopify product GID — the Storefront API requires gid://shopify/Product/{numericId}
+    // Normalize to full Shopify product GID
     const rawId = firstCartProductId;
     const productGid = rawId.startsWith('gid://shopify/Product/')
       ? rawId
       : rawId.startsWith('gid://')
-        ? rawId // some other GID format — pass as-is
+        ? rawId
         : `gid://shopify/Product/${rawId.replace(/[^0-9]/g, '')}`;
     const gql = `
       query GetRecommendations($productId: ID!) {
@@ -233,27 +281,30 @@ export function CartDrawer() {
       body: JSON.stringify({ query: gql, variables: { productId: productGid } }),
     })
       .then(r => r.json())
-      .then(json => {
+      .then(async json => {
         if (cancelled) return;
-        const nodes = json.data?.productRecommendations ?? [];
+        const nodes: any[] = json.data?.productRecommendations ?? [];
         const mapped = nodes
           .filter((p: any) => !cartIds.has(p.id))
           .slice(0, 6)
-          .map((p: any) => ({
-            id: p.id,
-            name: p.title,
-            price: `$${parseFloat(p.priceRange.minVariantPrice.amount).toFixed(2)}`,
-            imageUrl: p.images.nodes[0]?.url ?? '',
-            colors: [],
-            detailUrl: `/products/${p.handle}`,
-            variantId: p.variants?.nodes?.[0]?.id ?? null, // first variant GID for addItem
-          }));
-        // Fallback: if Shopify AI returns empty (cold-start / dev store), use manual curated list
-        setAutoRecommendedProducts(mapped.length > 0 ? mapped : manualRecommendedProducts);
+          .map(mapStorefrontProduct);
+        if (mapped.length > 0) {
+          setAutoRecommendedProducts(mapped);
+        } else {
+          // Primary AI returned empty — try best-sellers collection
+          const bestSellers = await fetchBestSellers();
+          if (!cancelled) {
+            setAutoRecommendedProducts(bestSellers.length > 0 ? bestSellers : manualRecommendedProducts);
+          }
+        }
       })
-      .catch(() => {
-        // On any API error, fall back to manual curated products so the section is never blank
-        if (!cancelled) setAutoRecommendedProducts(manualRecommendedProducts);
+      .catch(async () => {
+        if (cancelled) return;
+        // On API error — try best-sellers, then manual curated
+        const bestSellers = await fetchBestSellers();
+        if (!cancelled) {
+          setAutoRecommendedProducts(bestSellers.length > 0 ? bestSellers : manualRecommendedProducts);
+        }
       })
       .finally(() => { if (!cancelled) setAutoLoading(false); });
     return () => { cancelled = true; };
@@ -523,9 +574,8 @@ export function CartDrawer() {
                           key={prod.id}
                           product={prod}
                           onAdd={() => {
-                            // Use first variant GID if available (auto mode fetches it),
-                            // otherwise fall back to prod.id (manual mode uses product GID)
-                            const variantId = (prod as any).variantId || prod.id;
+                            // Use first variant ID if available, otherwise fallback to prod.id
+                            const variantId = (prod as any).variants?.[0]?.id || (prod as any).variantId || prod.id;
                             addItem({
                               id: variantId, name: prod.name, price: prod.price,
                               imageUrl: prod.imageUrl, productUrl: prod.detailUrl,
