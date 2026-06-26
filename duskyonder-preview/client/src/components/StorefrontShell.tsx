@@ -503,10 +503,10 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
       {/* Mobile Nav Drawer */}
       {mobileOpen && (
         <>
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 400 }} onClick={() => setMobileOpen(false)} />
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 9000 }} onClick={() => setMobileOpen(false)} />
           <div style={{
             position: "fixed", top: 0, left: 0, bottom: 0, width: 300,
-            background: "white", zIndex: 401, display: "flex", flexDirection: "column",
+            background: "white", zIndex: 9001, display: "flex", flexDirection: "column",
             boxShadow: "4px 0 24px rgba(0,0,0,0.15)",
             animation: "slideInLeft 0.3s cubic-bezier(0.23,1,0.32,1)",
           }}>

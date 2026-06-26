@@ -328,6 +328,8 @@
     transform: var(--hero-m-transform, var(--hero-transform, none)) translate(var(--offset-x-m, 0%), var(--offset-y-m, 0%));
     align-items: var(--hero-m-align, var(--hero-align, center));
     text-align: var(--hero-m-text, var(--hero-text, center));
+    /* Reduce side padding on mobile so text can reach edges (e.g. bottom-right flush) */
+    padding: 0 16px 24px;
   }
 }
 @media (min-width: 768px) {

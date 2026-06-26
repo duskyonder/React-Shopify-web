@@ -23,12 +23,15 @@ const POSITION_MAP: Record<string, React.CSSProperties> = {
 function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "left" | "center" | "right" }) {
   const { config } = useThemeConfig();
   const [current, setCurrent] = useState(0);
-  const [isMobileHero, setIsMobileHero] = useState(false);
+  // Initialise synchronously so the hero renders at the correct height on the very first paint.
+  // Avoids a 100vh → 100svh layout shift on mobile that delays LCP.
+  const [isMobileHero, setIsMobileHero] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  );
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const total = config.slides.length;
   useEffect(() => {
     const check = () => setIsMobileHero(window.innerWidth < 768);
-    check();
     window.addEventListener("resize", check, { passive: true });
     return () => window.removeEventListener("resize", check);
   }, []);
