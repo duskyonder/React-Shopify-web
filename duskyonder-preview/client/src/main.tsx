@@ -21,6 +21,28 @@ const queryClient = new QueryClient({
   },
 });
 
+// ─── Server-Side Config Hydration ────────────────────────────────────────────
+// The Express server injects window.__INITIAL_CONFIG__ into the HTML before
+// React mounts (see server/_core/vite.ts).  We pre-populate the React Query
+// cache with this data so that trpc.siteConfig.getAll.useQuery() resolves
+// synchronously on first render — eliminating the flash of default content.
+//
+// tRPC v11 query key for siteConfig.getAll (no input, type "query"):
+//   [["siteConfig", "getAll"], { type: "query" }]
+declare global {
+  interface Window {
+    __INITIAL_CONFIG__?: Record<string, unknown>;
+  }
+}
+
+if (typeof window !== "undefined" && window.__INITIAL_CONFIG__) {
+  queryClient.setQueryData(
+    [["siteConfig", "getAll"], { type: "query" }],
+    window.__INITIAL_CONFIG__
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
