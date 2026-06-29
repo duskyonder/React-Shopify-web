@@ -260,6 +260,8 @@ export default function SearchPage() {
                 )}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 24 }}>
                   {sortedProducts.map((p) => {
+                    // DIAGNOSTIC: confirm this component version is rendering
+                    console.log('Modified Component Rendering — product:', p.title, '| variantId:', (p as any).variantId);
                     // Append width=800 for high-res Shopify CDN image
                     const hiResUrl = p.imageUrl
                       ? p.imageUrl.includes("?")
@@ -268,10 +270,31 @@ export default function SearchPage() {
                       : "";
                     return (
                     <div key={p.id} style={{ background: "#fff", borderRadius: 4, overflow: "visible", boxShadow: "0 1px 8px rgba(0,0,0,0.07)" }}>
-                      {/* Image — forced 3:4 aspect, full image visible (object-contain) */}
-                      <a href={p.url} style={{ display: "block", aspectRatio: "3/4", background: "#F5F3F0", overflow: "hidden", borderRadius: "4px 4px 0 0", position: "relative" }}>
+                      {/* Image wrapper: explicit 3:4 aspect ratio, no cropping */}
+                      <a
+                        href={p.url}
+                        style={{
+                          display: "block",
+                          aspectRatio: "3 / 4",
+                          width: "100%",
+                          background: "#F5F3F0",
+                          overflow: "hidden",
+                          borderRadius: "4px 4px 0 0",
+                          position: "relative",
+                        }}
+                      >
                         {hiResUrl ? (
-                          <img src={hiResUrl} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+                          <img
+                            src={hiResUrl}
+                            alt={p.title}
+                            style={{
+                              display: "block",
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "contain",  /* full image, no cropping */
+                              objectPosition: "center center",
+                            }}
+                          />
                         ) : (
                           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(0,0,0,0.2)", fontSize: "0.75rem" }}>No image</div>
                         )}
