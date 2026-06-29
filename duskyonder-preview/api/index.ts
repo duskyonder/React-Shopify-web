@@ -20,7 +20,6 @@ import superjson from "superjson";
 import { z } from "zod";
 import path from "path";
 import fs from "fs";
-import { shopifyAdminFetch } from "../server/lib/shopifyAdminAuth";
 
 // ── Inline tRPC init (avoids @shared/const path alias) ────────────────────────
 const t = initTRPC.create({ transformer: superjson });
@@ -32,24 +31,96 @@ const SHOPIFY_DOMAIN = "c81aag-cy.myshopify.com";
 const SHOPIFY_API_VERSION = "2024-10";
 const METAOBJECT_TYPE = "duskyonder_site_config";
 
+// ── Inline OAuth token manager (self-contained for Vercel bundling) ────────────────────────
+// api/index.ts is intentionally self-contained — Vercel's esbuild cannot
+// resolve relative imports from server/ at runtime. All auth logic is inlined.
+const _TOKEN_TTL_MS = 23 * 60 * 60 * 1000; // 23 hours
+let _tokenCache: { token: string; expiresAt: number } | null = null;
+
+async function _fetchFreshAdminToken(): Promise<string | null> {
+  const clientId = process.env.SHOPIFY_CLIENT_ID ?? "";
+  const clientSecret = process.env.SHOPIFY_CLIENT_SECRET ?? "";
+  if (!clientId || !clientSecret) {
+    console.warn("[shopifyAdminAuth] SHOPIFY_CLIENT_ID or SHOPIFY_CLIENT_SECRET not set. Skipping OAuth refresh.");
+    return null;
+  }
+  const endpoint = `https://${SHOPIFY_DOMAIN}/admin/oauth/access_token`;
+  console.log("[shopifyAdminAuth] Attempting OAuth token refresh:", {
+    endpoint, shop: SHOPIFY_DOMAIN,
+    clientIdPrefix: clientId.slice(0, 8) + "...",
+    grantType: "client_credentials",
+    timestamp: new Date().toISOString(),
+  });
+  let res: Response;
+  try {
+    res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, grant_type: "client_credentials" }),
+    });
+  } catch (e) {
+    console.error("[shopifyAdminAuth] Network error during token refresh:", e);
+    return null;
+  }
+  const rawBody = await res.text();
+  console.log("[shopifyAdminAuth] Token refresh response:", { status: res.status, statusText: res.statusText, body: rawBody });
+  if (!res.ok) {
+    console.error(`[shopifyAdminAuth] Token refresh failed (HTTP ${res.status}). See body above for Shopify's exact error.`);
+    return null;
+  }
+  let json: Record<string, unknown>;
+  try { json = JSON.parse(rawBody); } catch { return null; }
+  const newToken = (json.access_token as string) ?? null;
+  if (!newToken) { console.error("[shopifyAdminAuth] No access_token in response:", json); return null; }
+  const expiresIn = typeof json.expires_in === "number" ? json.expires_in * 1000 : _TOKEN_TTL_MS;
+  _tokenCache = { token: newToken, expiresAt: Date.now() + expiresIn };
+  console.log("[shopifyAdminAuth] Token refresh succeeded. Expires:", new Date(_tokenCache.expiresAt).toISOString());
+  return newToken;
+}
+
+async function _getAdminToken(): Promise<string> {
+  if (_tokenCache && Date.now() < _tokenCache.expiresAt) return _tokenCache.token;
+  const refreshed = await _fetchFreshAdminToken();
+  if (refreshed) return refreshed;
+  const staticToken = process.env.SHOPIFY_ADMIN_TOKEN ?? "";
+  if (staticToken) {
+    _tokenCache = { token: staticToken, expiresAt: Date.now() + _TOKEN_TTL_MS };
+    return staticToken;
+  }
+  throw new Error("[shopifyAdminAuth] No Admin API token available.");
+}
+
 /**
- * Delegates to shopifyAdminFetch (shopifyAdminAuth.ts) which handles
- * OAuth refresh, 401 retry, and full diagnostic logging.
- * Wraps errors in TRPCError for consistent error handling.
+ * Admin API GraphQL helper with OAuth refresh, 401 retry, and diagnostic logging.
+ * Inlined here because api/index.ts must be self-contained for Vercel bundling.
  */
 async function shopifyAdminGraphQL(
   query: string,
   variables?: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  try {
-    return await shopifyAdminFetch(query, variables);
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: msg,
+  const makeReq = async (token: string) =>
+    fetch(`https://${SHOPIFY_DOMAIN}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": token },
+      body: JSON.stringify({ query, variables }),
     });
+  let token = await _getAdminToken();
+  let res = await makeReq(token);
+  if (res.status === 401) {
+    console.warn("[shopifyAdminAuth] 401 received — invalidating cache and retrying.");
+    _tokenCache = null;
+    token = await _getAdminToken();
+    res = await makeReq(token);
   }
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `Shopify Admin API error: ${res.status} ${res.statusText} — ${errBody}` });
+  }
+  const json = (await res.json()) as { data?: unknown; errors?: unknown[] };
+  if (json.errors) {
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `Shopify GraphQL errors: ${JSON.stringify(json.errors)}` });
+  }
+  return json.data as Record<string, unknown>;
 }
 
 // ── MySQL site-config helpers (replaces Shopify Metaobjects for config storage) ─
