@@ -172,7 +172,7 @@ export default function BlogIndex() {
   const showFeatured = blogCfg?.showFeatured ?? true;
   const showCategoryFilter = blogCfg?.showCategoryFilter ?? false;
   const footerCtaTitle = blogCfg?.footerCtaTitle ?? "Stay in the Loop";
-  const footerCtaSubtitle = blogCfg?.footerCtaSubtitle ?? "Subscribe for movement tips, new arrivals, and community stories.";
+  const footerCtaSubtitle = blogCfg?.footerCtaSubtitle ?? "Subscribe for movement tips, new arrivals, and lifestyle stories.";
   const footerCtaPlaceholder = blogCfg?.footerCtaPlaceholder ?? "Your email address";
   const footerCtaButton = blogCfg?.footerCtaButton ?? "Subscribe";
   const showFooterCta = blogCfg?.showFooterCta ?? true;

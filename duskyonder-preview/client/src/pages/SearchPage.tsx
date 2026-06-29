@@ -47,7 +47,7 @@ export default function SearchPage() {
     { type: "page" as const, id: "size", title: "Size Guide", desc: "Find your perfect fit with our comprehensive size chart.", url: "/pages/size-guide" },
     { type: "page" as const, id: "returns", title: "Returns & Exchanges", desc: "Our hassle-free return policy.", url: "/pages/returns" },
     { type: "page" as const, id: "blog", title: "Blog", desc: "Activewear tips, style guides, and brand stories.", url: "/pages/blog" },
-    { type: "page" as const, id: "influencer", title: "Influencer Program", desc: "Join our creator community.", url: "/pages/influencer" },
+    { type: "page" as const, id: "influencer", title: "Influencer Program", desc: "Join our creator network.", url: "/pages/influencer" },
   ];
 
   const results = useMemo(() => {

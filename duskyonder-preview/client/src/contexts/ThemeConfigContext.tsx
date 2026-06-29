@@ -754,7 +754,7 @@ export interface InfluencerConfig {
 const defaultInfluencerConfig: InfluencerConfig = {
   heroTag: "DUSKYONDER × CREATORS",
   heroTitle: "Move With Us.",
-  heroSubtitle: "We're building a community of women who move with purpose — and we want you in it.",
+  heroSubtitle: "We're building a movement of women who move with purpose — and we want you in it.",
   heroPrimaryBtnLabel: "Apply Now",
   heroPrimaryBtnLink: "#apply",
   heroSecondaryBtnLabel: "Meet Our Creators",
@@ -777,7 +777,7 @@ const defaultInfluencerConfig: InfluencerConfig = {
   showStats: true,
   statsItems: [
     { id: "st_1", value: "50+", label: "Active Creators", visible: true },
-    { id: "st_2", value: "10K+", label: "Community Members", visible: true },
+    { id: "st_2", value: "10K+", label: "Members", visible: true },
     { id: "st_3", value: "15%", label: "Commission Rate", visible: true },
   ],
   applyPageSectionOrder: [
@@ -789,7 +789,7 @@ const defaultInfluencerConfig: InfluencerConfig = {
   ],
   showBenefits: true,
   benefitsTitle: "Why Partner With DUSKYONDER",
-  benefitsSubtitle: "More than a collab — a community.",
+  benefitsSubtitle: "More than a collab — a connection.",
   benefits: [
     { id: "b1", icon: "🎁", title: "Free Products", description: "Priority access to new season drops. Wear it before it launches.", visible: true },
     { id: "b2", icon: "💰", title: "Commission", description: "Exclusive discount code for your audience — 15% off, and you earn on every sale.", visible: true },
@@ -985,7 +985,7 @@ const defaultAboutUsConfig: AboutUsConfig = {
   principlesTitle: "Three Principles, One Philosophy.",
   principles: [
     { id: "p1", number: "01", title: "Craft", subtitle: "Precision in Every Stitch", body: "We prioritize precision in every stitch. By maintaining strict design and production standards, we ensure that every garment provides the perfect balance of durability, comfort, and function for your diverse schedule." },
-    { id: "p2", number: "02", title: "Connection", subtitle: "Built for the Modern Woman", body: "We are built for the modern woman who values both performance and style. We design with the understanding that our connection moves fluidly between professional responsibilities and personal well-being." },
+    { id: "p2", number: "02", title: "Connection", subtitle: "Built for the Modern Woman", body: "We are built for the modern woman who values both performance and style. We design with the understanding that our approach moves fluidly between professional responsibilities and personal well-being." },
     { id: "p3", number: "03", title: "Spirit", subtitle: "Strength in Consistency", body: "True strength is found in consistency. Dusk Yonder is more than activewear; it is a declaration of confidence, engineered to keep you feeling supported and focused, regardless of your daily setting." },
   ],
   philosophyTag: "The Difference",
@@ -1010,7 +1010,7 @@ const defaultAboutUsConfig: AboutUsConfig = {
   universeTitle: "More Than Activewear. A Way of Life.",
   universeCards: [
     { id: "u1", number: "01", module: "Activewear", title: "Office to Gym", body: "Designed to support your transition from the office to the gym, our activewear combines gentle compression with effortless style." },
-    { id: "u2", number: "02", module: "CONNECTION", title: "Movement as a Lifestyle", body: "We connect with a lifestyle community that values movement, fostering a shared commitment to health and balanced living." },
+    { id: "u2", number: "02", module: "CONNECTION", title: "Movement as a Lifestyle", body: "We connect with individuals who value movement as a lifestyle, fostering a shared commitment to health and balanced living." },
     { id: "u3", number: "03", module: "Fabric Story", title: "Technical Fabrics", body: "Our fabrics are selected for their technical properties—moisture-wicking, breathable, and designed to move with you." },
     { id: "u4", number: "04", module: "Sustainability", title: "Eco-Conscious Growth", body: "We are committed to optimizing our supply chain and utilizing eco-conscious materials, ensuring our growth is achieved with respect for our planet." },
   ],

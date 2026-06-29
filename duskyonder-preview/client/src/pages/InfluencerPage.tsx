@@ -106,7 +106,7 @@ export default function InfluencerPage() {
             Ready to Move With Us?
           </h2>
           <p className="inf-apply-cta-subtitle" style={{ color: cfg.heroTextColor ? `${cfg.heroTextColor}cc` : "rgba(255,255,255,0.8)" }}>
-            Join our creator community and move with purpose.
+            Join our creator network and move with purpose.
           </p>
           <a href="/pages/influencer/apply" className="inf-apply-cta-btn">
             Apply Now →

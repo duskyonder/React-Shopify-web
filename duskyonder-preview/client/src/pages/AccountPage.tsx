@@ -503,7 +503,7 @@ function PreferencesTab() {
             Email Topics
           </div>
           {(Object.keys(prefs) as Array<keyof typeof prefs>).map((key) => {
-            const labels: Record<string, string> = { newArrivals: "New Arrivals", saleAlerts: "Sale & Promotions", orderUpdates: "Order Updates", communityNews: "Community & Events" };
+            const labels: Record<string, string> = { newArrivals: "New Arrivals", saleAlerts: "Sale & Promotions", orderUpdates: "Order Updates", communityNews: "Updates & Events" };
             return (
               <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #f5f5f5" }}>
                 <span style={{ fontSize: "0.88rem", color: "#333" }}>{labels[key]}</span>
