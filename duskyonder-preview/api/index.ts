@@ -581,14 +581,15 @@ const vercelRouter = router({
     getBlog: publicProcedure
       .input(z.object({ handle: z.string().default("news") }))
       .query(async ({ input }) => {
-        const adminToken = process.env.SHOPIFY_ADMIN_TOKEN ?? "";
         const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN ?? process.env.VITE_SHOPIFY_STORE_DOMAIN ?? SHOPIFY_DOMAIN;
+        let adminToken: string;
+        try { adminToken = await _getAdminToken(); } catch { adminToken = ""; }
         console.log(`[getBlog] handle="${input.handle}" domain="${shopifyDomain}" hasAdminToken=${!!adminToken}`);
         if (!adminToken) {
-          console.warn("[getBlog] SHOPIFY_ADMIN_TOKEN not set — returning null");
+          console.warn("[getBlog] Could not obtain admin token — returning null");
           return null;
         }
-        const baseUrl = `https://${shopifyDomain}/admin/api/2024-10`;
+        const baseUrl = `https://${shopifyDomain}/admin/api/2025-01`;
         const headers = { "X-Shopify-Access-Token": adminToken, "Content-Type": "application/json" };
         try {
           // Step 1: find the blog ID by handle
@@ -655,10 +656,12 @@ const vercelRouter = router({
     getBlogArticle: publicProcedure
       .input(z.object({ blogHandle: z.string().default("news"), articleHandle: z.string() }))
       .query(async ({ input }) => {
-        const adminToken = process.env.SHOPIFY_ADMIN_TOKEN ?? "";
         const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN ?? process.env.VITE_SHOPIFY_STORE_DOMAIN ?? SHOPIFY_DOMAIN;
+        let adminToken: string;
+        try { adminToken = await _getAdminToken(); } catch { adminToken = ""; }
+        console.log(`[getBlogArticle] blogHandle="${input.blogHandle}" articleHandle="${input.articleHandle}" hasAdminToken=${!!adminToken}`);
         if (!adminToken || !input.articleHandle) return null;
-        const baseUrl = `https://${shopifyDomain}/admin/api/2024-10`;
+        const baseUrl = `https://${shopifyDomain}/admin/api/2025-01`;
         const headers = { "X-Shopify-Access-Token": adminToken, "Content-Type": "application/json" };
         try {
           // Step 1: find blog ID by handle
