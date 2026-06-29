@@ -302,9 +302,9 @@
   position: absolute;
   inset: 0;
   object-fit: cover;
-  object-position: top center; /* anchor to top so model's head is never cropped */
+  object-position: top center;
   width: 100%;
-  max-width: 100%; /* prevent image from overflowing hero bounds */
+  max-width: 100%;
   height: 100%;
 }
 .sf-hero-placeholder-bg {
