@@ -21,7 +21,7 @@ const POSITION_MAP: Record<string, React.CSSProperties> = {
   "bottom-right":  { bottom: "8%", right: "5%", left: "auto",  top: "auto", transform: "none", alignItems: "flex-end", textAlign: "right" },
 };
 function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "left" | "center" | "right" }) {
-  const { config } = useThemeConfig();
+  const { config, isConfigReady } = useThemeConfig();
   const [current, setCurrent] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const total = config.slides.length;
@@ -33,6 +33,12 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
   }, [config.slideshowAutoplay, config.slideshowSpeed, total]);
   useEffect(() => { startTimer(); return () => { if (timerRef.current) clearInterval(timerRef.current); }; }, [startTimer]);
   const go = (n: number) => { setCurrent((current + n + total) % total); startTimer(); };
+  // While config is loading, show only a clean beige background.
+  // This prevents the stale/old banner image from flashing before the
+  // correct config arrives from the server.
+  if (!isConfigReady) {
+    return <section className="sf-hero" style={{ background: '#FAF8F4' }} />;
+  }
   // Hero: full-viewport on both mobile and desktop.
   // Mobile uses 100svh (safe viewport height avoids mobile browser chrome).
   // Desktop uses 100vh — CSS-driven, no admin height dependency.
