@@ -202,9 +202,9 @@
   align-items: center;
   justify-content: space-between;
   height: 64px;
-  max-width: 1280px;
+  max-width: 1760px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(24px, 4vw, 80px);
 }
 .sf-logo {
   font-size: 1.4rem;
@@ -538,9 +538,9 @@
   grid-template-columns: 1fr 1fr;
   gap: 60px;
   align-items: center;
-  max-width: 1280px;
+  max-width: 1760px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(24px, 4vw, 80px);
 }
 @media (max-width: 768px) {
   .sf-brand-story-inner { grid-template-columns: 1fr; gap: 32px; }
@@ -1045,9 +1045,9 @@
   display: grid;
   /* grid-template-columns controlled via inline style from config.fabricsPerRow */
   gap: 24px;
-  max-width: 1280px;
+  max-width: 1760px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(24px, 4vw, 80px);
 }
 @media (max-width: 768px) { .sf-fabric-grid { grid-template-columns: 1fr !important; } }
 .sf-fabric-card {
@@ -1082,15 +1082,15 @@
 .sf-footer {
   background: #0a2e1e;
   color: rgba(255,255,255,0.8);
-  padding: var(--footer-pad-y, 60px) 0 32px;
+  padding: var(--footer-pad-y, 80px) 0 64px; /* increased bottom padding for visual balance */
 }
 .sf-footer-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 40px;
-  max-width: 1280px;
+  max-width: 1760px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(24px, 4vw, 80px);
   margin-bottom: 48px;
 }
 @media (max-width: 1024px) { .sf-footer-grid { grid-template-columns: 1fr 1fr; } }
@@ -1100,7 +1100,7 @@
   .sf-footer-desktop { display: none !important; }
   .sf-footer-mobile { display: block; }
   .sf-footer {
-    padding: var(--footer-m-pad-y, 32px) 0 20px;
+    padding: var(--footer-m-pad-y, 40px) 0 32px; /* increased mobile bottom padding for balance */
     display: flex;
     flex-direction: column;
   }
@@ -1229,6 +1229,7 @@
   .sf-footer-bottom {
     font-size: 0.72rem !important;
     padding-top: 0 !important;
+    padding-bottom: 24px !important; /* added mobile bottom padding */
     padding-left: 20px !important;
     padding-right: 20px !important;
     justify-content: center !important;
@@ -1267,10 +1268,11 @@
 .sf-footer-bottom {
   border-top: 1px solid rgba(255,255,255,0.1);
   padding-top: 24px;
-  max-width: 1280px;
+  padding-bottom: 32px; /* added bottom breathing room */
+  max-width: 1760px;
   margin: 0 auto;
-  padding-left: 24px;
-  padding-right: 24px;
+  padding-left: clamp(24px, 4vw, 80px);
+  padding-right: clamp(24px, 4vw, 80px);
   display: flex;
   justify-content: space-between;
   align-items: center;
