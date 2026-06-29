@@ -1002,6 +1002,87 @@ const vercelRouter = router({
         };
       }),
   }),
+
+  // ── Live Shopify product search (Storefront API) ─────────────────────────────
+  search: router({
+    products: publicProcedure
+      .input(
+        z.object({
+          query: z.string().min(1).max(200),
+          limit: z.number().int().min(1).max(20).optional().default(8),
+        })
+      )
+      .query(async ({ input }) => {
+        const domain =
+          process.env.SHOPIFY_STORE_DOMAIN ??
+          process.env.VITE_SHOPIFY_STORE_DOMAIN ??
+          SHOPIFY_DOMAIN;
+        const token =
+          process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
+          process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
+          "";
+        console.log("[search] Input query:", input.query, "| limit:", input.limit);
+        console.log("[search] Storefront domain:", domain, "| tokenPrefix:", token ? token.slice(0, 8) + "..." : "MISSING");
+        if (!domain || !token) {
+          console.error("[search] Storefront API not configured — domain or token missing");
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Storefront API not configured" });
+        }
+        const gql = `
+          query SearchProducts($query: String!, $limit: Int!) {
+            products(first: $limit, query: $query, sortKey: RELEVANCE) {
+              nodes {
+                id title handle
+                priceRange { minVariantPrice { amount currencyCode } }
+                featuredImage { url altText }
+                variants(first: 1) { nodes { id availableForSale } }
+              }
+            }
+          }
+        `;
+        const payload = { query: gql, variables: { query: input.query, limit: input.limit } };
+        console.log("[search] GraphQL variables:", JSON.stringify(payload.variables));
+        try {
+          const res = await fetch(`https://${domain}/api/2025-01/graphql.json`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Shopify-Storefront-Access-Token": token,
+            },
+            body: JSON.stringify(payload),
+          });
+          const rawBody = await res.text();
+          console.log("[search] Storefront API response status:", res.status, res.statusText);
+          console.log("[search] Storefront API raw response body:", rawBody.slice(0, 2000));
+          if (!res.ok) {
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `Storefront API returned ${res.status}: ${rawBody.slice(0, 500)}` });
+          }
+          let json: {
+            data?: { products?: { nodes?: Array<{ id: string; title: string; handle: string; priceRange: { minVariantPrice: { amount: string; currencyCode: string } }; featuredImage: { url: string; altText: string | null } | null; variants: { nodes: Array<{ id: string; availableForSale: boolean }> } }> } };
+            errors?: Array<{ message: string }>;
+          };
+          try { json = JSON.parse(rawBody); }
+          catch { throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Invalid JSON from Storefront API" }); }
+          if (json.errors?.length) {
+            console.error("[search] GraphQL errors:", JSON.stringify(json.errors));
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: json.errors[0].message });
+          }
+          const nodes = json.data?.products?.nodes ?? [];
+          console.log(`[search] Result count: ${nodes.length} products for query "${input.query}"`);
+          if (nodes.length === 0) console.warn("[search] Zero products returned — verify query matches products in the store.");
+          const mapped = nodes.map((p) => {
+            const { amount, currencyCode } = p.priceRange.minVariantPrice;
+            const symbol = currencyCode === "USD" ? "$" : currencyCode + " ";
+            return { id: p.id, title: p.title, handle: p.handle, price: `${symbol}${parseFloat(amount).toFixed(2)}`, imageUrl: p.featuredImage?.url ?? "", imageAlt: p.featuredImage?.altText ?? p.title, url: `/products/${p.handle}`, variantId: p.variants.nodes[0]?.id ?? "", availableForSale: p.variants.nodes[0]?.availableForSale ?? false };
+          });
+          if (mapped.length > 0) console.log("[search] First mapped result:", JSON.stringify(mapped[0]));
+          return mapped;
+        } catch (err) {
+          if (err instanceof TRPCError) throw err;
+          console.error("[search] Unexpected error:", err instanceof Error ? err.message : err);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: err instanceof Error ? err.message : "Search request failed" });
+        }
+      }),
+  }),
 });
 
 export type VercelRouter = typeof vercelRouter;
