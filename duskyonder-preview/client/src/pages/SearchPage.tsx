@@ -258,14 +258,22 @@ export default function SearchPage() {
                     Products
                   </h2>
                 )}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
-                  {sortedProducts.map((p) => (
-                    <div key={p.id} style={{ background: "#fff", borderRadius: 4, overflow: "visible", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
-                      <a href={p.url} style={{ display: "block", aspectRatio: "3/4", background: "#1A3D2B", overflow: "hidden", borderRadius: "4px 4px 0 0", position: "relative" }}>
-                        {p.imageUrl ? (
-                          <img src={p.imageUrl} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 24 }}>
+                  {sortedProducts.map((p) => {
+                    // Append width=600 for high-res Shopify CDN image
+                    const hiResUrl = p.imageUrl
+                      ? p.imageUrl.includes("?")
+                        ? `${p.imageUrl}&width=600`
+                        : `${p.imageUrl}?width=600`
+                      : "";
+                    return (
+                    <div key={p.id} style={{ background: "#fff", borderRadius: 4, overflow: "visible", boxShadow: "0 1px 8px rgba(0,0,0,0.07)" }}>
+                      {/* Image — forced 3:4 aspect, full image visible (object-contain) */}
+                      <a href={p.url} style={{ display: "block", aspectRatio: "3/4", background: "#F5F3F0", overflow: "hidden", borderRadius: "4px 4px 0 0", position: "relative" }}>
+                        {hiResUrl ? (
+                          <img src={hiResUrl} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
                         ) : (
-                          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.25)", fontSize: "0.72rem" }}>产品图片</div>
+                          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(0,0,0,0.2)", fontSize: "0.75rem" }}>No image</div>
                         )}
                         {p.badge && (
                           <div style={{ position: "absolute", top: 10, left: 10, background: "#175C40", color: "#fff", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", padding: "3px 7px", borderRadius: 2, textTransform: "uppercase" }}>
@@ -273,12 +281,12 @@ export default function SearchPage() {
                           </div>
                         )}
                       </a>
-                      <div style={{ padding: "14px 14px 16px" }}>
+                      <div style={{ padding: "16px 16px 18px" }}>
                         <a href={p.url} style={{ textDecoration: "none", color: "inherit" }}>
-                          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1A1A1A", marginBottom: 6, lineHeight: 1.3 }}>{p.title}</div>
+                          <div style={{ fontSize: "1rem", fontWeight: 600, color: "#1A1A1A", marginBottom: 8, lineHeight: 1.35 }}>{p.title}</div>
                         </a>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
-                          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#175C40" }}>{p.price}</span>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 14 }}>
+                          <span style={{ fontSize: "1rem", fontWeight: 700, color: "#175C40" }}>{p.price}</span>
                           {p.colors && p.colors.length > 0 && (
                             <div style={{ display: "flex", gap: 4 }}>
                               {p.colors.slice(0, 4).map((c, ci) => (
@@ -289,13 +297,14 @@ export default function SearchPage() {
                         </div>
                         <button
                           onClick={() => { addItem({ variantId: (p as any).variantId || p.id, name: p.title, price: p.price, imageUrl: p.imageUrl }); openCart(); }}
-                          style={{ width: "100%", padding: "9px 0", background: "#0D3D2B", color: "#fff", border: "none", borderRadius: 2, fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+                          style={{ width: "100%", padding: "10px 0", background: "#0D3D2B", color: "#fff", border: "none", borderRadius: 2, fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
                         >
                           Add to Cart
                         </button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
