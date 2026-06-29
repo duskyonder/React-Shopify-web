@@ -621,28 +621,32 @@ export const appRouter = router({
             }
           }
         `;
+        const searchPayload = { query: gql, variables: { query: input.query, limit: input.limit } };
+        console.log("[search] Input query:", input.query, "| limit:", input.limit);
+        console.log("[search] Storefront domain:", domain, "| tokenPrefix:", token.slice(0, 8) + "...");
+        console.log("[search] GraphQL payload variables:", JSON.stringify(searchPayload.variables));
         try {
           const res = await fetch(
-            `https://${domain}/api/2024-10/graphql.json`,
+            `https://${domain}/api/2025-01/graphql.json`,
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
                 "X-Shopify-Storefront-Access-Token": token,
               },
-              body: JSON.stringify({
-                query: gql,
-                variables: { query: input.query, limit: input.limit },
-              }),
+              body: JSON.stringify(searchPayload),
             }
           );
+          const rawBody = await res.text();
+          console.log("[search] Storefront API response status:", res.status, res.statusText);
+          console.log("[search] Storefront API raw response body:", rawBody.slice(0, 2000));
           if (!res.ok) {
             throw new TRPCError({
               code: "INTERNAL_SERVER_ERROR",
-              message: `Storefront API returned ${res.status}`,
+              message: `Storefront API returned ${res.status}: ${rawBody.slice(0, 500)}`,
             });
           }
-          const json = (await res.json()) as {
+          let json: {
             data?: {
               products?: {
                 nodes?: Array<{
@@ -657,14 +661,26 @@ export const appRouter = router({
             };
             errors?: Array<{ message: string }>;
           };
+          try {
+            json = JSON.parse(rawBody);
+          } catch (parseErr) {
+            console.error("[search] Failed to parse Storefront API JSON:", parseErr);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Invalid JSON from Storefront API" });
+          }
           if (json.errors?.length) {
+            console.error("[search] GraphQL errors:", JSON.stringify(json.errors));
             throw new TRPCError({
               code: "INTERNAL_SERVER_ERROR",
               message: json.errors[0].message,
             });
           }
+          const nodes = json.data?.products?.nodes ?? [];
+          console.log(`[search] Result count: ${nodes.length} products for query "${input.query}"`);
+          if (nodes.length === 0) {
+            console.warn("[search] Zero products returned — check if query matches any products in the store.");
+          }
           // Map Shopify nodes to a clean frontend shape
-          return (json.data?.products?.nodes ?? []).map((p) => {
+          return nodes.map((p) => {
             const { amount, currencyCode } = p.priceRange.minVariantPrice;
             const symbol = currencyCode === "USD" ? "$" : currencyCode + " ";
             return {
@@ -681,9 +697,10 @@ export const appRouter = router({
           });
         } catch (err) {
           if (err instanceof TRPCError) throw err;
+          console.error("[search] Unexpected error:", err instanceof Error ? err.message : err);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Search request failed",
+            message: err instanceof Error ? err.message : "Search request failed",
           });
         }
       }),
