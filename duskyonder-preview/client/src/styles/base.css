@@ -124,11 +124,9 @@
   overflow-x: hidden;
   /* No top padding — hero extends behind the transparent navbar for full-bleed effect */
   padding-top: 0;
-  /* Cap content at 1440px and centre on very wide screens */
+  /* Ensure the wrapper never exceeds the viewport width */
   width: 100%;
-  max-width: 1440px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 100%;
   box-sizing: border-box;
 }
 /* storefront-wrapper: outermost shell — must not allow horizontal scroll */
@@ -1084,7 +1082,7 @@
 .sf-footer {
   background: #0a2e1e;
   color: rgba(255,255,255,0.8);
-  padding: var(--footer-pad-y, 80px) 0 64px; /* increased bottom padding for visual balance */
+  padding: var(--footer-pad-y, 60px) 0 32px;
 }
 .sf-footer-grid {
   display: grid;
@@ -1102,7 +1100,7 @@
   .sf-footer-desktop { display: none !important; }
   .sf-footer-mobile { display: block; }
   .sf-footer {
-    padding: var(--footer-m-pad-y, 40px) 0 32px; /* increased mobile bottom padding for balance */
+    padding: var(--footer-m-pad-y, 32px) 0 20px;
     display: flex;
     flex-direction: column;
   }
@@ -1231,7 +1229,6 @@
   .sf-footer-bottom {
     font-size: 0.72rem !important;
     padding-top: 0 !important;
-    padding-bottom: 24px !important; /* added mobile bottom padding */
     padding-left: 20px !important;
     padding-right: 20px !important;
     justify-content: center !important;
@@ -1270,7 +1267,6 @@
 .sf-footer-bottom {
   border-top: 1px solid rgba(255,255,255,0.1);
   padding-top: 24px;
-  padding-bottom: 32px; /* added bottom breathing room */
   max-width: 1280px;
   margin: 0 auto;
   padding-left: 24px;
