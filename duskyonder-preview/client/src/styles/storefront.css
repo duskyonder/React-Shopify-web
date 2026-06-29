@@ -413,6 +413,14 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Anchor to top so model's head is never cropped.
+     Offset by header area (promo ~40px + header ~64px = ~104px) so the subject
+     clears the fixed logo on first paint. */
+  object-position: top center;
+  /* Push the visible image area down by the header height so the top of the
+     image (model's head) starts below the logo, not behind it. */
+  top: calc(var(--promo-height, 40px) + 64px);
+  height: calc(100% - var(--promo-height, 40px) - 64px);
 }
 /* CSS-driven image switching — no JS required */
 .sf-hero-img-desktop { display: block; }
@@ -422,6 +430,11 @@
   .sf-hero-img-mobile  { display: block; }
   /* Fallback: if desktop is the only image rendered (no separate mobile URL), keep it visible */
   .sf-hero-img-desktop:only-child { display: block; }
+  /* Mobile: use mobile promo height for offset */
+  .sf-hero-img {
+    top: calc(var(--promo-m-height, 36px) + 64px);
+    height: calc(100% - var(--promo-m-height, 36px) - 64px);
+  }
 }
 .sf-hero-dots {
   position: absolute;

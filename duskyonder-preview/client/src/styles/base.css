@@ -277,7 +277,7 @@
   position: relative;
   overflow: hidden;
   overflow-x: hidden; /* explicit guard: prevent horizontal bleed on mobile */
-  background: #0D3D2B;
+  background: #FAF8F4; /* neutral warm tone — matches design system, no dark green flash */
   /* Hero sits below the header, no negative margin */
   margin-top: 0;
   /* Full-viewport height — CSS-driven, no JS needed */
@@ -302,7 +302,7 @@
   position: absolute;
   inset: 0;
   object-fit: cover;
-  object-position: center center; /* keep subject centred on all viewports */
+  object-position: top center; /* anchor to top so model's head is never cropped */
   width: 100%;
   max-width: 100%; /* prevent image from overflowing hero bounds */
   height: 100%;
