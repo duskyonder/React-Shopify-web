@@ -8,57 +8,35 @@
  *
  * This allows the admin editor to persist changes to Shopify, and the
  * storefront to read configuration directly from Shopify without a separate DB.
+ *
+ * Token management is delegated to server/lib/shopifyAdminAuth.ts which
+ * attempts an OAuth refresh (Partner App flow) before falling back to the
+ * static SHOPIFY_ADMIN_TOKEN env var.
  */
 
-const SHOPIFY_DOMAIN = "c81aag-cy.myshopify.com";
-const SHOPIFY_API_VERSION = "2024-10";
+import { shopifyAdminFetch, getAdminToken } from "./lib/shopifyAdminAuth";
+
 const METAOBJECT_TYPE = "duskyonder_site_config";
 
 /**
  * Returns Shopify Admin API request headers.
- * Reads SHOPIFY_ADMIN_TOKEN directly from process.env at call time (never
- * cached at module init) to work correctly with Vercel's serverless model.
- * Custom Apps use a permanent shpat_ token — no OAuth exchange needed.
+ * Delegates token acquisition to shopifyAdminAuth (OAuth-aware, cached).
+ * Now async — awaits the valid token before returning.
  */
-export function getShopifyAdminHeaders(): Record<string, string> {
-  const token = process.env.SHOPIFY_ADMIN_TOKEN;
-  if (!token) {
-    throw new Error(
-      "Vercel Runtime Error: SHOPIFY_ADMIN_TOKEN is missing from process.env. " +
-      "Set the permanent shpat_ token in Vercel Project Settings → Environment Variables."
-    );
-  }
+export async function getShopifyAdminHeaders(): Promise<Record<string, string>> {
+  const token = await getAdminToken();
   return {
     "Content-Type": "application/json",
-    "X-Shopify-Access-Token": token.trim(),
+    "X-Shopify-Access-Token": token,
   };
 }
 
+/**
+ * Internal GraphQL helper — delegates to shopifyAdminFetch which handles
+ * 401 retry, OAuth refresh, and full diagnostic logging.
+ */
 async function shopifyAdminGraphQL(query: string, variables?: Record<string, unknown>) {
-  const headers = getShopifyAdminHeaders();
-  const res = await fetch(
-    `https://${SHOPIFY_DOMAIN}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ query, variables }),
-    }
-  );
-  if (!res.ok) {
-    if (res.status === 401) {
-      throw new Error(
-        `Shopify Admin API 401 Unauthorized. Token was present in process.env at request time ` +
-        `but Shopify rejected it. Verify the token value in Vercel env vars matches the ` +
-        `active Custom App token in the Shopify Admin (Apps → Develop apps → your app → API credentials).`
-      );
-    }
-    throw new Error(`Shopify Admin API error: ${res.status} ${res.statusText}`);
-  }
-  const json = (await res.json()) as { data?: unknown; errors?: unknown[] };
-  if (json.errors) {
-    throw new Error(`Shopify GraphQL errors: ${JSON.stringify(json.errors)}`);
-  }
-  return json.data as Record<string, unknown>;
+  return shopifyAdminFetch(query, variables);
 }
 
 /**

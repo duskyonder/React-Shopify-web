@@ -20,6 +20,7 @@ import superjson from "superjson";
 import { z } from "zod";
 import path from "path";
 import fs from "fs";
+import { shopifyAdminFetch } from "../server/lib/shopifyAdminAuth";
 
 // ── Inline tRPC init (avoids @shared/const path alias) ────────────────────────
 const t = initTRPC.create({ transformer: superjson });
@@ -31,46 +32,24 @@ const SHOPIFY_DOMAIN = "c81aag-cy.myshopify.com";
 const SHOPIFY_API_VERSION = "2024-10";
 const METAOBJECT_TYPE = "duskyonder_site_config";
 
-function getAdminToken(): string {
-  return process.env.SHOPIFY_ADMIN_TOKEN ?? "";
-}
-
+/**
+ * Delegates to shopifyAdminFetch (shopifyAdminAuth.ts) which handles
+ * OAuth refresh, 401 retry, and full diagnostic logging.
+ * Wraps errors in TRPCError for consistent error handling.
+ */
 async function shopifyAdminGraphQL(
   query: string,
   variables?: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const token = getAdminToken();
-  if (!token) {
+  try {
+    return await shopifyAdminFetch(query, variables);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "SHOPIFY_ADMIN_TOKEN is not configured in Vercel environment variables.",
+      message: msg,
     });
   }
-  const res = await fetch(
-    `https://${SHOPIFY_DOMAIN}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": token,
-      },
-      body: JSON.stringify({ query, variables }),
-    }
-  );
-  if (!res.ok) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: `Shopify Admin API error: ${res.status} ${res.statusText}`,
-    });
-  }
-  const json = (await res.json()) as { data?: unknown; errors?: unknown[] };
-  if (json.errors) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: `Shopify GraphQL errors: ${JSON.stringify(json.errors)}`,
-    });
-  }
-  return json.data as Record<string, unknown>;
 }
 
 // ── MySQL site-config helpers (replaces Shopify Metaobjects for config storage) ─
