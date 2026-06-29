@@ -260,11 +260,11 @@ export default function SearchPage() {
                 )}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 24 }}>
                   {sortedProducts.map((p) => {
-                    // Append width=600 for high-res Shopify CDN image
+                    // Append width=800 for high-res Shopify CDN image
                     const hiResUrl = p.imageUrl
                       ? p.imageUrl.includes("?")
-                        ? `${p.imageUrl}&width=600`
-                        : `${p.imageUrl}?width=600`
+                        ? `${p.imageUrl}&width=800`
+                        : `${p.imageUrl}?width=800`
                       : "";
                     return (
                     <div key={p.id} style={{ background: "#fff", borderRadius: 4, overflow: "visible", boxShadow: "0 1px 8px rgba(0,0,0,0.07)" }}>
