@@ -124,6 +124,17 @@
   overflow-x: hidden;
   /* No top padding — hero extends behind the transparent navbar for full-bleed effect */
   padding-top: 0;
+  /* Ensure the wrapper never exceeds the viewport width */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+/* storefront-wrapper: outermost shell — must not allow horizontal scroll */
+.storefront-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* --- Header --- */
@@ -265,11 +276,16 @@
 .sf-hero {
   position: relative;
   overflow: hidden;
+  overflow-x: hidden; /* explicit guard: prevent horizontal bleed on mobile */
   background: #0D3D2B;
   /* Hero sits below the header, no negative margin */
   margin-top: 0;
   /* Full-viewport height — CSS-driven, no JS needed */
   height: 100vh;
+  /* Prevent any child from forcing the hero wider than the viewport */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 @media (max-width: 767px) {
   /* Use safe viewport height on mobile to avoid browser chrome overlap */
@@ -286,7 +302,9 @@
   position: absolute;
   inset: 0;
   object-fit: cover;
+  object-position: center center; /* keep subject centred on all viewports */
   width: 100%;
+  max-width: 100%; /* prevent image from overflowing hero bounds */
   height: 100%;
 }
 .sf-hero-placeholder-bg {
@@ -310,8 +328,9 @@
   padding: 0 24px;
   /* Full width — no max-width here; editor controls alignment via CSS var */
   width: 100%;
-  max-width: none;
+  max-width: 100%; /* changed from 'none' to prevent overflow on narrow viewports */
   box-sizing: border-box;
+  overflow: hidden; /* clip any oversized child text or inline elements */
   /* Horizontal alignment driven by --hero-align-h (set per-slide from editor) */
   align-items: var(--hero-align-h, flex-start);
   /* Use CSS custom properties set inline by React for desktop */
