@@ -45,8 +45,8 @@ export function AUHero() {
       className="au2-hero"
       style={{
         background: au.heroBgUrl
-          ? `linear-gradient(to bottom, rgba(13,61,43,0.72) 0%, rgba(13,61,43,0.55) 100%), url(${au.heroBgUrl}) center/cover no-repeat`
-          : "linear-gradient(160deg, #0D3D2B 0%, #175C40 55%, #1a6b4a 100%)",
+          ? `url(${au.heroBgUrl}) center/cover no-repeat`
+          : "#FAF8F4",
         minHeight: au.heroMinHeight ? `${au.heroMinHeight}px` : undefined,
         ...heroPositionVars(au.heroDesktopPosition, au.heroMobilePosition),
       }}
@@ -58,7 +58,7 @@ export function AUHero() {
       </div>
       <div className="au2-scroll-hint">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 5v14M5 12l7 7 7-7" stroke="rgba(255,255,255,0.55)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M12 5v14M5 12l7 7 7-7" stroke="rgba(13,61,43,0.45)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </div>
     </section>
