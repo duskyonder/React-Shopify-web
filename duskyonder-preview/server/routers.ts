@@ -575,5 +575,118 @@ export const appRouter = router({
         };
       }),
   }),
+
+  // Live Shopify product search — proxies Storefront API with debounce-friendly query
+  search: router({
+    products: publicProcedure
+      .input(
+        z.object({
+          query: z.string().min(1).max(200),
+          limit: z.number().int().min(1).max(20).optional().default(8),
+        })
+      )
+      .query(async ({ input }) => {
+        const domain =
+          process.env.SHOPIFY_STORE_DOMAIN ??
+          process.env.VITE_SHOPIFY_STORE_DOMAIN ??
+          "";
+        const token =
+          process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
+          process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN ??
+          "";
+        if (!domain || !token) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Storefront API not configured",
+          });
+        }
+        const gql = `
+          query SearchProducts($query: String!, $limit: Int!) {
+            products(first: $limit, query: $query, sortKey: RELEVANCE) {
+              nodes {
+                id
+                title
+                handle
+                priceRange {
+                  minVariantPrice { amount currencyCode }
+                }
+                featuredImage { url altText }
+                variants(first: 1) {
+                  nodes {
+                    id
+                    availableForSale
+                  }
+                }
+              }
+            }
+          }
+        `;
+        try {
+          const res = await fetch(
+            `https://${domain}/api/2024-10/graphql.json`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Shopify-Storefront-Access-Token": token,
+              },
+              body: JSON.stringify({
+                query: gql,
+                variables: { query: input.query, limit: input.limit },
+              }),
+            }
+          );
+          if (!res.ok) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: `Storefront API returned ${res.status}`,
+            });
+          }
+          const json = (await res.json()) as {
+            data?: {
+              products?: {
+                nodes?: Array<{
+                  id: string;
+                  title: string;
+                  handle: string;
+                  priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
+                  featuredImage: { url: string; altText: string | null } | null;
+                  variants: { nodes: Array<{ id: string; availableForSale: boolean }> };
+                }>;
+              };
+            };
+            errors?: Array<{ message: string }>;
+          };
+          if (json.errors?.length) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: json.errors[0].message,
+            });
+          }
+          // Map Shopify nodes to a clean frontend shape
+          return (json.data?.products?.nodes ?? []).map((p) => {
+            const { amount, currencyCode } = p.priceRange.minVariantPrice;
+            const symbol = currencyCode === "USD" ? "$" : currencyCode + " ";
+            return {
+              id: p.id,
+              title: p.title,
+              handle: p.handle,
+              price: `${symbol}${parseFloat(amount).toFixed(2)}`,
+              imageUrl: p.featuredImage?.url ?? "",
+              imageAlt: p.featuredImage?.altText ?? p.title,
+              url: `/products/${p.handle}`,
+              variantId: p.variants.nodes[0]?.id ?? "",
+              availableForSale: p.variants.nodes[0]?.availableForSale ?? false,
+            };
+          });
+        } catch (err) {
+          if (err instanceof TRPCError) throw err;
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Search request failed",
+          });
+        }
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

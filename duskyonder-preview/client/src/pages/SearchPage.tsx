@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useSearch } from "wouter";
 import { useThemeConfig, CollectionSeries } from "@/contexts/ThemeConfigContext";
 import { useCart } from "@/contexts/CartContext";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
+import { trpc } from "@/lib/trpc";
 
 // ==================== SEARCH PAGE ====================
 // Shopify equivalent: /search (search.liquid)
@@ -24,9 +25,20 @@ export default function SearchPage() {
   const [inputValue, setInputValue] = useState(initialQuery);
   const [sort, setSort] = useState<SortOption>("relevance");
   const [filter, setFilter] = useState<FilterType>("all");
+  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
 
-  // Build searchable items from ThemeConfig
-  const allProducts = config.products || [];
+  // Debounce: fire the API call 400ms after the user commits a search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query.trim()), 400);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Live Shopify product search via tRPC
+  const { data: liveProducts, isFetching: searchLoading, isError: searchError } = trpc.search.products.useQuery(
+    { query: debouncedQuery, limit: 20 },
+    { enabled: debouncedQuery.length > 0, staleTime: 30_000 }
+  );
+
   const allSeries = config.seriesList || [];
 
   const staticPages = [
@@ -42,9 +54,18 @@ export default function SearchPage() {
     if (!query.trim()) return { products: [], collections: [], pages: [] };
     const q = query.toLowerCase();
 
-    const products = allProducts
-      .filter((p) => p.name.toLowerCase().includes(q) || (p.badge || "").toLowerCase().includes(q))
-      .map((p) => ({ type: "product" as const, id: p.id, title: p.name, price: p.price, badge: p.badge, imageUrl: p.imageUrl, colors: p.colors, url: p.detailUrl || `/products/${p.id}` }));
+    // Live Shopify products mapped to the product card shape
+    const products = (liveProducts ?? []).map((p) => ({
+      type: "product" as const,
+      id: p.id,
+      title: p.title,
+      price: p.price,
+      badge: undefined as string | undefined,
+      imageUrl: p.imageUrl,
+      colors: [] as string[],
+      url: p.url,
+      variantId: p.variantId,
+    }));
 
     const collections = allSeries
       .filter((s: CollectionSeries) => s.name.toLowerCase().includes(q) || (s.description || "").toLowerCase().includes(q) || s.label.toLowerCase().includes(q))
@@ -53,7 +74,7 @@ export default function SearchPage() {
     const pages = staticPages.filter((p) => p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q));
 
     return { products, collections, pages };
-  }, [query, allProducts, allSeries]);
+  }, [query, liveProducts, allSeries]);
 
   const sortedProducts = useMemo(() => {
     const list = [...results.products];
@@ -164,6 +185,17 @@ export default function SearchPage() {
               ))}
             </div>
           </div>
+        ) : searchLoading ? (
+          /* Loading state */
+          <div style={{ textAlign: "center", padding: "60px 0", color: "#888", fontSize: "0.9rem" }}>
+            Searching for &ldquo;{query}&rdquo;…
+          </div>
+        ) : searchError ? (
+          /* Error state */
+          <div style={{ textAlign: "center", padding: "60px 0" }}>
+            <h2 style={{ fontFamily: "'Tenor Sans', sans-serif", fontSize: "2rem", fontWeight: 400, color: "#1A1A1A", margin: "0 0 16px" }}>Search unavailable</h2>
+            <p style={{ fontSize: "0.88rem", color: "#888" }}>Something went wrong. Please try again in a moment.</p>
+          </div>
         ) : totalCount === 0 ? (
           /* No results */
           <div style={{ textAlign: "center", padding: "60px 0" }}>
@@ -256,7 +288,7 @@ export default function SearchPage() {
                           )}
                         </div>
                         <button
-                          onClick={() => { addItem({ id: p.id, name: p.title, price: p.price, imageUrl: p.imageUrl }); openCart(); }}
+                          onClick={() => { addItem({ variantId: (p as any).variantId || p.id, name: p.title, price: p.price, imageUrl: p.imageUrl }); openCart(); }}
                           style={{ width: "100%", padding: "9px 0", background: "#0D3D2B", color: "#fff", border: "none", borderRadius: 2, fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
                         >
                           Add to Cart

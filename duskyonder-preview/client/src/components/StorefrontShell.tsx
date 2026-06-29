@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import { useCart } from "@/contexts/CartContext";
 import { trpc } from "@/lib/trpc";
@@ -149,7 +149,20 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Debounce: fire the API call 400ms after the user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Live Shopify product search via tRPC
+  const { data: liveProducts, isFetching: searchLoading } = trpc.search.products.useQuery(
+    { query: debouncedQuery, limit: 8 },
+    { enabled: debouncedQuery.length > 0, staleTime: 30_000 }
+  );
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 10);
@@ -171,25 +184,16 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
     };
   }, [searchOpen]);
 
-  // Derive search results from config data
-  const searchResults = useCallback(() => {
+  // Build search results: live Shopify products + static collection/page matches
+  const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
     const results: Array<{ type: string; title: string; url: string; imageUrl?: string; subtitle?: string }> = [];
-    // Products
-    const allProducts = [
-      ...(config.products || []),
-      ...(config.collections || []).flatMap(c => c.products || []),
-    ];
-    const seen = new Set<string>();
-    allProducts.forEach(p => {
-      if (seen.has(p.id)) return;
-      seen.add(p.id);
-      if (p.name?.toLowerCase().includes(q)) {
-        results.push({ type: "Product", title: p.name, url: (p as any).detailUrl || `/products/${p.name.toLowerCase().replace(/\s+/g, "-")}`, imageUrl: p.imageUrl, subtitle: p.price });
-      }
+    // Live Shopify products (from tRPC — keyed to debouncedQuery)
+    (liveProducts ?? []).forEach(p => {
+      results.push({ type: "Product", title: p.title, url: p.url, imageUrl: p.imageUrl, subtitle: p.price });
     });
-    // Collections
+    // Collections from CMS config
     (config.collections || []).forEach(c => {
       if (c.title?.toLowerCase().includes(q)) {
         results.push({ type: "Collection", title: c.title, url: `/collections/${c.handle}` });
@@ -207,7 +211,7 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
       });
     });
     return results.slice(0, 8);
-  }, [searchQuery, config]);
+  }, [searchQuery, liveProducts, config]);
 
   const navItems = config.navItems || [];
   const navLeft = navItems.filter(item => !/influenc|blog/i.test(item.label || ""));
@@ -431,12 +435,16 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
             {/* Results */}
             {searchQuery.trim() && (
               <div style={{ background: "#fff", borderRadius: 4, marginTop: 8, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.25)" }}>
-                {searchResults().length === 0 ? (
+                {searchLoading ? (
+                  <div style={{ padding: "24px", textAlign: "center", color: "#888", fontSize: "0.9rem" }}>
+                    Searching…
+                  </div>
+                ) : searchResults.length === 0 ? (
                   <div style={{ padding: "24px", textAlign: "center", color: "#888", fontSize: "0.9rem" }}>
                     No results for "{searchQuery}"
                   </div>
                 ) : (
-                  searchResults().map((result, i) => (
+                  searchResults.map((result, i) => (
                     <a
                       key={i}
                       href={result.url}
@@ -445,7 +453,7 @@ export function SFHeader({ darkMode = false }: { darkMode?: boolean }) {
                         display: "flex", alignItems: "center", gap: 14,
                         padding: "12px 20px",
                         textDecoration: "none",
-                        borderBottom: i < searchResults().length - 1 ? "1px solid #f5f5f5" : "none",
+                        borderBottom: i < searchResults.length - 1 ? "1px solid #f5f5f5" : "none",
                         transition: "background 0.1s",
                       }}
                       onMouseEnter={e => (e.currentTarget.style.background = "#f9f9f9")}
