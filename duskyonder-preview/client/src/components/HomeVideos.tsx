@@ -5,6 +5,7 @@ import { useCart } from "@/contexts/CartContext";
 import { ColorSwatch } from "@/components/StorefrontShell";
 import { PlayIcon, XIcon, HeartIcon, ImgPlaceholder } from "@/components/HomeIcons";
 import { fetchProductByHandle, type ShopifyProduct } from "@/lib/shopify";
+import { QuickAddDrawer, type QuickAddProduct } from "@/components/QuickAddDrawer";
 
 // ── Small icon helpers ──────────────────────────────────────────────────────
 const MuteIcon = ({ muted }: { muted: boolean }) => muted ? (
@@ -76,10 +77,11 @@ interface VideoCardMobileProps {
   videos: any[];
   videoIndex: number;
   onFullscreen: (video: any, index: number) => void;
+  onQuickAdd?: (product: QuickAddProduct) => void;
 }
 
 // ── Mobile Video Card (inline play) ─────────────────────────────────────────
-function MobileVideoCard({ video, mobileWidth, mobileGap, config, videos, videoIndex, onFullscreen }: VideoCardMobileProps) {
+function MobileVideoCard({ video, mobileWidth, mobileGap, config, videos, videoIndex, onFullscreen, onQuickAdd }: VideoCardMobileProps) {
   const { addItem, openCart } = useCart();
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -133,8 +135,27 @@ function MobileVideoCard({ video, mobileWidth, mobileGap, config, videos, videoI
     : video.linkedProductComparePrice || "";
 
   const handleAddToCart = () => {
+    // Resolve variant GID from live Shopify data; fall back to product GID
+    let variantId: string | undefined;
+    if (shopifyProduct?.variants?.length) {
+      const matched =
+        shopifyProduct.variants.find(v => {
+          const colorOk = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === 'color' && o.value === selectedColor);
+          const sizeOk = !selectedSize || v.selectedOptions.some(o => o.name.toLowerCase() === 'size' && o.value === selectedSize);
+          return colorOk && sizeOk && v.availableForSale;
+        }) ??
+        shopifyProduct.variants.find(v => {
+          const colorOk = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === 'color' && o.value === selectedColor);
+          const sizeOk = !selectedSize || v.selectedOptions.some(o => o.name.toLowerCase() === 'size' && o.value === selectedSize);
+          return colorOk && sizeOk;
+        }) ??
+        shopifyProduct.variants.find(v => v.availableForSale) ??
+        shopifyProduct.variants[0];
+      variantId = matched?.id;
+    }
+    console.log('MobileVideoCard addToCart variantId:', variantId);
     addItem({
-      id: video.linkedProductId || video.id,
+      variantId: variantId || video.linkedProductId || video.id,
       name: productName,
       price: productPrice,
       comparePrice,
@@ -247,9 +268,25 @@ function MobileVideoCard({ video, mobileWidth, mobileGap, config, videos, videoI
             <div style={{ fontSize: 12, color: "#333", marginTop: 2 }}>{productPrice}</div>
           </div>
           <button
-            onClick={() => setSheetOpen(true)}
+            onClick={() => {
+              if (onQuickAdd && (video.linkedProductHandle || video.linkedProductId)) {
+                onQuickAdd({
+                  handle: video.linkedProductHandle || null,
+                  id: video.linkedProductId || video.id,
+                  name: productName,
+                  price: productPrice,
+                  comparePrice,
+                  imageUrl: imgA || video.linkedProductImage || null,
+                  productUrl: video.linkedProductLink || null,
+                  colors: video.linkedProductColors || [],
+                  sizes: video.linkedProductSizes || [],
+                });
+              } else {
+                setSheetOpen(true);
+              }
+            }}
             style={{ width: 30, height: 30, borderRadius: "50%", background: "#111", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-            aria-label="View product details"
+            aria-label="Quick Add"
           ><ChevronUpIcon /></button>
         </div>
       )}
@@ -481,6 +518,9 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
   const [fullscreenVideo, setFullscreenVideo] = useState<any>(null);
   const [fullscreenIndex, setFullscreenIndex] = useState<number>(0);
 
+  // QuickAddDrawer state (shared across video cards)
+  const [quickAddProduct, setQuickAddProduct] = useState<QuickAddProduct | null>(null);
+
   const trackRef = useRef<HTMLDivElement>(null);
 
   // Auto-fetch Shopify product when desktop modal opens
@@ -603,6 +643,7 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                       videos={videos}
                       videoIndex={idx}
                       onFullscreen={(v, i) => { setFullscreenVideo(v); setFullscreenIndex(i); }}
+                      onQuickAdd={(p) => setQuickAddProduct(p)}
                     />
                   );
                 }
@@ -698,8 +739,27 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
           const imgRatio = config.videoModalImgRatio || "3/4";
 
           const handleAddToCart = () => {
+            // Resolve variant GID from live Shopify data
+            let variantId: string | undefined;
+            if (shopifyProduct?.variants?.length) {
+              const matched =
+                shopifyProduct.variants.find(v => {
+                  const colorOk = !selectedVideoColor || v.selectedOptions.some(o => o.name.toLowerCase() === 'color' && o.value === selectedVideoColor);
+                  const sizeOk = !selectedVideoSize || v.selectedOptions.some(o => o.name.toLowerCase() === 'size' && o.value === selectedVideoSize);
+                  return colorOk && sizeOk && v.availableForSale;
+                }) ??
+                shopifyProduct.variants.find(v => {
+                  const colorOk = !selectedVideoColor || v.selectedOptions.some(o => o.name.toLowerCase() === 'color' && o.value === selectedVideoColor);
+                  const sizeOk = !selectedVideoSize || v.selectedOptions.some(o => o.name.toLowerCase() === 'size' && o.value === selectedVideoSize);
+                  return colorOk && sizeOk;
+                }) ??
+                shopifyProduct.variants.find(v => v.availableForSale) ??
+                shopifyProduct.variants[0];
+              variantId = matched?.id;
+            }
+            console.log('DesktopModal addToCart variantId:', variantId);
             addItem({
-              id: activeVideo.linkedProductId || activeVideo.id,
+              variantId: variantId || activeVideo.linkedProductId || activeVideo.id,
               name: activeVideo.linkedProductName || "",
               price: activeVideo.linkedProductPrice || "",
               comparePrice: activeVideo.linkedProductComparePrice,
@@ -856,6 +916,12 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
         />,
         document.body
       )}
+
+      {/* Unified QuickAddDrawer */}
+      <QuickAddDrawer
+        product={quickAddProduct}
+        onClose={() => setQuickAddProduct(null)}
+      />
     </>
   );
 }

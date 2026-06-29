@@ -4,6 +4,7 @@ import { useCart } from "@/contexts/CartContext";
 import { ColorSwatch } from "@/components/StorefrontShell";
 import { HeartIcon, PlusIcon, XIcon, ImageIcon, ImgPlaceholder } from "@/components/HomeIcons";
 import { fetchProductByHandle, ShopifyProduct } from "@/lib/shopify";
+import { QuickAddDrawer } from "@/components/QuickAddDrawer";
 
 // ==================== QUICK VIEW MODAL ====================
 function QuickViewModal({ product, onClose }: { product: Product; onClose: () => void }) {
@@ -253,6 +254,7 @@ function DesktopProductPager({ products, productsPerRow, renderCard, gap = 0, ca
 function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string; titleAlign?: "left" | "center" | "right" }) {
   const { config } = useThemeConfig();
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
   const [wishlist, setWishlist] = useState<Set<string>>(new Set());
   const [hoveredColors, setHoveredColors] = useState<Record<string, number>>({}); // productId → colorIdx
   const [isMobile, setIsMobile] = useState(false);
@@ -393,6 +395,24 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
             )}
           </div>
           {product.badge && <span className="sf-product-badge">{product.badge}</span>}
+          {/* Mobile: bottom-right + button triggers QuickAddDrawer */}
+          {isMobile && (
+            <button
+              className="sf-product-mobile-quickadd-btn"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickAddProduct(product); }}
+              aria-label="Quick Add"
+              style={{
+                position: "absolute", bottom: 8, right: 8,
+                width: 32, height: 32, borderRadius: "50%",
+                background: "#1a3a2a", border: "none", color: "#fff",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", zIndex: 5,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.22)",
+              }}
+            >
+              <PlusIcon />
+            </button>
+          )}
           <div className="sf-product-hover-actions">
             <button
               className="sf-product-action-btn sf-quickadd-btn"
@@ -493,6 +513,21 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
       {quickViewProduct && (
         <QuickViewModal product={quickViewProduct} onClose={() => setQuickViewProduct(null)} />
       )}
+
+      {/* Mobile QuickAddDrawer */}
+      <QuickAddDrawer
+        product={quickAddProduct ? {
+          handle: quickAddProduct.detailUrl?.split('/products/')[1]?.split('?')[0] || null,
+          id: quickAddProduct.id,
+          name: quickAddProduct.name,
+          price: quickAddProduct.price,
+          imageUrl: quickAddProduct.imageUrl || null,
+          productUrl: quickAddProduct.detailUrl || null,
+          colors: quickAddProduct.colors || [],
+          colorImages: quickAddProduct.colorImages,
+        } : null}
+        onClose={() => setQuickAddProduct(null)}
+      />
     </>
   );
 }

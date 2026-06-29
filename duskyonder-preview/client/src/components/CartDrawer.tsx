@@ -577,8 +577,9 @@ export function CartDrawer() {
                           product={prod}
                           onAdd={() => {
                             // Extract variant GID using verified path from diagnostic
-                            const resolvedVariantId = (prod.variants && prod.variants[0]?.id)
-                              ? prod.variants[0].id
+                            const prodAny = prod as any;
+                            const resolvedVariantId = (prodAny.variants && prodAny.variants[0]?.id)
+                              ? prodAny.variants[0].id
                               : prod.id;
 
                             console.log("Resolved Variant ID:", resolvedVariantId);
