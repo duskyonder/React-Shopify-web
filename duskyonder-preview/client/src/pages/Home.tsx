@@ -605,6 +605,14 @@ const SECTION_MAP: Partial<Record<SectionKey, React.ComponentType<{ instanceId?:
 // ==================== MAIN PAGE ====================
 export default function Home() {
   const { config, isConfigReady } = useThemeConfig();
+  const [veilVisible, setVeilVisible] = React.useState(true);
+  React.useEffect(() => {
+    if (isConfigReady) {
+      // Small delay so the config has painted before we fade out
+      const t = setTimeout(() => setVeilVisible(false), 50);
+      return () => clearTimeout(t);
+    }
+  }, [isConfigReady]);
 
   const sectionOrder = config.sectionOrder || [
     { key: "hero" as SectionKey, label: "英雄横幅", visible: true },
@@ -624,19 +632,18 @@ export default function Home() {
         ["--promo-m-height" as string]: config.showPromoBar ? `${config.promoBarMobileHeight ?? 36}px` : "0px",
       } as React.CSSProperties}
     >
-      {/* Loading veil: covers the page until the real config has loaded, then fades out.
-          This prevents users from seeing the default placeholder hero for ~100-200ms. */}
-      {!isConfigReady && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "#fff",
-            zIndex: 99999,
-            pointerEvents: "none",
-          }}
-        />
-      )}
+      {/* Loading veil: fades out once the real config has painted */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "#fff",
+          zIndex: 99999,
+          pointerEvents: "none",
+          opacity: veilVisible ? 1 : 0,
+          transition: veilVisible ? "none" : "opacity 200ms ease-out",
+        }}
+      />
       {/* PromoBar and Header are OUTSIDE storefront to avoid overflow-x:hidden breaking fixed positioning */}
       <SharedSFPromoBar />
       <SharedSFHeader />
