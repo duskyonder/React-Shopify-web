@@ -174,10 +174,12 @@ function CartItemVariantEditor({ item, onClose }: { item: CartItem; onClose: () 
     // color name in item.selectedColor may not exactly match the Shopify option
     // value name, which would make every size appear unavailable. Sizes are
     // shown as available if they exist in ANY available variant of the product.
-    const isVariantAvailable = (v: ShopifyProductVariant) =>
-      v.availableForSale
-      || v.quantityAvailable == null
-      || (v.quantityAvailable !== undefined && v.quantityAvailable > 0);
+    const isVariantAvailable = (v: ShopifyProductVariant) => {
+      console.log('[CartVariantEditor] Checking variant:', v.title, '| availableForSale:', v.availableForSale, '| quantityAvailable:', v.quantityAvailable, '| selectedOptions:', JSON.stringify(v.selectedOptions));
+      return v.availableForSale
+        || v.quantityAvailable == null
+        || (v.quantityAvailable !== undefined && v.quantityAvailable > 0);
+    };
     return shopifyProduct.variants.some(v => {
       const sizeOk = v.selectedOptions.some(o => o.name.toLowerCase() === 'size' && o.value === size);
       return sizeOk && isVariantAvailable(v);
