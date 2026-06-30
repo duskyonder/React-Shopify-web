@@ -445,6 +445,14 @@ function FullscreenPlayer({ video, videoIndex, videos, onClose, onNavigate }: Fu
   const productPrice = shopifyProduct?.variants?.[0]?.price
     ? `$${parseFloat(shopifyProduct.variants[0].price.amount).toFixed(2)}`
     : video.linkedProductPrice || "";
+  const fpComparePrice = shopifyProduct?.variants?.[0]?.compareAtPrice
+    ? `$${parseFloat(shopifyProduct.variants[0].compareAtPrice.amount).toFixed(2)}`
+    : video.linkedProductComparePrice || "";
+  const fpParseAmt = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
+  const fpSale = fpParseAmt(productPrice);
+  const fpOrig = fpParseAmt(fpComparePrice);
+  const fpHasDiscount = !!(fpComparePrice && fpOrig > fpSale);
+  const fpDiscountPct = fpHasDiscount ? Math.round(((fpOrig - fpSale) / fpOrig) * 100) : 0;
   const productUrl = video.linkedProductLink || "#";
 
   const hasProduct = !!(productName || imgA);
@@ -464,7 +472,11 @@ function FullscreenPlayer({ video, videoIndex, videos, onClose, onNavigate }: Fu
             {imgA && <img src={imgA} alt={productName} style={{ width: 48, height: 60, objectFit: "cover", borderRadius: 4, flexShrink: 0 }} />}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, fontSize: 13, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{productName}</div>
-              <div style={{ fontSize: 13, color: "#ccc", marginTop: 2 }}>{productPrice}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, color: "#fff" }}>{productPrice}</span>
+                {fpHasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", textDecoration: "line-through" }}>{fpComparePrice}</span>}
+                {fpHasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 11, color: "#f87171" }}>-{fpDiscountPct}%</span>}
+              </div>
             </div>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
           </a>
@@ -520,7 +532,11 @@ function FullscreenPlayer({ video, videoIndex, videos, onClose, onNavigate }: Fu
           {imgA && <img src={imgA} alt={productName} style={{ width: 48, height: 60, objectFit: "cover", borderRadius: 4, flexShrink: 0, background: "#333" }} />}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 600, fontSize: 13, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{productName}</div>
-            <div style={{ fontSize: 13, color: "#ccc", marginTop: 2 }}>{productPrice}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, color: "#fff" }}>{productPrice}</span>
+              {fpHasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", textDecoration: "line-through" }}>{fpComparePrice}</span>}
+              {fpHasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 11, color: "#f87171" }}>-{fpDiscountPct}%</span>}
+            </div>
           </div>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
@@ -813,10 +829,16 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             : (activeVideo.linkedProductSizes || []);
 
           const computeDiscountLabel = () => {
-            if (!activeVideo.linkedProductComparePrice || !activeVideo.linkedProductPrice) return null;
-            const parsePrice = (s: string) => parseFloat(s.replace(/[^0-9.]/g, ''));
-            const sale = parsePrice(activeVideo.linkedProductPrice);
-            const orig = parsePrice(activeVideo.linkedProductComparePrice);
+            const parsePrice = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
+            const liveSaleStr = shopifyProduct?.variants?.[0]?.price
+              ? `$${parseFloat(shopifyProduct.variants[0].price.amount).toFixed(2)}`
+              : activeVideo.linkedProductPrice;
+            const liveCompareStr = shopifyProduct?.variants?.[0]?.compareAtPrice
+              ? `$${parseFloat(shopifyProduct.variants[0].compareAtPrice.amount).toFixed(2)}`
+              : activeVideo.linkedProductComparePrice;
+            if (!liveCompareStr || !liveSaleStr) return null;
+            const sale = parsePrice(liveSaleStr);
+            const orig = parsePrice(liveCompareStr);
             if (!orig || !sale || orig <= sale) return null;
             const pct = Math.round((1 - sale / orig) * 100);
             return `LIMITED TIME OFFER: ${pct}% OFF`;
