@@ -168,15 +168,17 @@ function CartItemVariantEditor({ item, onClose }: { item: CartItem; onClose: () 
 
   const isSizeAvailable = (size: string): boolean => {
     if (!shopifyProduct) return true;
-    // A variant is considered available if:
-    // - availableForSale is true, OR
-    // - quantityAvailable is null/undefined (inventory not tracked — always sellable)
+    // A variant is considered available if availableForSale is true OR
+    // quantityAvailable is null (inventory not tracked — always sellable).
+    // NOTE: We intentionally do NOT filter by selectedColor here because the
+    // color name in item.selectedColor may not exactly match the Shopify option
+    // value name, which would make every size appear unavailable. Sizes are
+    // shown as available if they exist in ANY available variant of the product.
     const isVariantAvailable = (v: ShopifyProductVariant) =>
       v.availableForSale || v.quantityAvailable == null;
     return shopifyProduct.variants.some(v => {
       const sizeOk = v.selectedOptions.some(o => o.name.toLowerCase() === 'size' && o.value === size);
-      const colorOk = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === 'color' && o.value === selectedColor);
-      return sizeOk && colorOk && isVariantAvailable(v);
+      return sizeOk && isVariantAvailable(v);
     });
   };
 
