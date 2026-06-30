@@ -163,11 +163,7 @@ export function AUPhilosophy() {
               </li>
             ))}
           </ol>
-          {au.philosophyCtaLabel && (
-            <a href={au.philosophyCtaLink} className="au2-text-link">
-              {au.philosophyCtaLabel} <span className="au2-arrow">→</span>
-            </a>
-          )}
+{/* Explore Our Fabrics link — hidden */}
         </div>
       </div>
     </section>
