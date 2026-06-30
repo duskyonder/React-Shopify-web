@@ -980,7 +980,7 @@ const defaultAboutUsConfig: AboutUsConfig = {
     "Our mission is to engineer versatile apparel that flows with you, supporting your transition from focused work environments to restorative yoga sessions, and everywhere in between.",
     "We are committed to building a lifestyle brand where quality meets the dynamic pace of modern living.",
   ],
-  storyImageUrl: "",
+  storyImageUrl: "https://cdn.shopify.com/s/files/1/0901/5977/6010/files/About-Us-1.jpg?v=1782804068",
   storyImageAspect: "3/4",
   principlesTag: "What We Stand For",
   principlesTitle: "Three Principles, One Philosophy.",
@@ -997,9 +997,9 @@ const defaultAboutUsConfig: AboutUsConfig = {
     "Versatile designs that transition seamlessly across scenarios.",
     "Functional aesthetics built for longevity and performance.",
   ],
-  philosophyCtaLabel: "Explore Our Fabrics",
+  philosophyCtaLabel: "", // temporarily hidden
   philosophyCtaLink: "/pages/fabrics",
-  philosophyImageUrl: "",
+  philosophyImageUrl: "https://cdn.shopify.com/s/files/1/0901/5977/6010/files/About-Us-2.jpg?v=1782806692",
   philosophyImageAspect: "4/5",
   stats: [
     { id: "s1", value: "2025", label: "Founded" },
