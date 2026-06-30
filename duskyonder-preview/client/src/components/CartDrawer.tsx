@@ -181,8 +181,9 @@ function CartItemVariantEditor({ item, onClose }: { item: CartItem; onClose: () 
         || v.quantityAvailable == null
         || (v.quantityAvailable !== undefined && v.quantityAvailable > 0);
     };
+    // Match size by value against any non-color option (handles typos like "Szie")
     return shopifyProduct.variants.some(v => {
-      const sizeOk = v.selectedOptions.some(o => o.name.toLowerCase() === 'size' && o.value === size);
+      const sizeOk = v.selectedOptions.some(o => o.name.toLowerCase() !== 'color' && o.value === size);
       return sizeOk && isVariantAvailable(v);
     });
   };
@@ -192,7 +193,8 @@ function CartItemVariantEditor({ item, onClose }: { item: CartItem; onClose: () 
     const find = (requireAvailable: boolean): ShopifyProductVariant | undefined =>
       shopifyProduct.variants.find(v => {
         const colorOk = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === 'color' && o.value === selectedColor);
-        const sizeOk = !selectedSize || v.selectedOptions.some(o => o.name.toLowerCase() === 'size' && o.value === selectedSize);
+        // Match size by value against any non-color option (handles typos like "Szie")
+        const sizeOk = !selectedSize || v.selectedOptions.some(o => o.name.toLowerCase() !== 'color' && o.value === selectedSize);
         return colorOk && sizeOk && (!requireAvailable || v.availableForSale);
       });
     return (find(true) ?? find(false) ?? shopifyProduct.variants[0])?.id ?? null;
