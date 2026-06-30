@@ -379,8 +379,8 @@ function SFMarquee({ titleAlign = "center" }: { instanceId?: string; titleAlign?
     : [{ id: "mq_legacy", type: "text" as const, text: config.marqueeText || "DUSKYONDER" }];
 
   const isReverse = config.marqueeDirection === "right";
-  const speed = config.marqueeSpeed || 20;
-
+  // Scale duration by item count so visual speed stays consistent regardless of how many items are shown
+  const speed = (config.marqueeSpeed || 20) * items.length;
   // Build the content once, then duplicate for seamless loop.
   // Repeat items enough times so a single short word fills the full banner width.
   const REPEAT = 10;
