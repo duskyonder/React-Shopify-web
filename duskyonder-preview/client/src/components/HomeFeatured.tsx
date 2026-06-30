@@ -296,6 +296,7 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
           id: p.id,
           name: p.title,
           price: p.price,
+          comparePrice: p.comparePrice,
           imageUrl: p.imageUrl,
           hoverImageUrl: p.hoverImageUrl || '',
           colors: p.colors,
@@ -433,7 +434,22 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
         </div>
         <div className="sf-product-info">
           <div className="sf-product-name">{product.name}</div>
-          <div className="sf-product-price">{product.price}</div>
+          <div className="sf-product-price" style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+            {(() => {
+              const parseAmt = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
+              const saleAmt = parseAmt(product.price);
+              const origAmt = parseAmt(product.comparePrice || '');
+              const hasDiscount = !!(product.comparePrice && origAmt > saleAmt);
+              const discountPct = hasDiscount ? Math.round(((origAmt - saleAmt) / origAmt) * 100) : 0;
+              return (
+                <>
+                  {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "0.75rem", color: "#6b7280", textDecoration: "line-through", fontWeight: 300 }}>{product.comparePrice}</span>}
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: hasDiscount ? 700 : 300, color: "#1a1a1a" }}>{product.price}</span>
+                  {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "0.72rem", color: "#dc2626" }}>-{discountPct}%</span>}
+                </>
+              );
+            })()}
+          </div>
           <div className="sf-product-swatches" style={{ position: "relative", zIndex: 10, gap: `${config.productsSwatchGap ?? 4}px`, marginLeft: config.productsSwatchOffsetX ? `${config.productsSwatchOffsetX}px` : undefined, marginTop: `${config.productsSwatchMarginTop ?? 6}px`, justifyContent: config.productsSwatchAlign ?? "flex-start" }}>
             {product.colors.map((color, i) => (
               <div

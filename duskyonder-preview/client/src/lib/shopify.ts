@@ -683,6 +683,10 @@ const GET_BEST_SELLING_PRODUCTS = `
               amount
               currencyCode
             }
+            compareAtPrice {
+              amount
+              currencyCode
+            }
           }
         }
         options {
@@ -714,6 +718,10 @@ const GET_COLLECTION_PRODUCTS = `
                 amount
                 currencyCode
               }
+              compareAtPrice {
+                amount
+                currencyCode
+              }
             }
           }
           options {
@@ -733,6 +741,7 @@ export interface StorefrontProductSimple {
   imageUrl: string;
   hoverImageUrl?: string;
   price: string;
+  comparePrice?: string;
   colors: string[];
   detailUrl: string;
 }
@@ -741,6 +750,9 @@ function mapStorefrontProducts(nodes: any[]): StorefrontProductSimple[] {
   return nodes.map((node: any) => {
     const images = node.images?.nodes || [];
     const price = node.variants?.nodes?.[0]?.price;
+    const compareAt = node.variants?.nodes?.[0]?.compareAtPrice;
+    const priceAmt = price ? parseFloat(price.amount) : 0;
+    const compareAmt = compareAt ? parseFloat(compareAt.amount) : 0;
     const colorOption = node.options?.find((o: any) => o.name.toLowerCase() === 'color');
     return {
       id: node.id,
@@ -748,7 +760,8 @@ function mapStorefrontProducts(nodes: any[]): StorefrontProductSimple[] {
       handle: node.handle,
       imageUrl: images[0]?.url || '',
       hoverImageUrl: images[1]?.url || undefined,
-      price: price ? `$${parseFloat(price.amount).toFixed(0)}` : '',
+      price: price ? `$${priceAmt.toFixed(0)}` : '',
+      comparePrice: (compareAt && compareAmt > priceAmt) ? `$${compareAmt.toFixed(0)}` : undefined,
       colors: colorOption?.values || [],
       detailUrl: `/products/${node.handle}`,
     };
@@ -797,6 +810,10 @@ const GET_PRODUCTS_BY_TAG = `
         variants(first: 1) {
           nodes {
             price {
+              amount
+              currencyCode
+            }
+            compareAtPrice {
               amount
               currencyCode
             }

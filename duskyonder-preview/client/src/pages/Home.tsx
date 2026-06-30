@@ -477,6 +477,7 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
           aspectRatio: config.seriesImageAspectRatio || "4/5",
           ...(config.seriesImageWidth && config.seriesImageWidth > 0 ? { width: `${config.seriesImageWidth}px`, flex: `0 0 ${config.seriesImageWidth}px` } : {}),
           ["--series-m-img-width" as string]: config.seriesMobileImageWidth && config.seriesMobileImageWidth > 0 ? `${config.seriesMobileImageWidth}px` : "100%",
+          transition: "opacity 0.5s ease-in-out",
         }}>
           {active?.link ? (
             <a href={active.link} style={{ display: "block", width: "100%", height: "100%", position: "absolute", inset: 0 }}>
@@ -509,8 +510,8 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                 >
                   <div className="sf-series-item-inner">
                     <span className="sf-series-num" style={{ color: i === activeIdx ? itemActiveNumColor : itemNumColor }}>{item.label}</span>
-                    <div>
-                      <div className="sf-series-name" style={{ color: i === activeIdx ? itemActiveNameColor : itemNameColor }}>{item.name}</div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div className="sf-series-name" style={{ color: i === activeIdx ? itemActiveNameColor : itemNameColor, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
                       {item.description && i === activeIdx && (
                         <div className="sf-series-desc" style={{ color: descColor }}>{item.description}</div>
                       )}

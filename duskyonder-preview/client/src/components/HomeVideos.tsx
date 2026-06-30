@@ -264,8 +264,21 @@ function MobileVideoCard({ video, mobileWidth, mobileGap, config, videos, videoI
             <img loading="lazy" src={imgA} alt={productName} style={{ width: 44, height: 56, objectFit: "cover", borderRadius: 4, flexShrink: 0, background: "#f0f0f0" }} />
           )}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 600, fontSize: 12, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{productName}</div>
-            <div style={{ fontSize: 12, color: "#333", marginTop: 2 }}>{productPrice}</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 12, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{productName}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2, flexWrap: "wrap" }}>
+              {(() => {
+                const parseAmt = (s: string) => parseFloat(s.replace(/[^0-9.]/g, ''));
+                const saleAmt = parseAmt(productPrice);
+                const origAmt = parseAmt(comparePrice);
+                const hasDiscount = !!(comparePrice && origAmt > saleAmt);
+                return (
+                  <>
+                    {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "#6b7280", textDecoration: "line-through" }}>{comparePrice}</span>}
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 12, color: "#111" }}>{productPrice}</span>
+                  </>
+                );
+              })()}
+            </div>
           </div>
           <button
             onClick={() => {
@@ -337,9 +350,21 @@ function MobileVideoCard({ video, mobileWidth, mobileGap, config, videos, videoI
                 )}
                 {/* Price */}
                 {(productPrice || comparePrice) && (
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 10 }}>
-                    {productPrice && <span style={{ fontWeight: 700, fontSize: 14, color: "#111" }}>{productPrice}</span>}
-                    {comparePrice && <span style={{ fontSize: 12, color: "#aaa", textDecoration: "line-through" }}>{comparePrice}</span>}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+                    {(() => {
+                      const parseAmt = (s: string) => parseFloat(s.replace(/[^0-9.]/g, ''));
+                      const saleAmt = parseAmt(productPrice);
+                      const origAmt = parseAmt(comparePrice);
+                      const hasDiscount = !!(comparePrice && origAmt > saleAmt);
+                      const discountPct = hasDiscount ? Math.round(((origAmt - saleAmt) / origAmt) * 100) : 0;
+                      return (
+                        <>
+                          {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#6b7280", textDecoration: "line-through" }}>{comparePrice}</span>}
+                          {productPrice && <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 14, color: "#111" }}>{productPrice}</span>}
+                          {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 12, color: "#dc2626" }}>-{discountPct}%</span>}
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
                 {/* Color swatches */}
@@ -881,10 +906,16 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                     const comparePrice = shopifyProduct?.variants?.[0]?.compareAtPrice
                       ? `$${parseFloat(shopifyProduct.variants[0].compareAtPrice.amount).toFixed(2)}`
                       : activeVideo.linkedProductComparePrice;
+                    const parseAmt = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
+                    const saleAmt = parseAmt(price);
+                    const origAmt = parseAmt(comparePrice);
+                    const hasDiscount = !!(comparePrice && origAmt > saleAmt);
+                    const discountPct = hasDiscount ? Math.round(((origAmt - saleAmt) / origAmt) * 100) : 0;
                     return (price || comparePrice) ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                        {price && <span style={{ fontWeight: 700, fontSize: 17, color: "#111" }}>{price}</span>}
-                        {comparePrice && <span style={{ fontSize: 14, color: "#aaa", textDecoration: "line-through" }}>{comparePrice}</span>}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+                        {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#6b7280", textDecoration: "line-through" }}>{comparePrice}</span>}
+                        {price && <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 17, color: "#111" }}>{price}</span>}
+                        {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 13, color: "#dc2626" }}>-{discountPct}%</span>}
                       </div>
                     ) : null;
                   })()}

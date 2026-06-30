@@ -178,20 +178,20 @@
 }
 .sf-series-inner {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 5fr 7fr;
   width: 100%;
   max-width: var(--series-max-width, 1760px);
   margin: 0 auto;
   padding: 0 clamp(24px, 4vw, 80px);
   box-sizing: border-box;
-  gap: 60px;
+  column-gap: clamp(40px, 5vw, 80px);
   align-items: stretch;
   min-height: var(--series-min-height, 520px);
 }
 @media (max-width: 900px) {
   /* Section carries the equal side padding; inner fills 100% width */
   .sf-series-section { overflow-x: hidden; padding: 48px 16px; }
-  .sf-series-inner { grid-template-columns: 1fr; gap: 32px; min-height: unset; padding: 0; width: 100% !important; max-width: 100% !important; }
+  .sf-series-inner { display: flex; flex-direction: column; gap: 32px; min-height: unset; padding: 0; width: 100% !important; max-width: 100% !important; }
   /* Mobile: hide the left image block (it will be shown inline in the list) */
   .sf-series-image.sf-series-image--desktop { display: none; }
   /* Mobile inline image: 100% of container, equal margins from section padding */
@@ -253,17 +253,18 @@
   justify-content: center;
 }
 .sf-series-label {
-  font-size: 0.68rem;
-  font-weight: 400;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.5);
   margin-bottom: 20px;
 }
 .sf-series-headline {
-  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(2rem, 3.8vw, 3.2rem);
   font-weight: 300;
-  font-family: var(--font-display);
   line-height: 1.1;
   letter-spacing: -0.03em;
   margin-bottom: 40px;
@@ -279,7 +280,7 @@
 }
 .sf-series-item {
   cursor: pointer;
-  transition: all 0.25s;
+  transition: all 0.25s ease-in-out;
 }
 .sf-series-item-inner {
   display: flex;
@@ -288,7 +289,9 @@
   padding: 16px 0;
 }
 .sf-series-item.active .sf-series-item-inner {
-  padding-left: 8px;
+  border-left: 2px solid currentColor;
+  padding-left: 12px;
+  transition: border-left 0.25s ease-in-out, padding-left 0.25s ease-in-out;
 }
 .sf-series-num {
   font-size: 0.68rem;
@@ -299,14 +302,14 @@
 }
 .sf-series-item.active .sf-series-num { color: #4CAF82; }
 .sf-series-name {
+  font-family: 'Outfit', sans-serif;
   font-size: 0.9rem;
   font-weight: 400;
-  font-family: var(--font-display);
-  color: rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.4);
   transition: color 0.25s;
 }
-.sf-series-item.active .sf-series-name { color: white; font-size: 1rem; }
-.sf-series-item:hover .sf-series-name { color: white; }
+.sf-series-item.active .sf-series-name { color: white; font-size: 1rem; font-weight: 500; }
+.sf-series-item:hover .sf-series-name { color: rgba(255,255,255,0.85); }
 .sf-series-desc {
   font-size: 0.8rem;
   font-weight: 300;
