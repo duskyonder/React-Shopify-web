@@ -381,7 +381,9 @@ function SFMarquee({ titleAlign = "center" }: { instanceId?: string; titleAlign?
   const isReverse = config.marqueeDirection === "right";
   const speed = config.marqueeSpeed || 20;
 
-  // Build the content once, then duplicate for seamless loop
+  // Build the content once, then duplicate for seamless loop.
+  // Repeat items enough times so a single short word fills the full banner width.
+  const REPEAT = 10;
   const renderItem = (item: typeof items[0], key: string) => {
     if (item.type === "image" && item.imageUrl) {
       return (
@@ -397,8 +399,13 @@ function SFMarquee({ titleAlign = "center" }: { instanceId?: string; titleAlign?
     );
   };
 
-  const content = items.map((item, i) => renderItem(item, `a_${i}`));
-  const contentDup = items.map((item, i) => renderItem(item, `b_${i}`));
+  // Expand items array so the track is always wider than the viewport
+  const expandedItems = Array.from({ length: REPEAT }, (_, r) =>
+    items.map((item, i) => renderItem(item, `a_${r}_${i}`))
+  );
+  const expandedItemsDup = Array.from({ length: REPEAT }, (_, r) =>
+    items.map((item, i) => renderItem(item, `b_${r}_${i}`))
+  );
 
   return (
     <div className="sf-marquee-section" style={{ background: config.marqueeBg, color: config.marqueeColor }}>
@@ -406,8 +413,8 @@ function SFMarquee({ titleAlign = "center" }: { instanceId?: string; titleAlign?
         className={`sf-marquee-track${isReverse ? " sf-marquee-reverse" : ""}`}
         style={{ animationDuration: `${speed}s` }}
       >
-        <span className="sf-marquee-content">{content}</span>
-        <span className="sf-marquee-content" aria-hidden="true">{contentDup}</span>
+        <span className="sf-marquee-content">{expandedItems}</span>
+        <span className="sf-marquee-content" aria-hidden="true">{expandedItemsDup}</span>
       </div>
     </div>
   );

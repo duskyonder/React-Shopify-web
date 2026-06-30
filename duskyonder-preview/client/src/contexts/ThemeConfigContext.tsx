@@ -1121,8 +1121,6 @@ const defaultConfig: ThemeConfig = {
   marqueeText: "DUSKYONDER",
   marqueeItems: [
     { id: "mq_1", type: "text", text: "DUSKYONDER" },
-    { id: "mq_2", type: "text", text: "MOVE WITH PURPOSE" },
-    { id: "mq_3", type: "text", text: "ECO-FRIENDLY FABRICS" },
   ],
   marqueeDirection: "left",
   marqueeSpeed: 20,
