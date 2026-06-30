@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import type {
   InfluencerConfig,
@@ -20,10 +20,122 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import ImageUploader from "@/components/ImageUploader";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Plus, Trash2, ChevronDown, ChevronUp, ExternalLink,
   Users, Star, BarChart2, Gift, ClipboardList, HelpCircle, FileText,
+  Search, Loader2,
 } from "lucide-react";
+
+// ── Shopify product search (reused from ProductsPage pattern) ─────────────
+const SHOPIFY_STORE_DOMAIN = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN as string;
+const SHOPIFY_STOREFRONT_TOKEN = import.meta.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN as string;
+
+interface ShopifyProductResult {
+  id: string;
+  name: string;
+  price: string;
+  imageUrl: string;
+  detailUrl: string;
+}
+
+async function searchShopifyProducts(query: string): Promise<ShopifyProductResult[]> {
+  const gql = `
+    query SearchProducts($query: String!) {
+      products(first: 12, query: $query, sortKey: BEST_SELLING) {
+        nodes {
+          id
+          handle
+          title
+          priceRange { minVariantPrice { amount currencyCode } }
+          images(first: 1) { nodes { url } }
+        }
+      }
+    }
+  `;
+  const res = await fetch(`https://${SHOPIFY_STORE_DOMAIN}/api/2024-10/graphql.json`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Storefront-Access-Token": SHOPIFY_STOREFRONT_TOKEN,
+    },
+    body: JSON.stringify({ query: gql, variables: { query } }),
+  });
+  const json = await res.json();
+  return (json.data?.products?.nodes ?? []).map((p: any) => ({
+    id: p.id,
+    name: p.title,
+    price: `$${parseFloat(p.priceRange.minVariantPrice.amount).toFixed(2)}`,
+    imageUrl: p.images.nodes[0]?.url ?? "",
+    detailUrl: `/products/${p.handle}`,
+  }));
+}
+
+function ProductSearchDialog({
+  open,
+  onClose,
+  onSelect,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (product: ShopifyProductResult) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ShopifyProductResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const doSearch = useCallback(async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    try {
+      const products = await searchShopifyProducts(query);
+      setResults(products);
+    } finally {
+      setLoading(false);
+    }
+  }, [query]);
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Search Shopify Products</DialogTitle>
+        </DialogHeader>
+        <div className="flex gap-2">
+          <Input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && doSearch()}
+            placeholder="Type a product name..."
+            className="h-8"
+            autoFocus
+          />
+          <Button size="sm" onClick={doSearch} disabled={loading}>
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+          </Button>
+        </div>
+        <div className="space-y-2 max-h-80 overflow-y-auto mt-2">
+          {results.map(p => (
+            <button
+              key={p.id}
+              onClick={() => { onSelect(p); onClose(); }}
+              className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-accent text-left transition-colors"
+            >
+              {p.imageUrl && (
+                <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover rounded flex-shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{p.name}</p>
+                <p className="text-xs text-muted-foreground">{p.price}</p>
+              </div>
+            </button>
+          ))}
+          {results.length === 0 && !loading && query && (
+            <p className="text-sm text-muted-foreground text-center py-4">No products found</p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 function uid() {
@@ -63,6 +175,8 @@ function CreatorCard({
   onMoveDown: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  // shopPickerFor: null = closed, "hero" = Shop Her Look, string id = shopProducts[id]
+  const [shopPickerFor, setShopPickerFor] = useState<null | "hero" | string>(null);
   const set = (key: keyof InfluencerCreator, val: string) => onChange({ ...creator, [key]: val });
 
   return (
@@ -213,23 +327,32 @@ function CreatorCard({
 
           {/* Shop product */}
           <div className="border rounded-md p-3 space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Shop Her Look</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Product Name</Label>
-                <Input className="h-8" value={creator.shopProductName ?? ""} onChange={e => set("shopProductName", e.target.value)} placeholder="AirLight Leggings" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Price</Label>
-                <Input className="h-8" value={creator.shopProductPrice ?? ""} onChange={e => set("shopProductPrice", e.target.value)} placeholder="$98" />
-              </div>
-              <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs">Product Link</Label>
-                <Input className="h-8" value={creator.shopProductLink ?? ""} onChange={e => set("shopProductLink", e.target.value)} placeholder="/products/airlight-leggings" />
-              </div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Shop Her Look</p>
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShopPickerFor("hero")}>
+                <Search className="h-3.5 w-3.5 mr-1" /> Pick from Shopify
+              </Button>
             </div>
+            {creator.shopProductName ? (
+              <div className="flex items-center gap-3 p-2 rounded-lg bg-muted/40 border">
+                {creator.shopProductImageUrl && (
+                  <img src={creator.shopProductImageUrl} alt={creator.shopProductName} className="w-12 h-12 object-cover rounded flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{creator.shopProductName}</p>
+                  <p className="text-xs text-muted-foreground">{creator.shopProductPrice}</p>
+                  <p className="text-xs text-muted-foreground truncate">{creator.shopProductLink}</p>
+                </div>
+                <button type="button" onClick={() => { set("shopProductName", ""); set("shopProductPrice", ""); set("shopProductLink", ""); set("shopProductImageUrl", ""); }} className="text-destructive/60 hover:text-destructive flex-shrink-0">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-2">No product selected. Click "Pick from Shopify" to choose one.</p>
+            )}
+            {/* Allow image override after Shopify pick */}
             <div className="space-y-1.5">
-              <Label className="text-xs">Product Image</Label>
+              <Label className="text-xs">Override Product Image (optional)</Label>
               <ImageUploader
                 section="influencer"
                 slot={`creator_product_${creator.id}`}
@@ -251,47 +374,59 @@ function CreatorCard({
                 variant="outline"
                 className="h-7 text-xs"
                 onClick={() => {
-                  const newProduct: InfluencerShopProduct = { id: uid(), name: "", price: "", imageUrl: "", link: "" };
+                  // Add a blank slot and open the picker for it immediately
+                  const newId = uid();
+                  const newProduct: InfluencerShopProduct = { id: newId, name: "", price: "", imageUrl: "", link: "" };
                   onChange({ ...creator, shopProducts: [...(creator.shopProducts ?? []), newProduct] });
+                  setShopPickerFor(newId);
                 }}
               >
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add Product
               </Button>
             </div>
             {(!creator.shopProducts || creator.shopProducts.length === 0) && (
-              <p className="text-xs text-muted-foreground text-center py-2">No products yet. Click "Add Product" to begin.</p>
+              <p className="text-xs text-muted-foreground text-center py-2">No products yet. Click "Add Product" to search Shopify.</p>
             )}
             {(creator.shopProducts ?? []).map((sp, idx) => (
               <div key={sp.id} className="border rounded p-3 space-y-2 bg-muted/30">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-medium text-muted-foreground">Product {idx + 1}</span>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setShopPickerFor(sp.id)}>
+                      <Search className="h-3 w-3 mr-1" /> Change
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => onChange({ ...creator, shopProducts: (creator.shopProducts ?? []).filter(p => p.id !== sp.id) })}
+                      className="text-destructive/60 hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+                {sp.name ? (
+                  <div className="flex items-center gap-3 p-2 rounded-lg bg-background border">
+                    {sp.imageUrl && (
+                      <img src={sp.imageUrl} alt={sp.name} className="w-12 h-12 object-cover rounded flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{sp.name}</p>
+                      <p className="text-xs text-muted-foreground">{sp.price}</p>
+                      <p className="text-xs text-muted-foreground truncate">{sp.link}</p>
+                    </div>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => onChange({ ...creator, shopProducts: (creator.shopProducts ?? []).filter(p => p.id !== sp.id) })}
-                    className="text-destructive/60 hover:text-destructive"
+                    onClick={() => setShopPickerFor(sp.id)}
+                    className="w-full py-3 border border-dashed rounded-lg text-xs text-muted-foreground hover:bg-accent transition-colors flex items-center justify-center gap-1.5"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Search className="h-3.5 w-3.5" /> Click to search and select a product
                   </button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Name</Label>
-                    <Input className="h-7 text-xs" value={sp.name} placeholder="AirLight Leggings"
-                      onChange={e => onChange({ ...creator, shopProducts: (creator.shopProducts ?? []).map(p => p.id === sp.id ? { ...p, name: e.target.value } : p) })} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Price</Label>
-                    <Input className="h-7 text-xs" value={sp.price} placeholder="$98"
-                      onChange={e => onChange({ ...creator, shopProducts: (creator.shopProducts ?? []).map(p => p.id === sp.id ? { ...p, price: e.target.value } : p) })} />
-                  </div>
-                  <div className="space-y-1 col-span-2">
-                    <Label className="text-xs">Product Link</Label>
-                    <Input className="h-7 text-xs" value={sp.link ?? ""} placeholder="/products/airlight-leggings"
-                      onChange={e => onChange({ ...creator, shopProducts: (creator.shopProducts ?? []).map(p => p.id === sp.id ? { ...p, link: e.target.value } : p) })} />
-                  </div>
-                </div>
+                )}
+                {/* Allow image override after Shopify pick */}
                 <div className="space-y-1">
-                  <Label className="text-xs">Product Image</Label>
+                  <Label className="text-xs">Override Image (optional)</Label>
                   <ImageUploader
                     section="influencer"
                     slot={`creator_sp_${creator.id}_${sp.id}`}
@@ -380,6 +515,33 @@ function CreatorCard({
           </div>
         </CardContent>
       )}
+
+      {/* ── Shopify product picker dialog (shared for hero + shopProducts) ── */}
+      <ProductSearchDialog
+        open={shopPickerFor !== null}
+        onClose={() => setShopPickerFor(null)}
+        onSelect={product => {
+          if (shopPickerFor === "hero") {
+            onChange({
+              ...creator,
+              shopProductName: product.name,
+              shopProductPrice: product.price,
+              shopProductImageUrl: product.imageUrl,
+              shopProductLink: product.detailUrl,
+            });
+          } else if (shopPickerFor) {
+            onChange({
+              ...creator,
+              shopProducts: (creator.shopProducts ?? []).map(p =>
+                p.id === shopPickerFor
+                  ? { ...p, name: product.name, price: product.price, imageUrl: product.imageUrl, link: product.detailUrl }
+                  : p
+              ),
+            });
+          }
+          setShopPickerFor(null);
+        }}
+      />
     </Card>
   );
 }
