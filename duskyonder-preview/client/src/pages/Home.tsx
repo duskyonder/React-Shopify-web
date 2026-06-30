@@ -495,29 +495,34 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             )
           )}
         </div>
-        <div className="sf-series-content">
+        <div className="sf-series-content" style={{ textAlign: "right", alignItems: "flex-end", justifyContent: "center", display: "flex", flexDirection: "column" }}>
           <div className="sf-series-label" style={{ color: labelColor }}>{config.seriesLabel || "TOP COLLECTIONS"}</div>
           <h2 className="sf-series-headline" style={{ color: headlineColor }}>
             {config.seriesHeadline || "THIS DREAMY PRINT"}<br />
             <em style={{ color: headlineEmColor }}>{config.seriesSubheadline || "DRAWS INSPIRATION"}</em>
           </h2>
-          <div className="sf-series-list">
+          <div className="sf-series-list" style={{ display: "flex", flexDirection: "column", gap: "2rem", alignItems: "flex-end" }}>
             {series.map((item, i) => (
               <div key={item.id}>
                 <div
-                  className={`sf-series-item${i === activeIdx ? " active" : ""}`}
+                  className={`sf-series-item-editorial${i === activeIdx ? " active" : ""}`}
                   onClick={() => { setActiveIdx(i); startTimer(); }}
+                  style={{
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: "clamp(2rem, 4vw, 3.75rem)",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    lineHeight: 1.1,
+                    cursor: "pointer",
+                    transition: "color 0.5s ease",
+                    color: i === activeIdx
+                      ? (isWhiteTheme ? "#111" : "#ffffff")
+                      : (isWhiteTheme ? "#d4d4d4" : "rgba(255,255,255,0.25)"),
+                    textAlign: "right",
+                  }}
                 >
-                  <div className="sf-series-item-inner">
-                    <span className="sf-series-num" style={{ color: i === activeIdx ? itemActiveNumColor : itemNumColor }}>{item.label}</span>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div className="sf-series-name" style={{ color: i === activeIdx ? itemActiveNameColor : itemNameColor, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
-                      {item.description && i === activeIdx && (
-                        <div className="sf-series-desc" style={{ color: descColor }}>{item.description}</div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="sf-series-divider" style={{ background: dividerColor }} />
+                  {item.name}
                 </div>
                 {/* Mobile: inline image shown below the active item */}
                 {isMobile && i === activeIdx && (

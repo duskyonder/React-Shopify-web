@@ -251,6 +251,8 @@
   flex-direction: column;
   gap: 0;
   justify-content: center;
+  align-items: flex-end;
+  text-align: right;
 }
 .sf-series-label {
   font-family: 'Outfit', sans-serif;
@@ -260,6 +262,7 @@
   text-transform: uppercase;
   color: rgba(255,255,255,0.5);
   margin-bottom: 20px;
+  text-align: right;
 }
 .sf-series-headline {
   font-family: 'Outfit', sans-serif;
@@ -269,6 +272,7 @@
   letter-spacing: -0.03em;
   margin-bottom: 40px;
   color: white;
+  text-align: right;
 }
 .sf-series-headline em {
   font-style: italic;
@@ -277,49 +281,35 @@
 .sf-series-list {
   display: flex;
   flex-direction: column;
+  gap: 2rem;
+  align-items: flex-end;
 }
-.sf-series-item {
-  cursor: pointer;
-  transition: all 0.25s ease-in-out;
-}
-.sf-series-item-inner {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  padding: 16px 0;
-}
-.sf-series-item.active .sf-series-item-inner {
-  border-left: 2px solid currentColor;
-  padding-left: 12px;
-  transition: border-left 0.25s ease-in-out, padding-left 0.25s ease-in-out;
-}
-.sf-series-num {
-  font-size: 0.68rem;
-  font-weight: 400;
-  color: rgba(255,255,255,0.4);
-  min-width: 28px;
-  padding-top: 2px;
-}
-.sf-series-item.active .sf-series-num { color: #4CAF82; }
-.sf-series-name {
+/* Editorial huge-text list item */
+.sf-series-item-editorial {
   font-family: 'Outfit', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 400;
-  color: rgba(255,255,255,0.4);
-  transition: color 0.25s;
+  font-size: clamp(2rem, 4vw, 3.75rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  cursor: pointer;
+  transition: color 0.5s ease;
+  text-align: right;
+  color: rgba(255,255,255,0.25);
 }
-.sf-series-item.active .sf-series-name { color: white; font-size: 1rem; font-weight: 500; }
-.sf-series-item:hover .sf-series-name { color: rgba(255,255,255,0.85); }
+.sf-series-item-editorial.active {
+  color: #ffffff;
+}
+.sf-series-item-editorial:hover {
+  color: rgba(255,255,255,0.6);
+}
 .sf-series-desc {
   font-size: 0.8rem;
   font-weight: 300;
   color: rgba(255,255,255,0.5);
   margin-top: 6px;
   line-height: 1.55;
-}
-.sf-series-divider {
-  height: 1px;
-  background: rgba(255,255,255,0.1);
+  text-align: right;
 }
 
 /* --- Product Card Hover Image Swap --- */

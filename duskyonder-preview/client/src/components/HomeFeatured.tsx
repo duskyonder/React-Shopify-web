@@ -434,7 +434,7 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
         </div>
         <div className="sf-product-info">
           <div className="sf-product-name">{product.name}</div>
-          <div className="sf-product-price" style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+          <div className="sf-product-price flex flex-wrap items-center gap-2">
             {(() => {
               const parseAmt = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
               const saleAmt = parseAmt(product.price);
@@ -443,9 +443,9 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
               const discountPct = hasDiscount ? Math.round(((origAmt - saleAmt) / origAmt) * 100) : 0;
               return (
                 <>
-                  {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "0.75rem", color: "#6b7280", textDecoration: "line-through", fontWeight: 300 }}>{product.comparePrice}</span>}
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: hasDiscount ? 700 : 300, color: "#1a1a1a" }}>{product.price}</span>
-                  {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "0.72rem", color: "#dc2626" }}>-{discountPct}%</span>}
+                  <span style={{ fontFamily: "'Outfit', sans-serif" }} className={`font-bold text-black`}>{product.price}</span>
+                  {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif" }} className="line-through text-neutral-400 text-sm">{product.comparePrice}</span>}
+                  {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif" }} className="text-red-600 font-bold text-sm">-{discountPct}%</span>}
                 </>
               );
             })()}
