@@ -238,6 +238,8 @@ function CollectionProductCard({
       <a href={productDetailUrl} className="sf-product-mobile-link" aria-label={product.name} />
 
       <div className="sf-product-image" style={{ aspectRatio }}>
+        {/* Desktop: clickable overlay above images (z-index 2) but below action buttons (z-index 3) */}
+        <a href={productDetailUrl} className="sf-product-desktop-link" aria-label={product.name} />
         <div className={"sf-product-img-primary"}>
           {displayImg ? <img loading="lazy" src={displayImg} alt={product.name} /> : <ImgPlaceholder label="产品图片" />}
         </div>
