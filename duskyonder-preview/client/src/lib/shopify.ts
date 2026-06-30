@@ -473,13 +473,15 @@ export async function addToCart(cartId: string, variantId: string, quantity: num
   }
 }
 
-export async function updateCartLine(cartId: string, lineId: string, quantity: number): Promise<ShopifyCart | null> {
+export async function updateCartLine(cartId: string, lineId: string, quantity: number, merchandiseId?: string): Promise<ShopifyCart | null> {
   try {
+    const lineInput: Record<string, unknown> = { id: lineId, quantity };
+    if (merchandiseId) lineInput.merchandiseId = merchandiseId;
     const { data, errors } = await shopifyFetch({
       query: UPDATE_CART_LINES,
       variables: {
         cartId,
-        lines: [{ id: lineId, quantity }],
+        lines: [lineInput],
       },
     });
 

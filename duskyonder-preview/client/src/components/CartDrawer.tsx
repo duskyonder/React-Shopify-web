@@ -1,9 +1,10 @@
-import React, { useState, useRef, useMemo, useEffect } from "react";
+import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { Link } from "wouter";
-import { useCart } from "@/contexts/CartContext";
+import { useCart, CartItem } from "@/contexts/CartContext";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import { useIsMobile } from "@/hooks/useMobile";
+import { fetchProductByHandle, type ShopifyProduct, type ShopifyProductVariant } from "@/lib/shopify";
 
 // ---- Design tokens (图1：奶白主体 + 深绿标题栏) ----
 const HEADER_BG = "#1a3a2a";      // 深绿标题栏
@@ -134,10 +135,181 @@ function RecommendedCard({ product, onAdd }: {
   );
 }
 
+// ---- Inline variant editor (shown inside cart item card when badge is clicked) ----
+function CartItemVariantEditor({ item, onClose }: { item: CartItem; onClose: () => void }) {
+  const { swapVariant, isLoading } = useCart();
+  const [shopifyProduct, setShopifyProduct] = useState<ShopifyProduct | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(item.selectedColor ?? null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(item.selectedSize ?? null);
+  const [applying, setApplying] = useState(false);
+
+  // Derive product handle from productUrl (e.g. /products/my-handle)
+  const productHandle = item.productUrl?.split('/products/')[1]?.split('?')[0] ?? null;
+
+  useEffect(() => {
+    if (!productHandle) return;
+    fetchProductByHandle(productHandle).then(p => {
+      setShopifyProduct(p);
+    });
+  }, [productHandle]);
+
+  const colorEntries: Array<{ name: string; hex: string | null }> = shopifyProduct
+    ? (shopifyProduct.options.find(o => o.name.toLowerCase() === 'color')?.optionValues ?? []).map(v => ({
+        name: v.name,
+        hex: v.swatch?.color ?? null,
+      }))
+    : (item.selectedColor ? [{ name: item.selectedColor, hex: null }] : []);
+
+  const sizes: string[] = shopifyProduct
+    ? shopifyProduct.options
+        .filter(o => o.name.toLowerCase() !== 'color')
+        .flatMap(o => o.optionValues.map(v => v.name))
+    : (item.selectedSize ? [item.selectedSize] : []);
+
+  const isSizeAvailable = (size: string): boolean => {
+    if (!shopifyProduct) return true;
+    return shopifyProduct.variants.some(v => {
+      const sizeOk = v.selectedOptions.some(o => o.name.toLowerCase() === 'size' && o.value === size);
+      const colorOk = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === 'color' && o.value === selectedColor);
+      return sizeOk && colorOk && v.availableForSale;
+    });
+  };
+
+  const resolveVariantId = (): string | null => {
+    if (!shopifyProduct?.variants?.length) return item.variantId ?? null;
+    const find = (requireAvailable: boolean): ShopifyProductVariant | undefined =>
+      shopifyProduct.variants.find(v => {
+        const colorOk = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === 'color' && o.value === selectedColor);
+        const sizeOk = !selectedSize || v.selectedOptions.some(o => o.name.toLowerCase() === 'size' && o.value === selectedSize);
+        return colorOk && sizeOk && (!requireAvailable || v.availableForSale);
+      });
+    return (find(true) ?? find(false) ?? shopifyProduct.variants[0])?.id ?? null;
+  };
+
+  const handleApply = async () => {
+    const newVariantId = resolveVariantId();
+    if (!newVariantId || newVariantId === item.variantId) { onClose(); return; }
+    setApplying(true);
+    try {
+      await swapVariant(item.id, newVariantId);
+      onClose();
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const hasOptions = colorEntries.length > 0 || sizes.length > 0;
+
+  return (
+    <div style={{
+      marginTop: 8,
+      padding: '12px 14px',
+      background: '#f5f2ee',
+      borderRadius: 6,
+      border: `1px solid ${CARD_BORDER}`,
+    }}>
+      {!shopifyProduct && productHandle && (
+        <p style={{ fontSize: 12, color: TEXT_SECONDARY, margin: 0 }}>Loading options…</p>
+      )}
+      {!hasOptions && shopifyProduct && (
+        <p style={{ fontSize: 12, color: TEXT_SECONDARY, margin: 0 }}>No options available</p>
+      )}
+
+      {/* Color swatches */}
+      {colorEntries.length > 0 && (
+        <div style={{ marginBottom: 10 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_SECONDARY, marginBottom: 6 }}>Color</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {colorEntries.map(c => {
+              const isActive = selectedColor === c.name;
+              const bg = c.hex || '#ccc';
+              return (
+                <button
+                  key={c.name}
+                  title={c.name}
+                  onClick={() => { setSelectedColor(c.name); setSelectedSize(null); }}
+                  style={{
+                    width: 22, height: 22, borderRadius: '50%',
+                    background: bg,
+                    border: isActive ? `2px solid ${ACCENT_GREEN}` : '2px solid transparent',
+                    outline: isActive ? `1px solid ${ACCENT_GREEN}` : '1px solid #ccc',
+                    outlineOffset: 1,
+                    cursor: 'pointer', padding: 0,
+                    transform: isActive ? 'scale(1.15)' : 'scale(1)',
+                    transition: 'transform 0.15s, border-color 0.15s',
+                    flexShrink: 0,
+                  }}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Size buttons */}
+      {sizes.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_SECONDARY, marginBottom: 6 }}>Size</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+            {sizes.map(s => {
+              const isActive = selectedSize === s;
+              const available = isSizeAvailable(s);
+              return (
+                <button
+                  key={s}
+                  onClick={() => available && setSelectedSize(s)}
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: 11, fontWeight: 500,
+                    border: isActive ? `1.5px solid ${ACCENT_GREEN}` : `1px solid ${CARD_BORDER}`,
+                    borderRadius: 3,
+                    background: isActive ? ACCENT_GREEN : '#fff',
+                    color: isActive ? '#fff' : available ? TEXT_PRIMARY : '#ccc',
+                    cursor: available ? 'pointer' : 'not-allowed',
+                    opacity: available ? 1 : 0.45,
+                    textDecoration: available ? 'none' : 'line-through',
+                    transition: 'background 0.15s, border-color 0.15s',
+                  }}
+                >{s}</button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Action row */}
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <button
+          onClick={onClose}
+          style={{
+            padding: '5px 14px', fontSize: 11, fontWeight: 600,
+            border: `1px solid ${CARD_BORDER}`, borderRadius: 3,
+            background: '#fff', color: TEXT_SECONDARY, cursor: 'pointer',
+            letterSpacing: '0.06em',
+          }}
+        >Cancel</button>
+        <button
+          onClick={handleApply}
+          disabled={applying || isLoading}
+          style={{
+            padding: '5px 14px', fontSize: 11, fontWeight: 600,
+            border: 'none', borderRadius: 3,
+            background: ACCENT_GREEN, color: '#fff',
+            cursor: applying || isLoading ? 'wait' : 'pointer',
+            letterSpacing: '0.06em',
+            opacity: applying || isLoading ? 0.7 : 1,
+          }}
+        >{applying ? 'Updating…' : 'Apply'}</button>
+      </div>
+    </div>
+  );
+}
+
 export function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, totalCount, addItem, checkoutUrl, subtotal: shopifySubtotal, isLoading: cartLoading } = useCart();
   const { config } = useThemeConfig();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [expandedVariantItemId, setExpandedVariantItemId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const drawerWidth = config.cartDrawerWidth ?? 420;
@@ -437,6 +609,7 @@ export function CartDrawer() {
                     display: "flex", gap: 14, padding: "14px 16px",
                     background: CARD_BG, borderRadius: 8,
                     border: `1px solid ${CARD_BORDER}`,
+                    alignItems: "flex-start",
                   }}>
                     {/* Product image */}
                     <Link href={productPath} onClick={closeCart} style={{ textDecoration: "none", flexShrink: 0 }}>
@@ -474,12 +647,44 @@ export function CartDrawer() {
                         <span style={{ fontSize: cartItemPriceFontSize, fontWeight: 600, color: TEXT_PRIMARY, flexShrink: 0 }}>{item.price}</span>
                       </div>
 
-                      {/* Variant info */}
-                      {(item.variantTitle || item.selectedColor || item.selectedSize) && (
-                        <p style={{ fontSize: 12, color: TEXT_SECONDARY, margin: 0, letterSpacing: "0.01em" }}>
-                          {item.variantTitle || [item.selectedColor, item.selectedSize].filter(Boolean).join(" · ")}
-                        </p>
-                      )}
+                      {/* Variant badge — clickable to open inline editor */}
+                      {(item.variantTitle || item.selectedColor || item.selectedSize) && (() => {
+                        const variantLabel = item.variantTitle || [item.selectedColor, item.selectedSize].filter(Boolean).join(' / ');
+                        const isExpanded = expandedVariantItemId === item.id;
+                        return (
+                          <>
+                            <button
+                              onClick={() => setExpandedVariantItemId(isExpanded ? null : item.id)}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 4,
+                                padding: '2px 8px',
+                                background: 'transparent',
+                                border: `1px solid ${CARD_BORDER}`,
+                                borderRadius: 3,
+                                fontSize: 11.5, color: TEXT_SECONDARY,
+                                cursor: 'pointer',
+                                letterSpacing: '0.01em',
+                                alignSelf: 'flex-start',
+                                transition: 'border-color 0.15s, color 0.15s',
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor = ACCENT_GREEN; e.currentTarget.style.color = ACCENT_GREEN; }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor = CARD_BORDER; e.currentTarget.style.color = TEXT_SECONDARY; }}
+                              title="Change color / size"
+                            >
+                              {variantLabel}
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+                                <polyline points="6 9 12 15 18 9"/>
+                              </svg>
+                            </button>
+                            {isExpanded && (
+                              <CartItemVariantEditor
+                                item={item}
+                                onClose={() => setExpandedVariantItemId(null)}
+                              />
+                            )}
+                          </>
+                        );
+                      })()}
 
                       {/* Qty stepper + Remove */}
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>

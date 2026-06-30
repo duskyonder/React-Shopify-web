@@ -30,6 +30,7 @@ interface CartContextValue {
   addItem: (item: Omit<CartItem, "quantity" | "id"> & { id?: string }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, qty: number) => void;
+  swapVariant: (lineId: string, newVariantId: string) => Promise<void>;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
@@ -177,6 +178,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cartId, syncCartState]);
 
+  // Swap a cart line's variant (change color/size in-place)
+  const swapVariant = useCallback(async (lineId: string, newVariantId: string) => {
+    if (!cartId) return;
+    setIsLoading(true);
+    try {
+      // Get current quantity for this line
+      const currentItem = items.find(i => i.id === lineId);
+      const qty = currentItem?.quantity ?? 1;
+      const cart = await shopifyUpdateCartLine(cartId, lineId, qty, newVariantId);
+      if (cart) syncCartState(cart);
+    } catch (err) {
+      console.error('Failed to swap variant:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [cartId, items, syncCartState]);
+
   // Clear cart (remove all lines)
   const clearCart = useCallback(() => {
     setItems([]);
@@ -193,7 +211,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <CartContext.Provider value={{
-      items, isOpen, addItem, removeItem, updateQuantity,
+      items, isOpen, addItem, removeItem, updateQuantity, swapVariant,
       clearCart, openCart, closeCart, totalCount,
       subtotal, checkoutUrl, isLoading,
     }}>
