@@ -149,6 +149,7 @@ function CartItemVariantEditor({ item, onClose }: { item: CartItem; onClose: () 
   useEffect(() => {
     if (!productHandle) return;
     fetchProductByHandle(productHandle).then(p => {
+      console.log('[CartVariantEditor] Fetched product for handle:', productHandle, '| options:', JSON.stringify(p?.options?.map(o => ({ name: o.name, values: o.optionValues?.map(v => v.name) }))), '| variant count:', p?.variants?.length, '| first variant selectedOptions:', JSON.stringify(p?.variants?.[0]?.selectedOptions));
       setShopifyProduct(p);
     });
   }, [productHandle]);
