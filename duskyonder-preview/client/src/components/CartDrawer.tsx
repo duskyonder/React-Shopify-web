@@ -168,10 +168,15 @@ function CartItemVariantEditor({ item, onClose }: { item: CartItem; onClose: () 
 
   const isSizeAvailable = (size: string): boolean => {
     if (!shopifyProduct) return true;
+    // A variant is considered available if:
+    // - availableForSale is true, OR
+    // - quantityAvailable is null/undefined (inventory not tracked — always sellable)
+    const isVariantAvailable = (v: ShopifyProductVariant) =>
+      v.availableForSale || v.quantityAvailable == null;
     return shopifyProduct.variants.some(v => {
       const sizeOk = v.selectedOptions.some(o => o.name.toLowerCase() === 'size' && o.value === size);
       const colorOk = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === 'color' && o.value === selectedColor);
-      return sizeOk && colorOk && v.availableForSale;
+      return sizeOk && colorOk && isVariantAvailable(v);
     });
   };
 
