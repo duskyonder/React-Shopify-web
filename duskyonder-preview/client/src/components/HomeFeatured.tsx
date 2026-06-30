@@ -78,30 +78,67 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
           {/* Right: product info */}
           <div className="sf-quickview-info">
             <h2 className="sf-quickview-name">{product.name}</h2>
-            <div className="sf-quickview-price">{product.price}</div>
-
-            {product.colors.length > 0 && (
-              <>
-                <div className="sf-option-label" style={{ marginTop: 16 }}>
-                  Color: <strong style={{ color: "#175C40" }}>{selectedColor}</strong>
+            {/* Price block — live Shopify data with strikethrough + discount % */}
+            {(() => {
+              const parseAmt = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
+              const livePrice = shopifyProduct?.variants?.[0]?.price
+                ? `$${parseFloat(shopifyProduct.variants[0].price.amount).toFixed(2)}`
+                : product.price;
+              const liveCompare = shopifyProduct?.variants?.[0]?.compareAtPrice
+                ? `$${parseFloat(shopifyProduct.variants[0].compareAtPrice.amount).toFixed(2)}`
+                : product.comparePrice;
+              const saleAmt = parseAmt(livePrice);
+              const origAmt = parseAmt(liveCompare || '');
+              const hasDiscount = !!(liveCompare && origAmt > saleAmt);
+              const discountPct = hasDiscount ? Math.round(((origAmt - saleAmt) / origAmt) * 100) : 0;
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '6px 0 4px' }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 16, color: '#111' }}>{livePrice}</span>
+                  {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: '#9ca3af', textDecoration: 'line-through' }}>{liveCompare}</span>}
+                  {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 12, color: '#dc2626' }}>-{discountPct}%</span>}
                 </div>
-                <div className="sf-color-swatches" style={{ marginTop: 8 }}>
-                  {product.colors.map((color, i) => (
-                    <div
-                      key={i}
-                      className={`sf-color-swatch${selectedColorIdx === i ? " active" : ""}`}
-                      style={{
-                        background: color,
-                        border: color === "#F9F9F9" ? "2px solid #eee" : undefined,
-                        width: 28, height: 28,
-                      }}
-                      onClick={() => setSelectedColorIdx(i)}
-                      title={color}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
+              );
+            })()}
+            {/* Color swatches — use live Shopify swatch hex when available */}
+            {(() => {
+              const liveColors: Array<{ name: string; hex: string | null }> = shopifyProduct
+                ? (shopifyProduct.options.find((o: any) => o.name.toLowerCase() === 'color')?.optionValues || []).map((v: any) => ({
+                    name: v.name,
+                    hex: v.swatch?.color || null,
+                  }))
+                : product.colors.map(c => ({
+                    name: c,
+                    hex: /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(c.trim()) ? c : null,
+                  }));
+              if (liveColors.length === 0) return null;
+              const activeColorName = liveColors[selectedColorIdx]?.name || '';
+              return (
+                <>
+                  <div className="sf-option-label" style={{ marginTop: 16 }}>
+                    Color: <strong style={{ color: '#175C40' }}>{activeColorName}</strong>
+                  </div>
+                  <div className="sf-color-swatches" style={{ marginTop: 8 }}>
+                    {liveColors.map(({ name, hex }, i) => hex ? (
+                      <div
+                        key={i}
+                        className={`sf-color-swatch${selectedColorIdx === i ? ' active' : ''}`}
+                        style={{ background: hex, border: (hex === '#F9F9F9' || hex === '#ffffff') ? '2px solid #eee' : undefined, width: 28, height: 28 }}
+                        onClick={() => setSelectedColorIdx(i)}
+                        title={name}
+                      />
+                    ) : (
+                      <button
+                        key={i}
+                        className={`sf-color-swatch${selectedColorIdx === i ? ' active' : ''}`}
+                        style={{ width: 'auto', height: 28, padding: '0 10px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: selectedColorIdx === i ? '#175C40' : '#f3f3f3', color: selectedColorIdx === i ? '#fff' : '#333', border: '1.5px solid #ddd', cursor: 'pointer' }}
+                        onClick={() => setSelectedColorIdx(i)}
+                        title={name}
+                      >{name}</button>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
 
             <div className="sf-option-label" style={{ marginTop: 16 }}>Size</div>
             <div className="sf-size-btns" style={{ marginTop: 8 }}>
@@ -537,6 +574,7 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
           id: quickAddProduct.id,
           name: quickAddProduct.name,
           price: quickAddProduct.price,
+          comparePrice: quickAddProduct.comparePrice,
           imageUrl: quickAddProduct.imageUrl || null,
           productUrl: quickAddProduct.detailUrl || null,
           colors: quickAddProduct.colors || [],
