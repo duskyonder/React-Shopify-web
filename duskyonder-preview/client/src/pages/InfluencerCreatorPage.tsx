@@ -3,7 +3,7 @@ import { useParams, Link } from "wouter";
 import { createPortal } from "react-dom";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
-import type { InfluencerCreator, InfluencerMediaItem } from "@/contexts/ThemeConfigContext";
+import type { InfluencerCreator, InfluencerMediaItem, InfluencerShopProduct } from "@/contexts/ThemeConfigContext";
 import { useCart } from "@/contexts/CartContext";
 
 // ---- Platform badge ----
@@ -20,25 +20,21 @@ function PlatformBadge({ platform }: { platform: string }) {
   );
 }
 
-// ---- Quick-view Product Panel (simplified PDP style) ----
+// ---- Quick-view Product Panel ----
 function ProductQuickView({
   product,
   onClose,
 }: {
-  product: { name: string; price?: string; imageUrl?: string; link?: string; colors?: string[]; sizes?: string[] };
+  product: InfluencerShopProduct;
   onClose: () => void;
 }) {
   const { addItem, openCart } = useCart();
-  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] ?? "");
-  const [selectedSize, setSelectedSize] = useState("");
-  const [previewIdx, setPreviewIdx] = useState(0);
-
-  // Mock 3 preview slots (main + 2 thumbnails)
-  const previews = [product.imageUrl, undefined, undefined];
+  const [previewIdx] = useState(0);
+  const previews = [product.imageUrl ?? undefined, undefined, undefined];
 
   function handleAddToCart() {
     addItem({
-      id: `${product.name}_${selectedColor}_${selectedSize}`,
+      id: product.id,
       name: product.name,
       price: product.price ?? "",
       imageUrl: product.imageUrl,
@@ -49,10 +45,7 @@ function ProductQuickView({
   }
 
   return createPortal(
-    <div
-      className="inf-cd-qv-overlay"
-      onClick={onClose}
-    >
+    <div className="inf-cd-qv-overlay" onClick={onClose}>
       <div className="inf-cd-qv-panel" onClick={e => e.stopPropagation()}>
         <button className="inf-cd-qv-close" onClick={onClose} aria-label="Close">✕</button>
         {/* Left: main image + thumbnails */}
@@ -65,15 +58,8 @@ function ProductQuickView({
           </div>
           <div className="inf-cd-qv-thumbs">
             {previews.map((src, i) => (
-              <button
-                key={i}
-                className={`inf-cd-qv-thumb${previewIdx === i ? " active" : ""}`}
-                onClick={() => setPreviewIdx(i)}
-              >
-                {src
-                  ? <img src={src} alt="" />
-                  : <div className="inf-cd-qv-thumb-placeholder" />
-                }
+              <button key={i} className={`inf-cd-qv-thumb${previewIdx === i ? " active" : ""}`}>
+                {src ? <img src={src} alt="" /> : <div className="inf-cd-qv-thumb-placeholder" />}
               </button>
             ))}
           </div>
@@ -82,44 +68,10 @@ function ProductQuickView({
         <div className="inf-cd-qv-right">
           <div className="inf-cd-qv-name">{product.name}</div>
           {product.price && <div className="inf-cd-qv-price">{product.price}</div>}
-
-          {product.colors && product.colors.length > 0 && (
-            <div className="inf-cd-qv-section">
-              <div className="inf-cd-qv-section-label">Color: <span style={{ fontWeight: 400, color: "#555" }}>{selectedColor}</span></div>
-              <div className="inf-cd-qv-colors">
-                {product.colors.map(c => (
-                  <button
-                    key={c}
-                    className={`inf-cd-qv-color-swatch${selectedColor === c ? " active" : ""}`}
-                    style={{ background: c.toLowerCase() }}
-                    onClick={() => setSelectedColor(c)}
-                    title={c}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {product.sizes && product.sizes.length > 0 && (
-            <div className="inf-cd-qv-section">
-              <div className="inf-cd-qv-section-label">Size</div>
-              <div className="inf-cd-qv-sizes">
-                {product.sizes.map(s => (
-                  <button
-                    key={s}
-                    className={`inf-cd-qv-size-btn${selectedSize === s ? " active" : ""}`}
-                    onClick={() => setSelectedSize(s)}
-                  >{s}</button>
-                ))}
-              </div>
-            </div>
-          )}
-
           <button className="inf-cd-qv-add-btn" onClick={handleAddToCart}>
             ADD TO CART
           </button>
-
-          {product.link && (
+          {product.link && product.link !== "#" && (
             <a href={product.link} className="inf-cd-qv-view-link">
               View Full Details →
             </a>
@@ -131,6 +83,31 @@ function ProductQuickView({
   );
 }
 
+// ---- Product Card ----
+function ProductCard({ product }: { product: InfluencerShopProduct }) {
+  const [qvOpen, setQvOpen] = useState(false);
+  return (
+    <>
+      <div className="inf-cd-product-card">
+        <div className="inf-cd-product-img" onClick={() => setQvOpen(true)}>
+          {product.imageUrl
+            ? <img src={product.imageUrl} alt={product.name} loading="lazy" />
+            : <div className="inf-cd-product-img-placeholder" />
+          }
+          <button className="inf-cd-product-quick-btn" onClick={e => { e.stopPropagation(); setQvOpen(true); }}>
+            Quick View
+          </button>
+        </div>
+        <div className="inf-cd-product-info">
+          <div className="inf-cd-product-name">{product.name}</div>
+          {product.price && <div className="inf-cd-product-price">{product.price}</div>}
+        </div>
+      </div>
+      {qvOpen && <ProductQuickView product={product} onClose={() => setQvOpen(false)} />}
+    </>
+  );
+}
+
 // ---- Media item lightbox ----
 function MediaLightbox({ item, onClose }: { item: InfluencerMediaItem; onClose: () => void }) {
   const isVideo = item.type === "video";
@@ -138,13 +115,10 @@ function MediaLightbox({ item, onClose }: { item: InfluencerMediaItem; onClose: 
   return createPortal(
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       {isVideo && hasProduct ? (
-        // Video + product info: left video, right product panel
         <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: 0, maxWidth: 900, width: "95vw", maxHeight: "92vh", borderRadius: 14, overflow: "hidden", background: "#fff", position: "relative", boxShadow: "0 24px 80px rgba(0,0,0,0.4)" }}>
-          {/* Left: Video */}
           <div style={{ flex: "0 0 auto", width: "min(360px, 50vw)", background: "#000", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
             <video src={item.url} controls autoPlay style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           </div>
-          {/* Right: Product info */}
           <div style={{ flex: 1, padding: "36px 28px 28px", display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", minWidth: 0 }}>
             {item.thumbnailUrl && (
               <div style={{ aspectRatio: "3/4", borderRadius: 8, overflow: "hidden", background: "#f5f5f5", maxHeight: 240 }}>
@@ -160,7 +134,6 @@ function MediaLightbox({ item, onClose }: { item: InfluencerMediaItem; onClose: 
           <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.9)", border: "1px solid #e0e0e0", color: "#333", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }} aria-label="Close">✕</button>
         </div>
       ) : (
-        // Image or video-only: centered lightbox
         <div onClick={e => e.stopPropagation()} style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh", borderRadius: 10, overflow: "hidden", background: "#111", display: "flex", flexDirection: "column" }}>
           {item.type === "image" ? (
             <img src={item.url} alt={item.caption ?? ""} style={{ maxWidth: "85vw", maxHeight: "80vh", objectFit: "contain", display: "block" }} />
@@ -188,7 +161,7 @@ function MediaLightbox({ item, onClose }: { item: InfluencerMediaItem; onClose: 
   );
 }
 
-// ---- Media Grid Item (for Videos tab) ----
+// ---- Media Grid Item ----
 function MediaGridItem({ item }: { item: InfluencerMediaItem }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   return (
@@ -215,67 +188,13 @@ function MediaGridItem({ item }: { item: InfluencerMediaItem }) {
   );
 }
 
-// ---- Default demo products ----
-function getDefaultProducts(creatorId: string) {
-  return [
-    { id: `${creatorId}_p1`, name: "AirLight High-Waist Leggings", price: "$98", imageUrl: "", link: "#", colors: ["#175C40", "#1a1a1a", "#f0ece4"], sizes: ["XS", "S", "M", "L", "XL"] },
-    { id: `${creatorId}_p2`, name: "SculptFlex Flare Leggings", price: "$108", imageUrl: "", link: "#", colors: ["#175C40", "#e8b4a0", "#1a1a1a"], sizes: ["XS", "S", "M", "L", "XL"] },
-    { id: `${creatorId}_p3`, name: "EcoMove Capri Leggings", price: "$88", imageUrl: "", link: "#", colors: ["#1a1a1a", "#175C40"], sizes: ["XS", "S", "M", "L"] },
-    { id: `${creatorId}_p4`, name: "Freedom Shorts", price: "$68", imageUrl: "", link: "#", colors: ["#f0ece4", "#e8b4a0"], sizes: ["XS", "S", "M", "L", "XL"] },
-    { id: `${creatorId}_p5`, name: "Sculpt Bra", price: "$68", imageUrl: "", link: "#", colors: ["#175C40", "#1a1a1a", "#8B7355", "#d0ccc8"], sizes: ["XS", "S", "M", "L"] },
-    { id: `${creatorId}_p6`, name: "Form Flare Pants", price: "$118", imageUrl: "", link: "#", colors: ["#1a1a1a", "#175C40"], sizes: ["XS", "S", "M", "L", "XL"] },
-  ];
-}
-
-function getDefaultMediaItems(creatorId: string): InfluencerMediaItem[] {
-  const captions = [
-    "Movement is freedom 🏃\u200d♀️",
-    "Morning flow ✨",
-    "Strong is beautiful 💪",
-    "Flow state activated",
-    "Run your own race",
-    "Feel the difference",
-  ];
-  return Array.from({ length: 6 }, (_, i) => ({
-    id: `${creatorId}_media_${i}`,
-    type: "video" as const,
-    url: "",
-    thumbnailUrl: "",
-    caption: captions[i] ?? "",
-    productName: i < 4 ? "AirLight Leggings" : undefined,
-    productLink: i < 4 ? "#" : undefined,
-  }));
-}
-
-// ---- Product Card (for Products tab) ----
-function ProductCard({ product }: { product: ReturnType<typeof getDefaultProducts>[0] }) {
-  const [qvOpen, setQvOpen] = useState(false);
+// ---- Empty state ----
+function EmptyState({ message }: { message: string }) {
   return (
-    <>
-      <div className="inf-cd-product-card">
-        <div className="inf-cd-product-img" onClick={() => setQvOpen(true)}>
-          {product.imageUrl
-            ? <img src={product.imageUrl} alt={product.name} loading="lazy" />
-            : <div className="inf-cd-product-img-placeholder" />
-          }
-          <button className="inf-cd-product-quick-btn" onClick={e => { e.stopPropagation(); setQvOpen(true); }}>
-            Quick View
-          </button>
-        </div>
-        <div className="inf-cd-product-info">
-          <div className="inf-cd-product-name">{product.name}</div>
-          {product.price && <div className="inf-cd-product-price">{product.price}</div>}
-          {product.colors && product.colors.length > 0 && (
-            <div className="inf-cd-product-swatches">
-              {product.colors.map((c, i) => (
-                <span key={i} className="inf-cd-product-swatch" style={{ background: c }} />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-      {qvOpen && <ProductQuickView product={product} onClose={() => setQvOpen(false)} />}
-    </>
+    <div className="inf-cd-empty" style={{ padding: "60px 20px", textAlign: "center", color: "#888" }}>
+      <p style={{ fontSize: "2rem", marginBottom: 12 }}>🗂️</p>
+      <p style={{ fontSize: "0.95rem" }}>{message}</p>
+    </div>
   );
 }
 
@@ -286,8 +205,7 @@ export default function InfluencerCreatorPage() {
   const { config } = useThemeConfig();
   const [activeTab, setActiveTab] = useState<"products" | "videos">("products");
 
-  const cfg = config.influencer;
-  const creators = cfg?.creators ?? [];
+  const creators = config.influencer?.creators ?? [];
 
   const creator: InfluencerCreator | undefined = creators.find(
     c => c.handle.replace("@", "").toLowerCase() === handle.toLowerCase()
@@ -310,22 +228,14 @@ export default function InfluencerCreatorPage() {
     );
   }
 
-  const mediaItems = creator.detailMediaItems && creator.detailMediaItems.length > 0
-    ? creator.detailMediaItems
-    : getDefaultMediaItems(creator.id);
+  // Dynamic discount code based on creator handle
+  const discountCode = `${creator.handle.replace("@", "").toUpperCase()}15`;
 
-  // Use admin-configured shopProducts if available, otherwise fall back to hardcoded defaults
-  const products = (creator.shopProducts && creator.shopProducts.length > 0)
-    ? creator.shopProducts.map(sp => ({
-        id: sp.id,
-        name: sp.name,
-        price: sp.price,
-        imageUrl: sp.imageUrl ?? "",
-        link: sp.link ?? "#",
-        colors: [] as string[],
-        sizes: [] as string[],
-      }))
-    : getDefaultProducts(creator.id);
+  // Products: use admin-configured shopProducts only — no hardcoded fallback
+  const products: InfluencerShopProduct[] = creator.shopProducts ?? [];
+
+  // Media items: use admin-configured detailMediaItems only — no hardcoded fallback
+  const mediaItems: InfluencerMediaItem[] = creator.detailMediaItems ?? [];
 
   return (
     <div className="inf-creator-detail-page storefront-wrapper">
@@ -342,7 +252,7 @@ export default function InfluencerCreatorPage() {
         }
       `}</style>
 
-      {/* ===== INSTAGRAM-STYLE PROFILE HEADER ===== */}
+      {/* ===== PROFILE HEADER ===== */}
       <section className="inf-cd-profile">
         <div className="inf-cd-profile-inner">
           {/* Left: avatar */}
@@ -355,7 +265,6 @@ export default function InfluencerCreatorPage() {
 
           {/* Right: info */}
           <div className="inf-cd-profile-info">
-            {/* Row 1: name + platform badge + social link */}
             <div className="inf-cd-profile-name-row">
               <h1 className="inf-cd-profile-name">{creator.name}</h1>
               <PlatformBadge platform={creator.platform} />
@@ -366,10 +275,8 @@ export default function InfluencerCreatorPage() {
               )}
             </div>
 
-            {/* Row 2: handle */}
             <div className="inf-cd-profile-handle">{creator.handle}</div>
 
-            {/* Row 3: stats */}
             <div className="inf-cd-profile-stats">
               {creator.postsCount && (
                 <div className="inf-cd-profile-stat">
@@ -389,13 +296,11 @@ export default function InfluencerCreatorPage() {
               )}
             </div>
 
-            {/* Row 4: bio */}
             {creator.bio && <p className="inf-cd-profile-bio">{creator.bio}</p>}
 
-            {/* Row 5: discount code */}
             <div className="inf-cd-profile-code-row">
               <span className="inf-cd-profile-code-label">Exclusive Code:</span>
-              <span className="inf-cd-profile-code">{creator.handle.replace("@", "").toUpperCase()}15</span>
+              <span className="inf-cd-profile-code">{discountCode}</span>
             </div>
           </div>
         </div>
@@ -422,9 +327,13 @@ export default function InfluencerCreatorPage() {
       {/* ===== PRODUCTS TAB ===== */}
       {activeTab === "products" && (
         <section className="inf-cd-tab-section">
-          <div className="inf-cd-products-grid">
-            {products.map(p => <ProductCard key={p.id} product={p} />)}
-          </div>
+          {products.length > 0 ? (
+            <div className="inf-cd-products-grid">
+              {products.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          ) : (
+            <EmptyState message="No products have been added for this creator yet." />
+          )}
         </section>
       )}
 
@@ -436,7 +345,7 @@ export default function InfluencerCreatorPage() {
               {mediaItems.map(item => <MediaGridItem key={item.id} item={item} />)}
             </div>
           ) : (
-            <div className="inf-cd-empty">No content yet.</div>
+            <EmptyState message="No media has been added for this creator yet." />
           )}
         </section>
       )}
@@ -449,7 +358,6 @@ export default function InfluencerCreatorPage() {
       </div>
 
       <SFFooter />
-
     </div>
   );
 }
