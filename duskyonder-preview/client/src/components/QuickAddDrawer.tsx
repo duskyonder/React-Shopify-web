@@ -79,6 +79,21 @@ export function QuickAddDrawer({ product, onClose }: QuickAddDrawerProps) {
     });
   }, [product?.handle]);
 
+  // Derive live price + comparePrice from Shopify when available
+  const displayPrice = (() => {
+    if (!shopifyProduct?.variants?.length) return product?.price ?? '';
+    const v = shopifyProduct.variants[0];
+    return v.price?.amount ? `$${parseFloat(v.price.amount).toFixed(2)}` : (product?.price ?? '');
+  })();
+  const displayComparePrice = (() => {
+    if (!shopifyProduct?.variants?.length) return product?.comparePrice ?? '';
+    const v = shopifyProduct.variants[0];
+    if (!v.compareAtPrice?.amount) return product?.comparePrice ?? '';
+    const origAmt = parseFloat(v.compareAtPrice.amount);
+    const saleAmt = parseFloat(v.price?.amount ?? '0');
+    return origAmt > saleAmt ? `$${origAmt.toFixed(2)}` : '';
+  })();
+
   // Derive colors from Shopify or fallback
   const colorEntries: Array<{ name: string; hex: string | null }> = shopifyProduct
     ? (shopifyProduct.options.find(o => o.name.toLowerCase() === "color")?.optionValues ?? []).map(v => ({
@@ -245,16 +260,16 @@ export function QuickAddDrawer({ product, onClose }: QuickAddDrawerProps) {
               display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden",
             }}>{product.name}</p>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>{product.price}</span>
-              {product.comparePrice && (() => {
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>{displayPrice}</span>
+              {displayComparePrice && (() => {
                 const parseAmt = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
-                const saleAmt = parseAmt(product.price);
-                const origAmt = parseAmt(product.comparePrice);
+                const saleAmt = parseAmt(displayPrice);
+                const origAmt = parseAmt(displayComparePrice);
                 const hasDiscount = origAmt > saleAmt;
                 const discountPct = hasDiscount ? Math.round(((origAmt - saleAmt) / origAmt) * 100) : 0;
                 return (
                   <>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: TEXT_SECONDARY, textDecoration: "line-through" }}>{product.comparePrice}</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: TEXT_SECONDARY, textDecoration: "line-through" }}>{displayComparePrice}</span>
                     {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#dc2626" }}>-{discountPct}%</span>}
                   </>
                 );

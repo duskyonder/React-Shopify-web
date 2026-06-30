@@ -760,8 +760,8 @@ function mapStorefrontProducts(nodes: any[]): StorefrontProductSimple[] {
       handle: node.handle,
       imageUrl: images[0]?.url || '',
       hoverImageUrl: images[1]?.url || undefined,
-      price: price ? `$${priceAmt.toFixed(0)}` : '',
-      comparePrice: (compareAt && compareAmt > priceAmt) ? `$${compareAmt.toFixed(0)}` : undefined,
+      price: price ? `$${priceAmt.toFixed(2)}` : '',
+      comparePrice: (compareAt && compareAmt > priceAmt) ? `$${compareAmt.toFixed(2)}` : undefined,
       colors: colorOption?.values || [],
       detailUrl: `/products/${node.handle}`,
     };

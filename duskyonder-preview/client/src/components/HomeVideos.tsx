@@ -93,13 +93,12 @@ function MobileVideoCard({ video, mobileWidth, mobileGap, config, videos, videoI
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef<number | null>(null);
 
-  // Auto-fetch Shopify product when playing starts
+  // Fetch Shopify product on mount so comparePrice is available before playing
   useEffect(() => {
-    if (!playing) return;
     const handle = video.linkedProductHandle;
     if (!handle || shopifyProduct) return;
     fetchProductByHandle(handle).then(p => setShopifyProduct(p));
-  }, [playing, video.linkedProductHandle]);
+  }, [video.linkedProductHandle]);
 
   // Derive product data
   const allImgs: string[] = shopifyProduct
@@ -130,9 +129,15 @@ function MobileVideoCard({ video, mobileWidth, mobileGap, config, videos, videoI
   const productPrice = shopifyProduct?.variants?.[0]?.price
     ? `$${parseFloat(shopifyProduct.variants[0].price.amount).toFixed(2)}`
     : video.linkedProductPrice || "";
-  const comparePrice = shopifyProduct?.variants?.[0]?.compareAtPrice
-    ? `$${parseFloat(shopifyProduct.variants[0].compareAtPrice.amount).toFixed(2)}`
-    : video.linkedProductComparePrice || "";
+  const comparePrice = (() => {
+    const v = shopifyProduct?.variants?.[0];
+    if (v?.compareAtPrice?.amount) {
+      const origAmt = parseFloat(v.compareAtPrice.amount);
+      const saleAmt = parseFloat(v.price?.amount ?? '0');
+      if (origAmt > saleAmt) return `$${origAmt.toFixed(2)}`;
+    }
+    return video.linkedProductComparePrice || "";
+  })();
 
   const handleAddToCart = () => {
     // Resolve variant GID from live Shopify data; fall back to product GID
