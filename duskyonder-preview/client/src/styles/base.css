@@ -661,14 +661,19 @@
   bottom: 20px;
   left: 18px;
   right: 18px;
+  /* mix-blend-mode: difference inverts the text color against the background image:
+     white (#fff) on dark areas stays white-ish; white on light areas inverts to dark.
+     This ensures readability without a fixed overlay regardless of image brightness. */
   color: #fff;
+  mix-blend-mode: difference;
   font-size: var(--cat-label-font-size, 0.75rem);
-  font-weight: 400;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   z-index: 2;
   transition: bottom 0.28s cubic-bezier(0.23, 1, 0.32, 1);
-  text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+  /* Remove text-shadow — it conflicts with mix-blend-mode and causes halos */
+  text-shadow: none;
   line-height: 1.2;
 }
 .sf-category-card:hover .sf-cat-overlay-text { bottom: 26px; }
