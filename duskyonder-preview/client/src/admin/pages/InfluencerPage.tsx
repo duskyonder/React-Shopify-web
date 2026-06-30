@@ -3,6 +3,8 @@ import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import type {
   InfluencerConfig,
   InfluencerCreator,
+  InfluencerShopProduct,
+  InfluencerMediaItem,
   InfluencerStatItem,
   InfluencerBenefit,
   InfluencerRequirement,
@@ -238,6 +240,143 @@ function CreatorCard({
                 label="Upload Product Image"
               />
             </div>
+          </div>
+
+          {/* ── Shop Products (multi-product list for detail page) ── */}
+          <div className="border rounded-md p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Shop Products (Detail Page Tab)</p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => {
+                  const newProduct: InfluencerShopProduct = { id: uid(), name: "", price: "", imageUrl: "", link: "" };
+                  onChange({ ...creator, shopProducts: [...(creator.shopProducts ?? []), newProduct] });
+                }}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add Product
+              </Button>
+            </div>
+            {(!creator.shopProducts || creator.shopProducts.length === 0) && (
+              <p className="text-xs text-muted-foreground text-center py-2">No products yet. Click "Add Product" to begin.</p>
+            )}
+            {(creator.shopProducts ?? []).map((sp, idx) => (
+              <div key={sp.id} className="border rounded p-3 space-y-2 bg-muted/30">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-muted-foreground">Product {idx + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => onChange({ ...creator, shopProducts: (creator.shopProducts ?? []).filter(p => p.id !== sp.id) })}
+                    className="text-destructive/60 hover:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Name</Label>
+                    <Input className="h-7 text-xs" value={sp.name} placeholder="AirLight Leggings"
+                      onChange={e => onChange({ ...creator, shopProducts: (creator.shopProducts ?? []).map(p => p.id === sp.id ? { ...p, name: e.target.value } : p) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Price</Label>
+                    <Input className="h-7 text-xs" value={sp.price} placeholder="$98"
+                      onChange={e => onChange({ ...creator, shopProducts: (creator.shopProducts ?? []).map(p => p.id === sp.id ? { ...p, price: e.target.value } : p) })} />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs">Product Link</Label>
+                    <Input className="h-7 text-xs" value={sp.link ?? ""} placeholder="/products/airlight-leggings"
+                      onChange={e => onChange({ ...creator, shopProducts: (creator.shopProducts ?? []).map(p => p.id === sp.id ? { ...p, link: e.target.value } : p) })} />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Product Image</Label>
+                  <ImageUploader
+                    section="influencer"
+                    slot={`creator_sp_${creator.id}_${sp.id}`}
+                    currentUrl={sp.imageUrl}
+                    onUploaded={url => onChange({ ...creator, shopProducts: (creator.shopProducts ?? []).map(p => p.id === sp.id ? { ...p, imageUrl: url } : p) })}
+                    onClear={() => onChange({ ...creator, shopProducts: (creator.shopProducts ?? []).map(p => p.id === sp.id ? { ...p, imageUrl: "" } : p) })}
+                    aspectRatio="3/4"
+                    label="Upload"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Detail Media Items ── */}
+          <div className="border rounded-md p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Media Items (Videos / Images Tab)</p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => {
+                  const newItem: InfluencerMediaItem = { id: uid(), type: "video", url: "", thumbnailUrl: "", caption: "" };
+                  onChange({ ...creator, detailMediaItems: [...(creator.detailMediaItems ?? []), newItem] });
+                }}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add Media
+              </Button>
+            </div>
+            {(!creator.detailMediaItems || creator.detailMediaItems.length === 0) && (
+              <p className="text-xs text-muted-foreground text-center py-2">No media yet. Click "Add Media" to begin.</p>
+            )}
+            {(creator.detailMediaItems ?? []).map((item, idx) => (
+              <div key={item.id} className="border rounded p-3 space-y-2 bg-muted/30">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-muted-foreground">Media {idx + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => onChange({ ...creator, detailMediaItems: (creator.detailMediaItems ?? []).filter(m => m.id !== item.id) })}
+                    className="text-destructive/60 hover:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Type</Label>
+                    <select
+                      className="h-7 w-full rounded-md border border-input bg-background px-2 text-xs"
+                      value={item.type}
+                      onChange={e => onChange({ ...creator, detailMediaItems: (creator.detailMediaItems ?? []).map(m => m.id === item.id ? { ...m, type: e.target.value as "image" | "video" } : m) })}
+                    >
+                      <option value="video">Video</option>
+                      <option value="image">Image</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Caption</Label>
+                    <Input className="h-7 text-xs" value={item.caption ?? ""} placeholder="Morning flow ✨"
+                      onChange={e => onChange({ ...creator, detailMediaItems: (creator.detailMediaItems ?? []).map(m => m.id === item.id ? { ...m, caption: e.target.value } : m) })} />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs">Video / Image URL</Label>
+                    <Input className="h-7 text-xs" value={item.url} placeholder="https://... or /manus-storage/..."
+                      onChange={e => onChange({ ...creator, detailMediaItems: (creator.detailMediaItems ?? []).map(m => m.id === item.id ? { ...m, url: e.target.value } : m) })} />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs">Thumbnail / Cover Image URL</Label>
+                    <Input className="h-7 text-xs" value={item.thumbnailUrl ?? ""} placeholder="https://..."
+                      onChange={e => onChange({ ...creator, detailMediaItems: (creator.detailMediaItems ?? []).map(m => m.id === item.id ? { ...m, thumbnailUrl: e.target.value } : m) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Linked Product Name</Label>
+                    <Input className="h-7 text-xs" value={item.productName ?? ""} placeholder="AirLight Leggings"
+                      onChange={e => onChange({ ...creator, detailMediaItems: (creator.detailMediaItems ?? []).map(m => m.id === item.id ? { ...m, productName: e.target.value } : m) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Linked Product Link</Label>
+                    <Input className="h-7 text-xs" value={item.productLink ?? ""} placeholder="/products/..."
+                      onChange={e => onChange({ ...creator, detailMediaItems: (creator.detailMediaItems ?? []).map(m => m.id === item.id ? { ...m, productLink: e.target.value } : m) })} />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       )}

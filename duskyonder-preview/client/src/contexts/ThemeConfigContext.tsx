@@ -612,6 +612,13 @@ export interface InfluencerTextStyle {
   maxWidth?: string;         // e.g. '600px'
 }
 
+export interface InfluencerShopProduct {
+  id: string;
+  name: string;
+  price: string;
+  imageUrl?: string;
+  link?: string;
+}
 export interface InfluencerCreator {
   id: string;
   name: string;              // display name
@@ -624,10 +631,11 @@ export interface InfluencerCreator {
   videoCoverUrl?: string;    // poster image for video
   videoUrl?: string;         // mp4 or YouTube link
   profileLink?: string;      // social profile URL
-  shopProductName?: string;  // product to feature in "Shop Her Look"
+  shopProductName?: string;  // legacy single-product "Shop Her Look" field
   shopProductPrice?: string;
   shopProductImageUrl?: string;
   shopProductLink?: string;
+  shopProducts?: InfluencerShopProduct[];  // multi-product list for detail page Products tab
   // Detail page media
   bio?: string;
   detailMediaItems?: InfluencerMediaItem[];

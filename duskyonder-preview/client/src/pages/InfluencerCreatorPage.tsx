@@ -314,7 +314,18 @@ export default function InfluencerCreatorPage() {
     ? creator.detailMediaItems
     : getDefaultMediaItems(creator.id);
 
-  const products = getDefaultProducts(creator.id);
+  // Use admin-configured shopProducts if available, otherwise fall back to hardcoded defaults
+  const products = (creator.shopProducts && creator.shopProducts.length > 0)
+    ? creator.shopProducts.map(sp => ({
+        id: sp.id,
+        name: sp.name,
+        price: sp.price,
+        imageUrl: sp.imageUrl ?? "",
+        link: sp.link ?? "#",
+        colors: [] as string[],
+        sizes: [] as string[],
+      }))
+    : getDefaultProducts(creator.id);
 
   return (
     <div className="inf-creator-detail-page storefront-wrapper">
