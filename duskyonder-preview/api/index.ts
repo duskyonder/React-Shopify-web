@@ -542,7 +542,8 @@ const vercelRouter = router({
         // Use REST Admin API /policies.json — more reliable than GraphQL shop.policies
         // which has inconsistent field availability across API versions.
         // REST response: { policies: [{ handle, title, body, url }] }
-        const token = getAdminToken();
+        let token: string;
+        try { token = await _getAdminToken(); } catch { token = ""; }
         console.log(`[getPolicies] token present: ${!!token}, length: ${token.length}, prefix: ${token.slice(0, 6)}...`);
         if (!token) {
           console.error("[getPolicies] SHOPIFY_ADMIN_TOKEN is empty or not set");
