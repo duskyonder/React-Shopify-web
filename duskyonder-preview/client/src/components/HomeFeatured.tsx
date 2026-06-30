@@ -349,6 +349,39 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
   const products = dataSource === 'auto' ? autoProducts : manualProducts;
   const sectionTitle = isDefault ? config.featuredTitle : (instanceData?.title ?? "Best Sellers");
 
+  // Batch-fetch live compareAtPrice per product so discount renders even when Shopify list queries return compareAtPrice:null
+  const [livePrices, setLivePrices] = useState<Record<string, { price: string; comparePrice: string }>>({});
+  const productIdsKey = products.map(p => p.id).join(',');
+  useEffect(() => {
+    if (!products.length) return;
+    let cancelled = false;
+    Promise.all(
+      products.map(async (p) => {
+        const handle = p.detailUrl?.split('/products/')[1]?.split('?')[0];
+        if (!handle) return null;
+        try {
+          const sp = await fetchProductByHandle(handle);
+          if (!sp?.variants?.[0]) return null;
+          const v = sp.variants[0];
+          const saleAmt = parseFloat(v.price?.amount ?? '0');
+          const origAmt = parseFloat(v.compareAtPrice?.amount ?? '0');
+          return {
+            id: p.id,
+            price: saleAmt ? `$${saleAmt.toFixed(2)}` : p.price,
+            comparePrice: (v.compareAtPrice && origAmt > saleAmt) ? `$${origAmt.toFixed(2)}` : '',
+          };
+        } catch { return null; }
+      })
+    ).then(results => {
+      if (cancelled) return;
+      const map: Record<string, { price: string; comparePrice: string }> = {};
+      for (const r of results) { if (r) map[r.id] = { price: r.price, comparePrice: r.comparePrice }; }
+      setLivePrices(map);
+    });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productIdsKey]);
+
   // Mobile scroll state
   const mobileTrackRef = useRef<HTMLDivElement>(null);
   const mobileIsJumping = useRef(false);
@@ -434,10 +467,12 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
           </div>
           {product.badge && <span className="sf-product-badge">{product.badge}</span>}
           {(() => {
+            const liveData = livePrices[product.id];
             const parseAmt = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
-            const saleAmt = parseAmt(product.price);
-            const origAmt = parseAmt(product.comparePrice || '');
-            const hasDiscount = !!(product.comparePrice && origAmt > saleAmt);
+            const saleAmt = parseAmt(liveData?.price || product.price);
+            const compareStr = liveData?.comparePrice || product.comparePrice || '';
+            const origAmt = parseAmt(compareStr);
+            const hasDiscount = !!(compareStr && origAmt > saleAmt);
             if (!hasDiscount) return null;
             const discountPct = Math.round(((origAmt - saleAmt) / origAmt) * 100);
             return (
@@ -490,15 +525,18 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
           <div className="sf-product-name">{product.name}</div>
           <div className="sf-product-price flex flex-wrap items-center gap-2">
             {(() => {
+              const liveData = livePrices[product.id];
+              const displayPrice = liveData?.price || product.price;
+              const displayCompare = liveData?.comparePrice || product.comparePrice || '';
               const parseAmt = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
-              const saleAmt = parseAmt(product.price);
-              const origAmt = parseAmt(product.comparePrice || '');
-              const hasDiscount = !!(product.comparePrice && origAmt > saleAmt);
+              const saleAmt = parseAmt(displayPrice);
+              const origAmt = parseAmt(displayCompare);
+              const hasDiscount = !!(displayCompare && origAmt > saleAmt);
               const discountPct = hasDiscount ? Math.round(((origAmt - saleAmt) / origAmt) * 100) : 0;
               return (
                 <>
-                  <span style={{ fontFamily: "'Outfit', sans-serif" }} className={`font-bold text-black`}>{product.price}</span>
-                  {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif" }} className="line-through text-neutral-400 text-sm">{product.comparePrice}</span>}
+                  <span style={{ fontFamily: "'Outfit', sans-serif" }} className={`font-bold text-black`}>{displayPrice}</span>
+                  {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif" }} className="line-through text-neutral-400 text-sm">{displayCompare}</span>}
                   {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif" }} className="text-red-600 font-bold text-sm">-{discountPct}%</span>}
                 </>
               );

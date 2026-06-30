@@ -578,6 +578,38 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
     fetchProductByHandle(handle).then(p => setShopifyProduct(p));
   }, [activeVideo]);
 
+  // Batch-fetch live price + compareAtPrice for all video cards (desktop price display)
+  const [videoLivePrices, setVideoLivePrices] = useState<Record<string, { price: string; comparePrice: string }>>({});
+  useEffect(() => {
+    if (!config.videos?.length) return;
+    let cancelled = false;
+    Promise.all(
+      config.videos.map(async (v: any) => {
+        const handle = v.linkedProductHandle;
+        if (!handle) return null;
+        try {
+          const sp = await fetchProductByHandle(handle);
+          if (!sp?.variants?.[0]) return null;
+          const variant = sp.variants[0];
+          const saleAmt = parseFloat(variant.price?.amount ?? '0');
+          const origAmt = parseFloat(variant.compareAtPrice?.amount ?? '0');
+          return {
+            id: v.id || handle,
+            price: saleAmt ? `$${saleAmt.toFixed(2)}` : (v.linkedProductPrice || ''),
+            comparePrice: (variant.compareAtPrice && origAmt > saleAmt) ? `$${origAmt.toFixed(2)}` : '',
+          };
+        } catch { return null; }
+      })
+    ).then(results => {
+      if (cancelled) return;
+      const map: Record<string, { price: string; comparePrice: string }> = {};
+      for (const r of results) { if (r) map[r.id] = { price: r.price, comparePrice: r.comparePrice }; }
+      setVideoLivePrices(map);
+    });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [(config.videos ?? []).map((v: any) => v.id || v.linkedProductHandle).join(',')]);
+
   if (!config.showVideos) return null;
 
   const desktopCount = config.videosDesktopCount ?? 4;
@@ -727,6 +759,24 @@ function SFVideos({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                         )}
                         <div className="sf-video-product-info">
                           <div className="sf-video-product-name">{video.linkedProductName}</div>
+                          {(() => {
+                            const liveData = videoLivePrices[video.id || video.linkedProductHandle];
+                            const displayPrice = liveData?.price || video.linkedProductPrice || '';
+                            const displayCompare = liveData?.comparePrice || video.linkedProductComparePrice || '';
+                            if (!displayPrice) return null;
+                            const parseAmt = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
+                            const saleAmt = parseAmt(displayPrice);
+                            const origAmt = parseAmt(displayCompare);
+                            const hasDiscount = !!(displayCompare && origAmt > saleAmt);
+                            const discountPct = hasDiscount ? Math.round(((origAmt - saleAmt) / origAmt) * 100) : 0;
+                            return (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginTop: 2 }}>
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 12, color: '#111' }}>{displayPrice}</span>
+                                {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: '#9ca3af', textDecoration: 'line-through' }}>{displayCompare}</span>}
+                                {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 11, color: '#dc2626' }}>-{discountPct}%</span>}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}
