@@ -1704,7 +1704,11 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
     saveTimer.current = setTimeout(async () => {
       setIsSaving(true);
       try {
-        await setConfigMutation.mutateAsync({ key: "themeConfig", value: newConfig });
+        await setConfigMutation.mutateAsync({
+          key: "themeConfig",
+          value: newConfig,
+          adminSecret: import.meta.env.VITE_ADMIN_PASSWORD ?? "duskyonder2024",
+        });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error("[ThemeConfig] save failed:", msg);

@@ -30,8 +30,11 @@ export const appRouter = router({
     }),
 
     setConfig: publicProcedure
-      .input(z.object({ key: z.string(), value: z.string() }))
+      .input(z.object({ key: z.string(), value: z.string(), adminSecret: z.string().optional() }))
       .mutation(async ({ input }) => {
+        if (input.adminSecret !== ENV.adminSecret) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid admin secret" });
+        }
         await setThemeConfig(input.key, input.value);
         return { success: true };
       }),
@@ -95,10 +98,13 @@ export const appRouter = router({
         try { return JSON.parse(raw); } catch { return raw; }
       }),
 
-    // Save a config section (used by admin editor)
+    // Save a config section (used by admin editor) — requires admin secret
     set: publicProcedure
-      .input(z.object({ key: z.string(), value: z.unknown() }))
+      .input(z.object({ key: z.string(), value: z.unknown(), adminSecret: z.string().optional() }))
       .mutation(async ({ input }) => {
+        if (input.adminSecret !== ENV.adminSecret) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid admin secret" });
+        }
         await setThemeConfig(input.key, JSON.stringify(input.value));
         return { success: true };
       }),

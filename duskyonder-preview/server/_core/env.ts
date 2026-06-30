@@ -26,4 +26,8 @@ export const ENV = {
     "",
   // Resend — transactional email (contact form)
   resendApiKey: process.env.RESEND_API_KEY ?? "",
+  // Admin panel secret — must match VITE_ADMIN_PASSWORD on the client
+  get adminSecret(): string {
+    return process.env.VITE_ADMIN_PASSWORD ?? "duskyonder2024";
+  },
 };
