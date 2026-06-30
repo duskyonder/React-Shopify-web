@@ -760,7 +760,7 @@ export default function Collections() {
       bannerImageUrl: shopifyBannerUrl,
       bannerHeight: 480,
       showBanner: true,
-      productsPerRow: 3,
+      productsPerRow: 4,
       productAspectRatio: "3/4",
       showColorFilter: true,
       colorFilters: [],
@@ -777,6 +777,8 @@ export default function Collections() {
       // Shopify live banner always overrides static config when available
       bannerImageUrl: shopifyBannerUrl || baseConfig.bannerImageUrl,
       showBanner: true,
+      // Always use Shopify description when available so all collections show their description
+      subtitle: shopifyCollection.description || baseConfig.subtitle,
       // Use dynamic colors when Shopify provides them, otherwise keep static config colors
       colorFilters: dynamicColorFilters.length > 0 ? dynamicColorFilters : baseConfig.colorFilters,
       showColorFilter: true,
