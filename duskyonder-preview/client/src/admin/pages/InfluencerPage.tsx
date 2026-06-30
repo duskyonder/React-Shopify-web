@@ -325,46 +325,6 @@ function CreatorCard({
             <Input className="h-8" value={creator.videoUrl ?? ""} onChange={e => set("videoUrl", e.target.value)} placeholder="https://youtube.com/... or .mp4 URL" />
           </div>
 
-          {/* Shop product */}
-          <div className="border rounded-md p-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Shop Her Look</p>
-              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShopPickerFor("hero")}>
-                <Search className="h-3.5 w-3.5 mr-1" /> Pick from Shopify
-              </Button>
-            </div>
-            {creator.shopProductName ? (
-              <div className="flex items-center gap-3 p-2 rounded-lg bg-muted/40 border">
-                {creator.shopProductImageUrl && (
-                  <img src={creator.shopProductImageUrl} alt={creator.shopProductName} className="w-12 h-12 object-cover rounded flex-shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{creator.shopProductName}</p>
-                  <p className="text-xs text-muted-foreground">{creator.shopProductPrice}</p>
-                  <p className="text-xs text-muted-foreground truncate">{creator.shopProductLink}</p>
-                </div>
-                <button type="button" onClick={() => { set("shopProductName", ""); set("shopProductPrice", ""); set("shopProductLink", ""); set("shopProductImageUrl", ""); }} className="text-destructive/60 hover:text-destructive flex-shrink-0">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground text-center py-2">No product selected. Click "Pick from Shopify" to choose one.</p>
-            )}
-            {/* Allow image override after Shopify pick */}
-            <div className="space-y-1.5">
-              <Label className="text-xs">Override Product Image (optional)</Label>
-              <ImageUploader
-                section="influencer"
-                slot={`creator_product_${creator.id}`}
-                currentUrl={creator.shopProductImageUrl}
-                onUploaded={url => set("shopProductImageUrl", url)}
-                onClear={() => set("shopProductImageUrl", "")}
-                aspectRatio="3/4"
-                label="Upload Product Image"
-              />
-            </div>
-          </div>
-
           {/* ── Shop Products (multi-product list for detail page) ── */}
           <div className="border rounded-md p-3 space-y-3">
             <div className="flex items-center justify-between">
@@ -499,15 +459,28 @@ function CreatorCard({
                     <Input className="h-7 text-xs" value={item.thumbnailUrl ?? ""} placeholder="https://..."
                       onChange={e => onChange({ ...creator, detailMediaItems: (creator.detailMediaItems ?? []).map(m => m.id === item.id ? { ...m, thumbnailUrl: e.target.value } : m) })} />
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Linked Product Name</Label>
-                    <Input className="h-7 text-xs" value={item.productName ?? ""} placeholder="AirLight Leggings"
-                      onChange={e => onChange({ ...creator, detailMediaItems: (creator.detailMediaItems ?? []).map(m => m.id === item.id ? { ...m, productName: e.target.value } : m) })} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Linked Product Link</Label>
-                    <Input className="h-7 text-xs" value={item.productLink ?? ""} placeholder="/products/..."
-                      onChange={e => onChange({ ...creator, detailMediaItems: (creator.detailMediaItems ?? []).map(m => m.id === item.id ? { ...m, productLink: e.target.value } : m) })} />
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs">Linked Product</Label>
+                    {item.productName ? (
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-background border">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate">{item.productName}</p>
+                          <p className="text-xs text-muted-foreground truncate">{item.productLink}</p>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setShopPickerFor(`media_${item.id}`)}>Change</Button>
+                          <button type="button" onClick={() => onChange({ ...creator, detailMediaItems: (creator.detailMediaItems ?? []).map(m => m.id === item.id ? { ...m, productName: "", productLink: "" } : m) })} className="text-destructive/60 hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShopPickerFor(`media_${item.id}`)}
+                        className="w-full py-2 border border-dashed rounded-lg text-xs text-muted-foreground hover:bg-accent transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <Search className="h-3.5 w-3.5" /> Pick a linked product from Shopify
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -516,20 +489,24 @@ function CreatorCard({
         </CardContent>
       )}
 
-      {/* ── Shopify product picker dialog (shared for hero + shopProducts) ── */}
+      {/* ── Shopify product picker dialog (shared for shopProducts + detailMediaItems) ── */}
       <ProductSearchDialog
         open={shopPickerFor !== null}
         onClose={() => setShopPickerFor(null)}
         onSelect={product => {
-          if (shopPickerFor === "hero") {
+          if (shopPickerFor && shopPickerFor.startsWith("media_")) {
+            // Linked product for a media item
+            const mediaId = shopPickerFor.slice(6);
             onChange({
               ...creator,
-              shopProductName: product.name,
-              shopProductPrice: product.price,
-              shopProductImageUrl: product.imageUrl,
-              shopProductLink: product.detailUrl,
+              detailMediaItems: (creator.detailMediaItems ?? []).map(m =>
+                m.id === mediaId
+                  ? { ...m, productName: product.name, productLink: product.detailUrl }
+                  : m
+              ),
             });
           } else if (shopPickerFor) {
+            // shopProducts array item
             onChange({
               ...creator,
               shopProducts: (creator.shopProducts ?? []).map(p =>
