@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
-import { createPortal } from "react-dom";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import type { InfluencerCreator, InfluencerMediaItem, InfluencerShopProduct } from "@/contexts/ThemeConfigContext";
-import { useCart } from "@/contexts/CartContext";
+import { QuickAddDrawer, type QuickAddProduct } from "@/components/QuickAddDrawer";
+import { createPortal } from "react-dom";
 
 // ---- Platform badge ----
 function PlatformBadge({ platform }: { platform: string }) {
@@ -20,91 +20,47 @@ function PlatformBadge({ platform }: { platform: string }) {
   );
 }
 
-// ---- Quick-view Product Panel ----
-function ProductQuickView({
+// ---- Product Card ----
+// Triggers the shared QuickAddDrawer via onQuickAdd callback
+function ProductCard({
   product,
-  onClose,
+  onQuickAdd,
 }: {
   product: InfluencerShopProduct;
-  onClose: () => void;
+  onQuickAdd: (p: QuickAddProduct) => void;
 }) {
-  const { addItem, openCart } = useCart();
-  const [previewIdx] = useState(0);
-  const previews = [product.imageUrl ?? undefined, undefined, undefined];
-
-  function handleAddToCart() {
-    addItem({
+  function handleQuickAdd(e: React.MouseEvent) {
+    e.stopPropagation();
+    // Extract Shopify handle from link: "/products/some-handle" → "some-handle"
+    const handle = product.link
+      ? product.link.replace(/^\/products\//, "").split("?")[0]
+      : undefined;
+    onQuickAdd({
       id: product.id,
+      handle: handle || null,
       name: product.name,
       price: product.price ?? "",
-      imageUrl: product.imageUrl,
-      productUrl: product.link,
+      imageUrl: product.imageUrl ?? null,
+      productUrl: product.link ?? null,
     });
-    openCart();
-    onClose();
   }
 
-  return createPortal(
-    <div className="inf-cd-qv-overlay" onClick={onClose}>
-      <div className="inf-cd-qv-panel" onClick={e => e.stopPropagation()}>
-        <button className="inf-cd-qv-close" onClick={onClose} aria-label="Close">✕</button>
-        {/* Left: main image + thumbnails */}
-        <div className="inf-cd-qv-left">
-          <div className="inf-cd-qv-main-img">
-            {previews[previewIdx]
-              ? <img src={previews[previewIdx]} alt={product.name} />
-              : <div className="inf-cd-qv-img-placeholder" />
-            }
-          </div>
-          <div className="inf-cd-qv-thumbs">
-            {previews.map((src, i) => (
-              <button key={i} className={`inf-cd-qv-thumb${previewIdx === i ? " active" : ""}`}>
-                {src ? <img src={src} alt="" /> : <div className="inf-cd-qv-thumb-placeholder" />}
-              </button>
-            ))}
-          </div>
-        </div>
-        {/* Right: product info */}
-        <div className="inf-cd-qv-right">
-          <div className="inf-cd-qv-name">{product.name}</div>
-          {product.price && <div className="inf-cd-qv-price">{product.price}</div>}
-          <button className="inf-cd-qv-add-btn" onClick={handleAddToCart}>
-            ADD TO CART
-          </button>
-          {product.link && product.link !== "#" && (
-            <a href={product.link} className="inf-cd-qv-view-link">
-              View Full Details →
-            </a>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
-// ---- Product Card ----
-function ProductCard({ product }: { product: InfluencerShopProduct }) {
-  const [qvOpen, setQvOpen] = useState(false);
   return (
-    <>
-      <div className="inf-cd-product-card">
-        <div className="inf-cd-product-img" onClick={() => setQvOpen(true)}>
-          {product.imageUrl
-            ? <img src={product.imageUrl} alt={product.name} loading="lazy" />
-            : <div className="inf-cd-product-img-placeholder" />
-          }
-          <button className="inf-cd-product-quick-btn" onClick={e => { e.stopPropagation(); setQvOpen(true); }}>
-            Quick View
-          </button>
-        </div>
-        <div className="inf-cd-product-info">
-          <div className="inf-cd-product-name">{product.name}</div>
-          {product.price && <div className="inf-cd-product-price">{product.price}</div>}
-        </div>
+    <div className="inf-cd-product-card">
+      <div className="inf-cd-product-img" onClick={handleQuickAdd}>
+        {product.imageUrl
+          ? <img src={product.imageUrl} alt={product.name} loading="lazy" />
+          : <div className="inf-cd-product-img-placeholder" />
+        }
+        <button className="inf-cd-product-quick-btn" onClick={handleQuickAdd}>
+          Quick Add
+        </button>
       </div>
-      {qvOpen && <ProductQuickView product={product} onClose={() => setQvOpen(false)} />}
-    </>
+      <div className="inf-cd-product-info">
+        <div className="inf-cd-product-name">{product.name}</div>
+        {product.price && <div className="inf-cd-product-price">{product.price}</div>}
+      </div>
+    </div>
   );
 }
 
@@ -162,8 +118,32 @@ function MediaLightbox({ item, onClose }: { item: InfluencerMediaItem; onClose: 
 }
 
 // ---- Media Grid Item ----
-function MediaGridItem({ item }: { item: InfluencerMediaItem }) {
+// "Shop" button on media items also triggers QuickAddDrawer when a linked product exists
+function MediaGridItem({
+  item,
+  onQuickAdd,
+}: {
+  item: InfluencerMediaItem;
+  onQuickAdd: (p: QuickAddProduct) => void;
+}) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  function handleShopClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!item.productName) return;
+    const handle = item.productLink
+      ? item.productLink.replace(/^\/products\//, "").split("?")[0]
+      : undefined;
+    onQuickAdd({
+      id: item.id,
+      handle: handle || null,
+      name: item.productName,
+      price: "",
+      imageUrl: item.thumbnailUrl ?? null,
+      productUrl: item.productLink ?? null,
+    });
+  }
+
   return (
     <>
       <div className="inf-cd-media-item" onClick={() => setLightboxOpen(true)}>
@@ -179,7 +159,9 @@ function MediaGridItem({ item }: { item: InfluencerMediaItem }) {
         {item.productName && (
           <div className="inf-cd-media-product">
             <span className="inf-cd-media-product-name">{item.productName}</span>
-            {item.productLink && <a href={item.productLink} className="inf-cd-media-shop-btn" onClick={e => e.stopPropagation()}>Shop</a>}
+            <button className="inf-cd-media-shop-btn" onClick={handleShopClick}>
+              Quick Add
+            </button>
           </div>
         )}
       </div>
@@ -204,6 +186,9 @@ export default function InfluencerCreatorPage() {
   const handle = params.handle ?? "";
   const { config } = useThemeConfig();
   const [activeTab, setActiveTab] = useState<"products" | "videos">("products");
+
+  // Shared QuickAddDrawer state — lifted to page level so both ProductCard and MediaGridItem can trigger it
+  const [quickAddProduct, setQuickAddProduct] = useState<QuickAddProduct | null>(null);
 
   const creators = config.influencer?.creators ?? [];
 
@@ -329,7 +314,9 @@ export default function InfluencerCreatorPage() {
         <section className="inf-cd-tab-section">
           {products.length > 0 ? (
             <div className="inf-cd-products-grid">
-              {products.map(p => <ProductCard key={p.id} product={p} />)}
+              {products.map(p => (
+                <ProductCard key={p.id} product={p} onQuickAdd={setQuickAddProduct} />
+              ))}
             </div>
           ) : (
             <EmptyState message="No products have been added for this creator yet." />
@@ -342,7 +329,9 @@ export default function InfluencerCreatorPage() {
         <section className="inf-cd-tab-section">
           {mediaItems.length > 0 ? (
             <div className="inf-cd-media-grid">
-              {mediaItems.map(item => <MediaGridItem key={item.id} item={item} />)}
+              {mediaItems.map(item => (
+                <MediaGridItem key={item.id} item={item} onQuickAdd={setQuickAddProduct} />
+              ))}
             </div>
           ) : (
             <EmptyState message="No media has been added for this creator yet." />
@@ -358,6 +347,12 @@ export default function InfluencerCreatorPage() {
       </div>
 
       <SFFooter />
+
+      {/* ===== SHARED QUICK ADD DRAWER ===== */}
+      <QuickAddDrawer
+        product={quickAddProduct}
+        onClose={() => setQuickAddProduct(null)}
+      />
     </div>
   );
 }
