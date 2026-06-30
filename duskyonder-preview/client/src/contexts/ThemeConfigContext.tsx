@@ -1607,6 +1607,14 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
             (mergedConfig as any)[field] = saved[field];
           }
         }
+        // Deep-merge aboutUs so empty-string saved values fall back to defaults
+        if (saved.aboutUs && defaultConfig.aboutUs) {
+          mergedConfig.aboutUs = { ...defaultConfig.aboutUs, ...saved.aboutUs };
+          // Restore default image URLs if saved value is empty string
+          if (!mergedConfig.aboutUs.storyImageUrl) mergedConfig.aboutUs.storyImageUrl = defaultConfig.aboutUs.storyImageUrl;
+          if (!mergedConfig.aboutUs.philosophyImageUrl) mergedConfig.aboutUs.philosophyImageUrl = defaultConfig.aboutUs.philosophyImageUrl;
+          if (mergedConfig.aboutUs.philosophyCtaLabel === undefined) mergedConfig.aboutUs.philosophyCtaLabel = defaultConfig.aboutUs.philosophyCtaLabel;
+        }
         setConfig(() => mergedConfig);
       } catch {}
     }
