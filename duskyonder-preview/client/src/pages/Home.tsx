@@ -495,13 +495,13 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
             )
           )}
         </div>
-        <div className="sf-series-content" style={{ textAlign: "right", alignItems: "flex-end", justifyContent: "center", display: "flex", flexDirection: "column" }}>
+        <div className="sf-series-content" style={{ textAlign: "center", alignItems: "center", justifyContent: "center", display: "flex", flexDirection: "column" }}>
           <div className="sf-series-label" style={{ color: labelColor }}>{config.seriesLabel || "TOP COLLECTIONS"}</div>
           <h2 className="sf-series-headline" style={{ color: headlineColor }}>
             {config.seriesHeadline || "THIS DREAMY PRINT"}<br />
             <em style={{ color: headlineEmColor }}>{config.seriesSubheadline || "DRAWS INSPIRATION"}</em>
           </h2>
-          <div className="sf-series-list" style={{ display: "flex", flexDirection: "column", gap: "2rem", alignItems: "flex-end" }}>
+          <div className="sf-series-list" style={{ display: "flex", flexDirection: "column", gap: "2rem", alignItems: "center" }}>
             {series.map((item, i) => (
               <div key={item.id}>
                 <div
@@ -509,7 +509,7 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                   onClick={() => { setActiveIdx(i); startTimer(); }}
                   style={{
                     fontFamily: "'Outfit', sans-serif",
-                    fontSize: "clamp(2rem, 4vw, 3.75rem)",
+                    fontSize: "clamp(1rem, 2vw, 1.875rem)",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
@@ -519,7 +519,7 @@ function SFSeries({ titleAlign = "center" }: { instanceId?: string; titleAlign?:
                     color: i === activeIdx
                       ? (isWhiteTheme ? "#111" : "#ffffff")
                       : (isWhiteTheme ? "#d4d4d4" : "rgba(255,255,255,0.25)"),
-                    textAlign: "right",
+                    textAlign: "center",
                   }}
                 >
                   {item.name}

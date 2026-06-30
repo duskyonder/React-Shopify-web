@@ -251,8 +251,8 @@
   flex-direction: column;
   gap: 0;
   justify-content: center;
-  align-items: flex-end;
-  text-align: right;
+  align-items: center;
+  text-align: center;
 }
 .sf-series-label {
   font-family: 'Outfit', sans-serif;
@@ -262,7 +262,7 @@
   text-transform: uppercase;
   color: rgba(255,255,255,0.5);
   margin-bottom: 20px;
-  text-align: right;
+  text-align: center;
 }
 .sf-series-headline {
   font-family: 'Outfit', sans-serif;
@@ -272,7 +272,7 @@
   letter-spacing: -0.03em;
   margin-bottom: 40px;
   color: white;
-  text-align: right;
+  text-align: center;
 }
 .sf-series-headline em {
   font-style: italic;
@@ -287,14 +287,14 @@
 /* Editorial huge-text list item */
 .sf-series-item-editorial {
   font-family: 'Outfit', sans-serif;
-  font-size: clamp(2rem, 4vw, 3.75rem);
+  font-size: clamp(1rem, 2vw, 1.875rem);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   line-height: 1.1;
   cursor: pointer;
   transition: color 0.5s ease;
-  text-align: right;
+  text-align: center;
   color: rgba(255,255,255,0.25);
 }
 .sf-series-item-editorial.active {
