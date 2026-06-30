@@ -275,6 +275,7 @@ function MobileVideoCard({ video, mobileWidth, mobileGap, config, videos, videoI
                   <>
                     {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "#6b7280", textDecoration: "line-through" }}>{comparePrice}</span>}
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 12, color: "#111" }}>{productPrice}</span>
+                    {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 11, color: "#dc2626" }}>-{Math.round(((origAmt - saleAmt) / origAmt) * 100)}%</span>}
                   </>
                 );
               })()}

@@ -433,6 +433,23 @@ function SFFeatured({ instanceId, titleAlign = "center" }: { instanceId?: string
             )}
           </div>
           {product.badge && <span className="sf-product-badge">{product.badge}</span>}
+          {(() => {
+            const parseAmt = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
+            const saleAmt = parseAmt(product.price);
+            const origAmt = parseAmt(product.comparePrice || '');
+            const hasDiscount = !!(product.comparePrice && origAmt > saleAmt);
+            if (!hasDiscount) return null;
+            const discountPct = Math.round(((origAmt - saleAmt) / origAmt) * 100);
+            return (
+              <span style={{
+                position: 'absolute', top: 8, right: 8, zIndex: 4,
+                background: '#dc2626', color: '#fff',
+                fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 11,
+                padding: '3px 7px', borderRadius: 4,
+                pointerEvents: 'none',
+              }}>-{discountPct}%</span>
+            );
+          })()}
           {/* Mobile: bottom-right + button triggers QuickAddDrawer */}
           {isMobile && (
             <button

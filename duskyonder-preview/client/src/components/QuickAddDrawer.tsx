@@ -244,11 +244,21 @@ export function QuickAddDrawer({ product, onClose }: QuickAddDrawerProps) {
               fontFamily: "'Tenor Sans', sans-serif", lineHeight: 1.35,
               display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden",
             }}>{product.name}</p>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>{product.price}</span>
-              {product.comparePrice && (
-                <span style={{ fontSize: 12, color: TEXT_SECONDARY, textDecoration: "line-through" }}>{product.comparePrice}</span>
-              )}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: TEXT_PRIMARY }}>{product.price}</span>
+              {product.comparePrice && (() => {
+                const parseAmt = (s: string) => parseFloat((s || '').replace(/[^0-9.]/g, ''));
+                const saleAmt = parseAmt(product.price);
+                const origAmt = parseAmt(product.comparePrice);
+                const hasDiscount = origAmt > saleAmt;
+                const discountPct = hasDiscount ? Math.round(((origAmt - saleAmt) / origAmt) * 100) : 0;
+                return (
+                  <>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: TEXT_SECONDARY, textDecoration: "line-through" }}>{product.comparePrice}</span>
+                    {hasDiscount && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#dc2626" }}>-{discountPct}%</span>}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
