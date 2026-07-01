@@ -6,6 +6,7 @@ import { ZoomModal } from "@/components/ProductDetailModals";
 export function ProductGallery({ images, productName, activeColorImage }: { images: string[]; productName: string; activeColorImage?: string }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [zoomSrc, setZoomSrc] = useState<string | null>(null);
+  const [zoomIdx, setZoomIdx] = useState(0);
 
   // Swipe state
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -71,7 +72,7 @@ export function ProductGallery({ images, productName, activeColorImage }: { imag
         <img
           src={allImages[activeIdx] || ""}
           alt={`${productName} image ${activeIdx + 1}`}
-          onClick={() => allImages[activeIdx] && setZoomSrc(allImages[activeIdx])}
+          onClick={() => { if (allImages[activeIdx]) { setZoomSrc(allImages[activeIdx]); setZoomIdx(activeIdx); } }}
         />
 
         {allImages.length > 1 && (
@@ -103,7 +104,14 @@ export function ProductGallery({ images, productName, activeColorImage }: { imag
         ))}
       </div>
 
-      {zoomSrc && <ZoomModal src={zoomSrc} onClose={() => setZoomSrc(null)} />}
+      {zoomSrc && (
+        <ZoomModal
+          src={zoomSrc}
+          onClose={() => setZoomSrc(null)}
+          images={allImages.filter(Boolean)}
+          initialIndex={zoomIdx}
+        />
+      )}
     </div>
   );
 }

@@ -133,7 +133,7 @@ export function QuickAddDrawer({ product, onClose }: QuickAddDrawerProps) {
   };
 
   const shopifyFirstImage = shopifyProduct?.images?.length
-    ? (shopifyProduct.images[0].url ?? shopifyProduct.images[0].src ?? null)
+    ? (shopifyProduct.images[0].url ?? null)
     : null;
   const displayImage = (selectedColor && product?.colorImages?.[selectedColor])
     ? product.colorImages[selectedColor]
@@ -141,7 +141,7 @@ export function QuickAddDrawer({ product, onClose }: QuickAddDrawerProps) {
 
   // All product images for desktop gallery
   const allImages: string[] = shopifyProduct?.images?.length
-    ? shopifyProduct.images.map(img => img.url ?? img.src).filter(Boolean)
+    ? shopifyProduct.images.map(img => img.url).filter(Boolean)
     : displayImage ? [displayImage] : [];
 
   // Drag-to-dismiss (mobile only)

@@ -842,3 +842,61 @@ export async function fetchProductsByTag(tag: string, count: number = 12): Promi
     return [];
   }
 }
+
+// =====================================================
+// Product Recommendations (Storefront API)
+// =====================================================
+
+const GET_PRODUCT_RECOMMENDATIONS = `
+  query GetProductRecommendations($productId: ID!) {
+    productRecommendations(productId: $productId) {
+      id
+      title
+      handle
+      images(first: 2) {
+        nodes {
+          url
+          altText
+        }
+      }
+      variants(first: 1) {
+        nodes {
+          price {
+            amount
+            currencyCode
+          }
+          compareAtPrice {
+            amount
+            currencyCode
+          }
+        }
+      }
+      options {
+        name
+        values
+      }
+    }
+  }
+`;
+
+/**
+ * Fetch Shopify's AI-powered product recommendations for a given product ID.
+ * Returns up to 10 recommended products (Shopify's default limit).
+ * Falls back to an empty array on any error.
+ */
+export async function fetchProductRecommendations(productId: string): Promise<StorefrontProductSimple[]> {
+  try {
+    const { data, errors } = await shopifyFetch<{ productRecommendations: any[] }>({
+      query: GET_PRODUCT_RECOMMENDATIONS,
+      variables: { productId },
+    });
+    if (errors?.length) {
+      console.error("Product recommendations errors:", errors);
+      return [];
+    }
+    return mapStorefrontProducts(data.productRecommendations || []);
+  } catch (e) {
+    console.error("Failed to fetch product recommendations:", e);
+    return [];
+  }
+}

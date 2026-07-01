@@ -8,7 +8,7 @@ import { HeartIcon, ChevronDownIcon, ShareIcon, InstagramIcon, PinterestIcon, Li
 import { SizeGuideModal } from "@/components/ProductDetailModals";
 import { CollapsibleSection } from "@/components/ProductDetailGallery";
 import { useCart } from "@/contexts/CartContext";
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { ShopifyProduct, StorefrontProductSimple } from "@/lib/shopify";
 
 // ==================== PRODUCT INFO PANEL ====================
 export function ProductInfoPanel({
@@ -121,12 +121,21 @@ export function ProductInfoPanel({
       <h1 className="pdp-product-name">{product.name}</h1>
 
       {/* Price */}
-      <div className="pdp-price-row">
-        <span className="pdp-price">{product.price}</span>
-        {(detail.comparePrice || product.comparePrice) && (
-          <span className="pdp-compare-price">{detail.comparePrice || product.comparePrice}</span>
-        )}
-      </div>
+      {(() => {
+        const rawCompare = detail.comparePrice || product.comparePrice || "";
+        const rawPrice = product.price || "";
+        const compareNum = parseFloat(rawCompare.replace(/[^0-9.]/g, ""));
+        const priceNum = parseFloat(rawPrice.replace(/[^0-9.]/g, ""));
+        const showCompare = rawCompare && !isNaN(compareNum) && !isNaN(priceNum) && compareNum > priceNum;
+        return (
+          <div className="pdp-price-row">
+            <span className="pdp-price">{product.price}</span>
+            {showCompare && (
+              <span className="pdp-compare-price">{rawCompare}</span>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Color selection */}
       {colorChoices.length > 0 && (
@@ -168,62 +177,60 @@ export function ProductInfoPanel({
         </div>
       </div>
 
-      {/* Quantity */}
-      <div className="pdp-option-group">
-        <div className="pdp-option-label">Quantity</div>
+      {/* Quantity + Add to Cart + Wishlist — single compact row on mobile, stacked on desktop */}
+      <div className="pdp-cta-block">
+        {/* Quantity stepper */}
         <div className="pdp-qty-row">
           <button className="pdp-qty-btn" onClick={() => setQuantity(q => Math.max(1, q - 1))}>−</button>
           <span className="pdp-qty-value">{quantity}</span>
           <button className="pdp-qty-btn" onClick={() => setQuantity(q => q + 1)}>+</button>
         </div>
-      </div>
 
-      {/* Add to cart + wishlist */}
-      <div className="pdp-cta-row">
-        <button
-          className="pdp-add-to-cart"
-          style={{ flex: 1 }}
-          disabled={addingToCart}
-          onClick={() => {
-            // Find the matching variant based on selected color + size
-            const selectedColor = product.colors?.[selectedColorIdx];
-            let variantId: string | undefined;
-            if (shopifyProduct) {
-              const variant = shopifyProduct.variants.find(v => {
-                const colorMatch = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === "color" && o.value === selectedColor);
-                const sizeMatch = !selectedSize || v.selectedOptions.some(o => o.name.toLowerCase() === "size" && o.value === selectedSize);
-                return colorMatch && sizeMatch && v.availableForSale;
-              }) || shopifyProduct.variants.find(v => v.availableForSale);
-              variantId = variant?.id;
-            }
-            if (!variantId && !selectedSize && shopifyProduct?.variants?.length) {
-              // If no size selected, prompt user
-              alert("Please select a size");
-              return;
-            }
-            setAddingToCart(true);
-            addItem({
-              id: variantId || product.id,
-              name: product.name,
-              price: product.price,
-              comparePrice: product.comparePrice,
-              imageUrl: product.imageUrl,
-              productUrl: `/products/${shopifyProduct?.handle || ""}`,
-              variantId: variantId || undefined,
-              selectedColor: selectedColor || undefined,
-              selectedSize: selectedSize || undefined,
-            });
-            openCart();
-            setTimeout(() => setAddingToCart(false), 500);
-          }}
-        >
-          {addingToCart ? "ADDING..." : "ADD TO CART"}
-        </button>
-        {showWishlist && (
-          <button className={`pdp-wishlist-btn${wishlist ? " active" : ""}`} onClick={() => setWishlist(w => !w)}>
-            <HeartIcon filled={wishlist} />
+        {/* ATC + Wishlist */}
+        <div className="pdp-cta-row">
+          <button
+            className="pdp-add-to-cart"
+            style={{ flex: 1 }}
+            disabled={addingToCart}
+            onClick={() => {
+              const selectedColor = product.colors?.[selectedColorIdx];
+              let variantId: string | undefined;
+              if (shopifyProduct) {
+                const variant = shopifyProduct.variants.find(v => {
+                  const colorMatch = !selectedColor || v.selectedOptions.some(o => o.name.toLowerCase() === "color" && o.value === selectedColor);
+                  const sizeMatch = !selectedSize || v.selectedOptions.some(o => o.name.toLowerCase() === "size" && o.value === selectedSize);
+                  return colorMatch && sizeMatch && v.availableForSale;
+                }) || shopifyProduct.variants.find(v => v.availableForSale);
+                variantId = variant?.id;
+              }
+              if (!variantId && !selectedSize && shopifyProduct?.variants?.length) {
+                alert("Please select a size");
+                return;
+              }
+              setAddingToCart(true);
+              addItem({
+                id: variantId || product.id,
+                name: product.name,
+                price: product.price,
+                comparePrice: product.comparePrice,
+                imageUrl: product.imageUrl,
+                productUrl: `/products/${shopifyProduct?.handle || ""}`,
+                variantId: variantId || undefined,
+                selectedColor: selectedColor || undefined,
+                selectedSize: selectedSize || undefined,
+              });
+              openCart();
+              setTimeout(() => setAddingToCart(false), 500);
+            }}
+          >
+            {addingToCart ? "ADDING..." : "ADD TO CART"}
           </button>
-        )}
+          {showWishlist && (
+            <button className={`pdp-wishlist-btn${wishlist ? " active" : ""}`} onClick={() => setWishlist(w => !w)}>
+              <HeartIcon filled={wishlist} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Shipping / Return quick-info modules */}
@@ -374,6 +381,7 @@ export function ProductVideo({ videoUrl }: { videoUrl: string }) {
 export function RecommendedProducts({
   currentProductId,
   collectionProducts,
+  shopifyRecs = [],
   manualIds,
   count,
   mobileCount,
@@ -385,6 +393,7 @@ export function RecommendedProducts({
 }: {
   currentProductId: string;
   collectionProducts: CollectionProduct[];
+  shopifyRecs?: StorefrontProductSimple[];
   manualIds: string[];
   count: number;
   mobileCount: number;
@@ -413,13 +422,33 @@ export function RecommendedProducts({
     return () => obs.disconnect();
   }, []);
 
-  // Build list: manual first, then fill from same collection (excluding current)
+  // Build list:
+  // 1. Manual picks (from admin config) first
+  // 2. Shopify AI recommendations (if available)
+  // 3. Fall back to same-collection products
   const manualProducts = manualIds
     .map(id => collectionProducts.find(p => p.id === id))
     .filter((p): p is CollectionProduct => !!p && p.id !== currentProductId);
-  const autoProducts = collectionProducts.filter(
-    p => p.id !== currentProductId && !manualIds.includes(p.id)
-  );
+
+  // Convert StorefrontProductSimple → CollectionProduct shape for unified rendering
+  const shopifyRecProducts: CollectionProduct[] = shopifyRecs
+    .filter(r => r.id !== currentProductId && !manualIds.includes(r.id))
+    .map(r => ({
+      id: r.id,
+      name: r.title,
+      price: r.price,
+      comparePrice: r.comparePrice,
+      imageUrl: r.imageUrl,
+      hoverImageUrl: r.hoverImageUrl,
+      colors: r.colors,
+      colorImages: {},
+      detailUrl: r.detailUrl,
+    }));
+
+  const autoProducts = shopifyRecProducts.length > 0
+    ? shopifyRecProducts
+    : collectionProducts.filter(p => p.id !== currentProductId && !manualIds.includes(p.id));
+
   const allRecs = [...manualProducts, ...autoProducts].slice(0, Math.max(count, mobileCount, 4));
 
   const totalPages = Math.ceil(allRecs.length / displayCount);

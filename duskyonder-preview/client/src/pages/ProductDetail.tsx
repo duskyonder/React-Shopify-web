@@ -6,7 +6,7 @@ import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
 import { ChevronLeftIcon } from "@/components/ProductDetailIcons";
 import { ProductGallery } from "@/components/ProductDetailGallery";
 import { ProductInfoPanel, ProductVideo, RecommendedProducts, BackToTop, MobileStickyCart, InlineNewsletterStrip } from "@/components/ProductDetailInfo";
-import { fetchProductByHandle, type ShopifyProduct } from "@/lib/shopify";
+import { fetchProductByHandle, fetchProductRecommendations, type ShopifyProduct, type StorefrontProductSimple } from "@/lib/shopify";
 import { useCart } from "@/contexts/CartContext";
 
 export default function ProductDetail() {
@@ -69,6 +69,15 @@ export default function ProductDetail() {
   const activeColorImage = activeColorHex && product?.colorImages?.[activeColorHex]
     ? product.colorImages[activeColorHex]
     : undefined;
+
+  // Shopify product recommendations
+  const [shopifyRecs, setShopifyRecs] = useState<StorefrontProductSimple[]>([]);
+  useEffect(() => {
+    if (!shopifyProduct?.id) return;
+    fetchProductRecommendations(shopifyProduct.id).then(recs => {
+      setShopifyRecs(recs);
+    }).catch(() => setShopifyRecs([]));
+  }, [shopifyProduct?.id]);
 
   const showVideo = foundDetail.showVideo && foundDetail.videoUrl;
   const showRecommended = foundDetail.showRecommended !== false;
@@ -138,10 +147,11 @@ export default function ProductDetail() {
             )}
 
             {/* Recommended products */}
-            {showRecommended && foundCollection.products.length > 1 && (
+            {showRecommended && (
               <RecommendedProducts
                 currentProductId={product.id}
                 collectionProducts={foundCollection.products}
+                shopifyRecs={shopifyRecs}
                 manualIds={foundDetail.manualRecommendedIds || []}
                 count={recommendedCount}
                 mobileCount={mobileRecommendedCount}
