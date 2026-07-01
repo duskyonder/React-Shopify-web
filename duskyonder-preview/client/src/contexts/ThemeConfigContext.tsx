@@ -649,6 +649,9 @@ export interface InfluencerMediaItem {
   caption?: string;
   productName?: string;
   productLink?: string;
+  productPrice?: string;
+  productComparePrice?: string;
+  productImageUrl?: string;
 }
 
 export interface InfluencerStatItem {
