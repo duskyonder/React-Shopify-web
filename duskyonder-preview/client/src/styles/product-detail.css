@@ -75,16 +75,22 @@
 .pdp-thumb-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 
 .pdp-main-image {
-  flex: 1;
-  /* Shrink desktop main image by ~20%: cap at 80% of the gallery container */
-  max-width: 80%;
+  /* Desktop: take ~65% of the gallery width, leaving room for the 72px thumb strip + gap */
+  flex: 0 0 65%;
+  max-width: 65%;
   position: relative;
   border-radius: 8px;
   overflow: hidden;
   background: #f5f5f5;
-  aspect-ratio: 3/4;
+  /* No fixed aspect-ratio or height — let the image define its own height */
 }
-.pdp-main-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Image scales proportionally: full width of its container, natural height, no cropping */
+.pdp-main-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
 .pdp-main-placeholder {
   width: 100%;
   height: 100%;
@@ -590,8 +596,9 @@
     order: 1;
     position: relative;
     display: block;
+    flex: unset;       /* reset desktop flex: 0 0 65% */
     width: 100%;
-    max-width: 100%; /* reset desktop shrink on mobile */
+    max-width: 100%;   /* reset desktop max-width: 65% */
     background-color: transparent;
     margin: 0;
     padding: 0;
