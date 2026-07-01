@@ -173,19 +173,8 @@
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
-  .inf-cd-profile { padding: 60px 20px 40px; }
-  .inf-cd-profile-inner { flex-direction: column; gap: 28px; }
-  .inf-cd-profile-avatar, .inf-cd-profile-avatar-placeholder { width: 100px; height: 100px; }
-  .inf-cd-profile-name { font-size: 1.5rem; }
-  .inf-cd-profile-stats { gap: 24px; }
-  .inf-cd-tab-bar-inner { padding: 0 20px; }
-  .inf-cd-tab-section { padding: 32px 20px 60px; }
-  .inf-cd-products-grid { grid-template-columns: repeat(2, 1fr); gap: 20px 16px; }
   .inf-benefits-section--minimal .inf-benefits-grid { grid-template-columns: 1fr; gap: 36px; }
   .inf-req-section--minimal .inf-req-grid { grid-template-columns: 1fr; gap: 40px; }
-}
-@media (max-width: 480px) {
-  .inf-cd-products-grid { grid-template-columns: 1fr; }
 }
 
 /* ============================================================
