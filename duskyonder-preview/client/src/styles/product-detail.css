@@ -40,9 +40,11 @@
 /* ---- Gallery ---- */
 .pdp-gallery {
   display: flex;
-  gap: 12px;
+  flex-direction: row-reverse; /* thumbnails on left, main image on right */
+  gap: 16px;
   position: sticky;
   top: 80px;
+  align-items: flex-start;
 }
 .pdp-thumbs {
   display: flex;
@@ -74,6 +76,8 @@
 
 .pdp-main-image {
   flex: 1;
+  /* Shrink desktop main image by ~20%: cap at 80% of the gallery container */
+  max-width: 80%;
   position: relative;
   border-radius: 8px;
   overflow: hidden;
@@ -587,6 +591,7 @@
     position: relative;
     display: block;
     width: 100%;
+    max-width: 100%; /* reset desktop shrink on mobile */
     background-color: transparent;
     margin: 0;
     padding: 0;

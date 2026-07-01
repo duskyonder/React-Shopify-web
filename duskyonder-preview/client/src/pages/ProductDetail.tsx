@@ -6,7 +6,7 @@ import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
 import { ChevronLeftIcon } from "@/components/ProductDetailIcons";
 import { ProductGallery } from "@/components/ProductDetailGallery";
 import { ProductInfoPanel, ProductVideo, RecommendedProducts, BackToTop, MobileStickyCart, InlineNewsletterStrip } from "@/components/ProductDetailInfo";
-import { fetchProductByHandle, fetchProductRecommendations, type ShopifyProduct, type StorefrontProductSimple } from "@/lib/shopify";
+import { fetchProductByHandle, fetchProductRecommendations, fetchBestSellingProducts, type ShopifyProduct, type StorefrontProductSimple } from "@/lib/shopify";
 import { useCart } from "@/contexts/CartContext";
 
 export default function ProductDetail() {
@@ -70,13 +70,26 @@ export default function ProductDetail() {
     ? product.colorImages[activeColorHex]
     : undefined;
 
-  // Shopify product recommendations
+  // Shopify product recommendations — with best-sellers fallback when empty
   const [shopifyRecs, setShopifyRecs] = useState<StorefrontProductSimple[]>([]);
   useEffect(() => {
     if (!shopifyProduct?.id) return;
-    fetchProductRecommendations(shopifyProduct.id).then(recs => {
-      setShopifyRecs(recs);
-    }).catch(() => setShopifyRecs([]));
+    fetchProductRecommendations(shopifyProduct.id)
+      .then(async recs => {
+        if (recs.length > 0) {
+          setShopifyRecs(recs);
+        } else {
+          // Shopify hasn't indexed this product yet — fall back to best sellers
+          try {
+            const fallback = await fetchBestSellingProducts(8);
+            // Exclude the current product from the fallback list
+            setShopifyRecs(fallback.filter(r => r.id !== shopifyProduct.id));
+          } catch {
+            setShopifyRecs([]);
+          }
+        }
+      })
+      .catch(() => setShopifyRecs([]));
   }, [shopifyProduct?.id]);
 
   const showVideo = foundDetail.showVideo && foundDetail.videoUrl;
