@@ -172,8 +172,8 @@ function ProductCard({
 }
 
 // ─── Video Card — mirrors HomeVideos.tsx desktop card render ──────────────────
-// Thumbnail with sf-video-card classes, play badge, creator badge (top-left)
-// Product strip below: thumbnail | name | chevron-up circle button → QuickAddDrawer
+// Thumbnail click → inline video playback (same pattern as MobileVideoCard)
+// Product strip chevron button → QuickAddDrawer only
 function VideoCard({
   item,
   onQuickAdd,
@@ -181,8 +181,20 @@ function VideoCard({
   item: InfluencerMediaItem;
   onQuickAdd: (p: QuickAddProduct) => void;
 }) {
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
   const hasProduct = !!(item.productName);
   const thumbSrc = item.thumbnailUrl || (item.type === "image" ? item.url : null);
+
+  // Convert video URL to embeddable src (same logic as HomeVideos)
+  function toEmbedUrl(url: string): { type: "video" | "iframe"; src: string } {
+    if (!url) return { type: "video", src: url };
+    const ytMatch = url.match(/(?:v=|youtu\.be\/)([^&?/]+)/);
+    if (ytMatch) return { type: "iframe", src: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1&loop=1&playlist=${ytMatch[1]}` };
+    const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+    if (ttMatch) return { type: "iframe", src: `https://www.tiktok.com/embed/v2/${ttMatch[1]}` };
+    return { type: "video", src: url };
+  }
 
   function buildVideoPayload(): QuickAddProduct {
     const handle = item.productLink
@@ -203,31 +215,76 @@ function VideoCard({
       {/* Video card — 9:16 aspect, matches HomeVideos desktop */}
       <div
         className="sf-video-card"
-        style={{ aspectRatio: "9/16", cursor: hasProduct ? "pointer" : "default" }}
-        onClick={() => { if (hasProduct) onQuickAdd(buildVideoPayload()); }}
+        style={{ aspectRatio: "9/16", cursor: "pointer", position: "relative", overflow: "hidden", borderRadius: 10, background: "#000" }}
+        onClick={() => { if (!playing) setPlaying(true); }}
       >
-        {thumbSrc ? (
-          <img
-            loading="lazy"
-            src={thumbSrc}
-            alt={item.caption ?? ""}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          />
+        {!playing ? (
+          <>
+            {thumbSrc ? (
+              <img
+                loading="lazy"
+                src={thumbSrc}
+                alt={item.caption ?? ""}
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+            ) : (
+              <div style={{ width: "100%", height: "100%", background: FOREST,
+                display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <PlayIcon />
+              </div>
+            )}
+            {/* Play badge — only shown when not playing */}
+            <div className="sf-video-play"><PlayIcon /></div>
+          </>
         ) : (
-          <div style={{ width: "100%", height: "100%", background: FOREST,
-            display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <PlayIcon />
-          </div>
+          (() => {
+            if (!item.url) {
+              return (
+                <div style={{ width: "100%", height: "100%", background: FOREST,
+                  display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
+                  {thumbSrc ? <img loading="lazy" src={thumbSrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} /> : null}
+                  <PlayIcon />
+                  <p style={{ fontSize: 12, color: "#fff", opacity: 0.7, margin: 0 }}>No video link</p>
+                </div>
+              );
+            }
+            const { type, src } = toEmbedUrl(item.url);
+            if (type === "video") {
+              return <video src={src} autoPlay playsInline muted={muted} loop style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />;
+            }
+            return <iframe src={src} style={{ width: "100%", height: "100%", border: "none", display: "block" }} allow="autoplay; fullscreen; encrypted-media" allowFullScreen />;
+          })()
         )}
-
-        {/* Play badge */}
-        <div className="sf-video-play"><PlayIcon /></div>
 
         {/* Creator / caption badge — top-left */}
         {item.caption && (
-          <div className="sf-video-creator-badge">
+          <div className="sf-video-creator-badge" style={{ top: 10, left: 10 }}>
             <span className="sf-video-creator-name">{item.caption}</span>
           </div>
+        )}
+
+        {/* Mute toggle — only when playing */}
+        {playing && (
+          <button
+            onClick={e => { e.stopPropagation(); setMuted(m => !m); }}
+            style={{ position: "absolute", top: 10, right: 10, width: 32, height: 32,
+              borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "none",
+              color: "#fff", cursor: "pointer", display: "flex", alignItems: "center",
+              justifyContent: "center", backdropFilter: "blur(4px)", zIndex: 10 }}
+            aria-label={muted ? "Unmute" : "Mute"}
+          >
+            {muted ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            )}
+          </button>
         )}
       </div>
 
@@ -328,7 +385,7 @@ export default function InfluencerCreatorPage() {
             .icp-profile-inner { flex-direction: column; gap: 20px; text-align: center; align-items: center; }
             .icp-stats { justify-content: center !important; }
             .icp-name-row { justify-content: center !important; flex-wrap: wrap !important; }
-            .icp-section-pt { padding-top: calc(24px + 56px + 24px) !important; }
+            .icp-section-pt { padding-top: calc(8px + 56px + 8px) !important; }
             .icp-bio { margin-left: auto !important; margin-right: auto !important; }
           }
         `}</style>
