@@ -175,6 +175,10 @@ export const GET_PRODUCT_BY_HANDLE = `
           altText
         }
       }
+      seo {
+        title
+        description
+      }
     }
   }
 `;
@@ -216,6 +220,7 @@ export interface ShopifyProduct {
   options: ShopifyProductOption[];
   variants: ShopifyProductVariant[];
   images: { url: string; altText?: string }[];
+  seo?: { title?: string; description?: string };
 }
 
 export async function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {

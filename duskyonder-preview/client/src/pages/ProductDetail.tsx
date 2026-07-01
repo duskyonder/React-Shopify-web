@@ -70,6 +70,58 @@ export default function ProductDetail() {
     ? product.colorImages[activeColorHex]
     : undefined;
 
+  // Dynamic SEO meta tags — update on product load, reset on unmount
+  const DEFAULT_TITLE = "Dusk Yonder | Performance Activewear";
+  const DEFAULT_DESC = "Dusk Yonder — high-performance, eco-friendly activewear designed for versatility. Shop leggings, sports bras, jumpsuits, shorts and more.";
+
+  useEffect(() => {
+    if (!shopifyProduct) return;
+
+    const pageTitle =
+      shopifyProduct.seo?.title?.trim() ||
+      `${shopifyProduct.title} | Dusk Yonder`;
+    const pageDesc =
+      shopifyProduct.seo?.description?.trim() ||
+      shopifyProduct.description?.substring(0, 155) ||
+      "Shop premium activewear at Dusk Yonder.";
+    const pageUrl = `https://duskyonder.com/products/${shopifyProduct.handle}`;
+    const pageImage = shopifyProduct.images[0]?.url ?? "";
+
+    // Helper: update or create a <meta> tag
+    const setMeta = (selector: string, attr: string, value: string) => {
+      let el = document.querySelector<HTMLMetaElement>(selector);
+      if (!el) {
+        el = document.createElement("meta");
+        const [attrName, attrVal] = selector
+          .replace(/[\[\]'"]/g, "")
+          .split("=");
+        el.setAttribute(attrName, attrVal);
+        document.head.appendChild(el);
+      }
+      el.setAttribute(attr, value);
+    };
+
+    document.title = pageTitle;
+    setMeta('meta[name="description"]',        "content", pageDesc);
+    setMeta('meta[property="og:title"]',       "content", pageTitle);
+    setMeta('meta[property="og:description"]', "content", pageDesc);
+    setMeta('meta[property="og:url"]',         "content", pageUrl);
+    if (pageImage) {
+      setMeta('meta[property="og:image"]',     "content", pageImage);
+    }
+    setMeta('meta[property="og:type"]',        "content", "product");
+
+    // Cleanup: restore site-level defaults when leaving the PDP
+    return () => {
+      document.title = DEFAULT_TITLE;
+      setMeta('meta[name="description"]',        "content", DEFAULT_DESC);
+      setMeta('meta[property="og:title"]',       "content", DEFAULT_TITLE);
+      setMeta('meta[property="og:description"]', "content", DEFAULT_DESC);
+      setMeta('meta[property="og:url"]',         "content", "https://duskyonder.com");
+      setMeta('meta[property="og:type"]',        "content", "website");
+    };
+  }, [shopifyProduct]);
+
   // Shopify product recommendations — with best-sellers fallback when empty
   const [shopifyRecs, setShopifyRecs] = useState<StorefrontProductSimple[]>([]);
   useEffect(() => {
