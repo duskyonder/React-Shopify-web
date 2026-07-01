@@ -622,8 +622,37 @@ const SECTION_MAP: Partial<Record<SectionKey, React.ComponentType<{ instanceId?:
 };
 
 // ==================== MAIN PAGE ====================
+const HOME_SEO_TITLE = "Dusk Yonder | Premium Athleisure & Everyday Activewear";
+const HOME_SEO_DESC = "Dusk Yonder — premium athleisure designed to blur the lines between workout and daily life. Shop versatile leggings, sports bras, and jumpsuits for modern movement.";
+const SITE_DEFAULT_TITLE = "Dusk Yonder | Performance Activewear";
+const SITE_DEFAULT_DESC = "Dusk Yonder — high-performance activewear designed for versatility. Shop leggings, sports bras, jumpsuits, shorts and more.";
+
+function setPageMeta(selector: string, value: string) {
+  let el = document.querySelector<HTMLMetaElement>(selector);
+  if (!el) {
+    el = document.createElement("meta");
+    const [attrName, attrVal] = selector.replace(/[\[\]'"]/g, "").split("=");
+    el.setAttribute(attrName, attrVal);
+    document.head.appendChild(el);
+  }
+  el.setAttribute("content", value);
+}
+
 export default function Home() {
   const { config } = useThemeConfig();
+
+  useEffect(() => {
+    document.title = HOME_SEO_TITLE;
+    setPageMeta('meta[name="description"]', HOME_SEO_DESC);
+    setPageMeta('meta[property="og:title"]', HOME_SEO_TITLE);
+    setPageMeta('meta[property="og:description"]', HOME_SEO_DESC);
+    return () => {
+      document.title = SITE_DEFAULT_TITLE;
+      setPageMeta('meta[name="description"]', SITE_DEFAULT_DESC);
+      setPageMeta('meta[property="og:title"]', SITE_DEFAULT_TITLE);
+      setPageMeta('meta[property="og:description"]', SITE_DEFAULT_DESC);
+    };
+  }, []);
 
   const sectionOrder = config.sectionOrder || [
     { key: "hero" as SectionKey, label: "英雄横幅", visible: true },

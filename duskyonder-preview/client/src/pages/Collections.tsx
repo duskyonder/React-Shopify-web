@@ -801,6 +801,32 @@ export default function Collections() {
   // Prefer live Shopify data; fall back to static config
   const activeCollection = dynamicCollection || matchedCollection || collections.find(c => c.id === selectedId) || collections[0];
 
+  // SEO: update title + meta when active collection changes
+  useEffect(() => {
+    if (!activeCollection) return;
+    const colTitle = (activeCollection as any).title || (activeCollection as any).name || "Collection";
+    const prev = document.title;
+    document.title = `${colTitle} | Dusk Yonder`;
+    const _sm = (sel: string, val: string) => {
+      let el = document.querySelector<HTMLMetaElement>(sel);
+      if (!el) { el = document.createElement("meta"); const [a, v] = sel.replace(/[\[\]'"]/g, "").split("="); el.setAttribute(a, v); document.head.appendChild(el); }
+      el.setAttribute("content", val);
+    };
+    const desc = (activeCollection as any).description
+      ? (activeCollection as any).description.substring(0, 155)
+      : `Shop the ${colTitle} collection at Dusk Yonder. Premium athleisure designed for versatility and modern movement.`;
+    _sm('meta[name="description"]', desc);
+    _sm('meta[property="og:title"]', `${colTitle} | Dusk Yonder`);
+    _sm('meta[property="og:description"]', desc);
+    return () => {
+      document.title = prev;
+      _sm('meta[name="description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+      _sm('meta[property="og:title"]', "Dusk Yonder | Performance Activewear");
+      _sm('meta[property="og:description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCollection?.id]);
+
   if (collections.length === 0) {
     return (
       <div style={{ position: "relative" }}>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
 import { trpc } from "@/lib/trpc";
@@ -52,8 +52,28 @@ const INFO_ITEMS = [
 ];
 
 // ── Main component ───────────────────────────────────────────────────────────
+const _setMeta = (sel: string, val: string) => {
+  let el = document.querySelector<HTMLMetaElement>(sel);
+  if (!el) { el = document.createElement("meta"); const [a, v] = sel.replace(/[\[\]'"]/g, "").split("="); el.setAttribute(a, v); document.head.appendChild(el); }
+  el.setAttribute("content", val);
+};
+
 export default function ContactPage() {
   const [status, setStatus] = useState<SubmitStatus>("idle");
+
+  useEffect(() => {
+    const prev = document.title;
+    document.title = "Contact Us | Dusk Yonder";
+    _setMeta('meta[name="description"]', "Get in touch with Dusk Yonder. Contact our support team for inquiries about our premium athleisure, your orders, and customer services.");
+    _setMeta('meta[property="og:title"]', "Contact Us | Dusk Yonder");
+    _setMeta('meta[property="og:description"]', "Get in touch with Dusk Yonder. Contact our support team for inquiries about our premium athleisure, your orders, and customer services.");
+    return () => {
+      document.title = prev;
+      _setMeta('meta[name="description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+      _setMeta('meta[property="og:title"]', "Dusk Yonder | Performance Activewear");
+      _setMeta('meta[property="og:description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+    };
+  }, []);
   const sendContact = trpc.contact.send.useMutation();
 
   const {

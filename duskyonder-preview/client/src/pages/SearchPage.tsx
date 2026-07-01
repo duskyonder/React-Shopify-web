@@ -33,6 +33,32 @@ export default function SearchPage() {
     return () => clearTimeout(timer);
   }, [query]);
 
+  // SEO: update title + meta when search query changes
+  useEffect(() => {
+    const prev = document.title;
+    const pageTitle = query.trim()
+      ? `Search results for "${query.trim()}" | Dusk Yonder`
+      : "Search | Dusk Yonder";
+    document.title = pageTitle;
+    const _sm = (sel: string, val: string) => {
+      let el = document.querySelector<HTMLMetaElement>(sel);
+      if (!el) { el = document.createElement("meta"); const [a, v] = sel.replace(/[\[\]'"]/g, "").split("="); el.setAttribute(a, v); document.head.appendChild(el); }
+      el.setAttribute("content", val);
+    };
+    const desc = query.trim()
+      ? `Browse Dusk Yonder search results for "${query.trim()}". Find premium athleisure, leggings, sports bras, and more.`
+      : "Search the Dusk Yonder store for premium athleisure, activewear, and performance clothing.";
+    _sm('meta[name="description"]', desc);
+    _sm('meta[property="og:title"]', pageTitle);
+    _sm('meta[property="og:description"]', desc);
+    return () => {
+      document.title = prev;
+      _sm('meta[name="description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+      _sm('meta[property="og:title"]', "Dusk Yonder | Performance Activewear");
+      _sm('meta[property="og:description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+    };
+  }, [query]);
+
   // Live Shopify product search via tRPC
   const { data: liveProducts, isFetching: searchLoading, isError: searchError } = trpc.search.products.useQuery(
     { query: debouncedQuery, limit: 20 },

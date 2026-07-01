@@ -139,6 +139,29 @@ function ShopifyShopPolicyPage({ policyKey }: { policyKey: ShopPolicyKey }) {
   // headingIds is stable (memoised above) — no state/effect needed, pass directly
   const activeId = useScrollspy(headingIds);
 
+  // SEO: update title + meta when policy loads
+  useEffect(() => {
+    if (!policy?.title) return;
+    const policyTitle = policy.title;
+    const prev = document.title;
+    document.title = `${policyTitle} | Dusk Yonder`;
+    const setMeta = (sel: string, val: string) => {
+      let el = document.querySelector<HTMLMetaElement>(sel);
+      if (!el) { el = document.createElement("meta"); const [a, v] = sel.replace(/[\[\]'"]/g, "").split("="); el.setAttribute(a, v); document.head.appendChild(el); }
+      el.setAttribute("content", val);
+    };
+    const desc = `Review the ${policyTitle} at Dusk Yonder. Find detailed information regarding our premium athleisure store policies, shipping, and returns.`;
+    setMeta('meta[name="description"]', desc);
+    setMeta('meta[property="og:title"]', `${policyTitle} | Dusk Yonder`);
+    setMeta('meta[property="og:description"]', desc);
+    return () => {
+      document.title = prev;
+      setMeta('meta[name="description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+      setMeta('meta[property="og:title"]', "Dusk Yonder | Performance Activewear");
+      setMeta('meta[property="og:description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+    };
+  }, [policy?.title]);
+
   if (isLoading) {
     return (
       <div className="policy-page">

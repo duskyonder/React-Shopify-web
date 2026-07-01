@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useParams, Link } from "wouter";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
@@ -602,6 +602,33 @@ export default function InfluencerCreatorPage() {
   const creator: InfluencerCreator | undefined = creators.find(
     c => c.handle.replace("@", "").toLowerCase() === handle.toLowerCase()
   );
+
+  // SEO: update title + meta when creator is resolved
+  useEffect(() => {
+    if (!creator) return;
+    const name = creator.name || handle;
+    const prev = document.title;
+    document.title = `${name} | Dusk Yonder Creator`;
+    const _sm = (sel: string, val: string) => {
+      let el = document.querySelector<HTMLMetaElement>(sel);
+      if (!el) { el = document.createElement("meta"); const [a, v] = sel.replace(/[\[\]'"]/g, "").split("="); el.setAttribute(a, v); document.head.appendChild(el); }
+      el.setAttribute("content", val);
+    };
+    const desc = creator.bio
+      ? creator.bio.substring(0, 155)
+      : `Shop ${name}'s curated Dusk Yonder picks and discover premium athleisure for modern movement.`;
+    _sm('meta[name="description"]', desc);
+    _sm('meta[property="og:title"]', `${name} | Dusk Yonder Creator`);
+    _sm('meta[property="og:description"]', desc);
+    if (creator.avatarUrl) _sm('meta[property="og:image"]', creator.avatarUrl);
+    return () => {
+      document.title = prev;
+      _sm('meta[name="description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+      _sm('meta[property="og:title"]', "Dusk Yonder | Performance Activewear");
+      _sm('meta[property="og:description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creator?.name, creator?.bio, creator?.avatarUrl, handle]);
 
   if (!creator) {
     return (

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import type { InfluencerConfig } from "@/contexts/ThemeConfigContext";
@@ -10,6 +10,25 @@ export default function InfluencerPage() {
 
   const ts = (key: string) => tsStyle(cfg.textStyles?.[key]);
   const isVisible = (key: string) => cfg.textStyles?.[key]?.visible !== false;
+
+  useEffect(() => {
+    const prev = document.title;
+    document.title = "Creator & Ambassador Program | Dusk Yonder";
+    const _sm = (sel: string, val: string) => {
+      let el = document.querySelector<HTMLMetaElement>(sel);
+      if (!el) { el = document.createElement("meta"); const [a, v] = sel.replace(/[\[\]'"]/g, "").split("="); el.setAttribute(a, v); document.head.appendChild(el); }
+      el.setAttribute("content", val);
+    };
+    _sm('meta[name="description"]', "Join the Dusk Yonder creator community. Apply to become a brand ambassador and collaborate with a premium athleisure brand built for modern movement.");
+    _sm('meta[property="og:title"]', "Creator & Ambassador Program | Dusk Yonder");
+    _sm('meta[property="og:description"]', "Join the Dusk Yonder creator community. Apply to become a brand ambassador and collaborate with a premium athleisure brand built for modern movement.");
+    return () => {
+      document.title = prev;
+      _sm('meta[name="description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+      _sm('meta[property="og:title"]', "Dusk Yonder | Performance Activewear");
+      _sm('meta[property="og:description"]', "Dusk Yonder — high-performance activewear designed for versatility.");
+    };
+  }, []);
 
   // Section refs for animation
   const heroRef = useRef<HTMLDivElement>(null);
