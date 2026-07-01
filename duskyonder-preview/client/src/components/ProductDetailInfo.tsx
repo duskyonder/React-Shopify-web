@@ -127,11 +127,15 @@ export function ProductInfoPanel({
         const compareNum = parseFloat(rawCompare.replace(/[^0-9.]/g, ""));
         const priceNum = parseFloat(rawPrice.replace(/[^0-9.]/g, ""));
         const showCompare = rawCompare && !isNaN(compareNum) && !isNaN(priceNum) && compareNum > priceNum;
+        const discountPct = showCompare ? Math.round((1 - priceNum / compareNum) * 100) : 0;
         return (
           <div className="pdp-price-row">
             <span className="pdp-price">{product.price}</span>
             {showCompare && (
               <span className="pdp-compare-price">{rawCompare}</span>
+            )}
+            {showCompare && discountPct > 0 && (
+              <span className="pdp-discount-badge">-{discountPct}%</span>
             )}
           </div>
         );

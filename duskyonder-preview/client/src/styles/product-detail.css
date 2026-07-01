@@ -205,6 +205,13 @@
   font-weight: 400;
   opacity: 1;
 }
+.pdp-discount-badge {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #C0392B;
+  letter-spacing: 0.01em;
+}
 
 /* Option groups */
 .pdp-option-group { margin-bottom: 20px; }
