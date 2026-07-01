@@ -1,4 +1,5 @@
-import { useState, createPortal } from "react";
+import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams, Link } from "wouter";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
@@ -588,6 +589,14 @@ export default function InfluencerCreatorPage() {
   const { config } = useThemeConfig();
   const [activeTab, setActiveTab] = useState<"products" | "videos">("products");
   const [quickAddProduct, setQuickAddProduct] = useState<QuickAddProduct | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  function handleCopyCode() {
+    navigator.clipboard.writeText(discountCode).then(() => {
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    }).catch(() => {});
+  }
 
   const creators = config.influencer?.creators ?? [];
   const creator: InfluencerCreator | undefined = creators.find(
@@ -629,7 +638,7 @@ export default function InfluencerCreatorPage() {
           padding: 0 48px;
         }
         .icp-section-pt {
-          padding-top: calc(40px + 64px + 48px);
+          padding-top: calc(var(--promo-height, 40px) + 64px + 24px);
         }
         .icp-profile-inner {
           display: flex;
@@ -664,7 +673,7 @@ export default function InfluencerCreatorPage() {
         }
         @media (max-width: 640px) {
           .icp-section-inner { padding: 0 16px; }
-          .icp-section-pt    { padding-top: calc(8px + 56px + 8px) !important; }
+          .icp-section-pt    { padding-top: calc(var(--promo-m-height, 36px) + 64px + 12px) !important; }
           .icp-profile-inner { flex-direction: column; gap: 16px; text-align: center; align-items: center; }
           .icp-stats         { justify-content: center !important; }
           .icp-name-row      { justify-content: center !important; flex-wrap: wrap !important; }
@@ -742,15 +751,28 @@ export default function InfluencerCreatorPage() {
                 </p>
               )}
 
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 8,
-                background: "#f0f7f4", border: `1px solid ${FOREST}20`, borderRadius: 4, padding: "7px 12px" }}>
-                <span style={{ fontFamily: FONT_BODY, fontSize: "0.72rem", color: TEXT_SECONDARY, letterSpacing: "0.04em" }}>
+              <button
+                onClick={handleCopyCode}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8,
+                  background: "#f0f7f4", border: `1px solid ${FOREST}20`, borderRadius: 4, padding: "7px 12px",
+                  cursor: "pointer", fontFamily: FONT_BODY }}
+                aria-label="Copy promo code"
+              >
+                <span style={{ fontSize: "0.72rem", color: TEXT_SECONDARY, letterSpacing: "0.04em" }}>
                   Exclusive Code:
                 </span>
-                <span style={{ fontFamily: FONT_BODY, fontSize: "0.82rem", fontWeight: 700, color: FOREST, letterSpacing: "0.1em" }}>
+                <span style={{ fontSize: "0.82rem", fontWeight: 700, color: FOREST, letterSpacing: "0.1em" }}>
                   {discountCode}
                 </span>
-              </div>
+                {codeCopied ? (
+                  <span style={{ fontSize: "0.7rem", color: FOREST, fontWeight: 600, letterSpacing: "0.04em" }}>✓ Copied!</span>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={FOREST} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
         </div>
