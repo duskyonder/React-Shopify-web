@@ -4,6 +4,7 @@ import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
 import { useThemeConfig } from "@/contexts/ThemeConfigContext";
 import type { InfluencerCreator, InfluencerMediaItem, InfluencerShopProduct } from "@/contexts/ThemeConfigContext";
 import { QuickAddDrawer, type QuickAddProduct } from "@/components/QuickAddDrawer";
+import { createPortal } from "react-dom";
 
 // ─── Design tokens (mirrors Home page palette) ───────────────────────────────
 const FOREST = "#0D3D2B";
@@ -169,6 +170,113 @@ function ProductCard({
   );
 }
 
+// ─── Media Lightbox (portal, for viewing full media) ─────────────────────────
+function MediaLightbox({ item, onClose }: { item: InfluencerMediaItem; onClose: () => void }) {
+  const isVideo = item.type === "video";
+  const hasProduct = !!(item.productName || item.productLink);
+
+  return createPortal(
+    <div
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.75)",
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+    >
+      {isVideo && hasProduct ? (
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{ display: "flex", gap: 0, maxWidth: 900, width: "95vw", maxHeight: "92vh",
+            borderRadius: 14, overflow: "hidden", background: CARD_BG, position: "relative",
+            boxShadow: "0 24px 80px rgba(0,0,0,0.4)" }}
+        >
+          <div style={{ flex: "0 0 auto", width: "min(360px,50vw)", background: "#000",
+            display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            <video src={item.url} controls autoPlay
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          </div>
+          <div style={{ flex: 1, padding: "36px 28px 28px", display: "flex", flexDirection: "column",
+            gap: 16, overflowY: "auto", minWidth: 0 }}>
+            {item.thumbnailUrl && (
+              <div style={{ aspectRatio: "3/4", borderRadius: 8, overflow: "hidden",
+                background: CARD_IMG_BG, maxHeight: 240 }}>
+                <img src={item.thumbnailUrl} alt={item.productName ?? ""}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              </div>
+            )}
+            {item.caption && (
+              <p style={{ margin: 0, fontFamily: FONT_BODY, fontSize: "0.9rem", color: TEXT_SECONDARY, lineHeight: 1.6 }}>
+                {item.caption}
+              </p>
+            )}
+            {item.productName && (
+              <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 18, color: TEXT_PRIMARY, lineHeight: 1.3 }}>
+                {item.productName}
+              </div>
+            )}
+            {item.productLink && (
+              <a href={item.productLink}
+                style={{ display: "inline-block", padding: "12px 24px", background: FOREST, color: "#fff",
+                  fontFamily: FONT_BODY, fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.08em",
+                  textTransform: "uppercase", textDecoration: "none", borderRadius: 3, textAlign: "center" }}>
+                Shop Now
+              </a>
+            )}
+          </div>
+          <button onClick={onClose}
+            style={{ position: "absolute", top: 12, right: 12, width: 34, height: 34, borderRadius: "50%",
+              background: "rgba(255,255,255,0.9)", border: "1px solid #e0e0e0", color: "#333",
+              cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}
+            aria-label="Close">✕</button>
+        </div>
+      ) : (
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh", borderRadius: 10,
+            overflow: "hidden", background: "#111", display: "flex", flexDirection: "column" }}
+        >
+          {item.type === "image" ? (
+            <img src={item.url} alt={item.caption ?? ""}
+              style={{ maxWidth: "85vw", maxHeight: "80vh", objectFit: "contain", display: "block" }} />
+          ) : (
+            <video src={item.url} controls autoPlay
+              style={{ maxWidth: "85vw", maxHeight: "80vh", display: "block" }} />
+          )}
+          {(item.caption || item.productName) && (
+            <div style={{ padding: "14px 20px", background: CARD_BG }}>
+              {item.caption && (
+                <p style={{ margin: "0 0 6px", fontFamily: FONT_BODY, fontSize: "0.9rem", color: "#333" }}>
+                  {item.caption}
+                </p>
+              )}
+              {item.productName && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "0.88rem", color: TEXT_PRIMARY }}>
+                    {item.productName}
+                  </span>
+                  {item.productLink && (
+                    <a href={item.productLink}
+                      style={{ fontFamily: FONT_BODY, fontSize: "0.8rem", fontWeight: 700, color: FOREST,
+                        border: `1px solid ${FOREST}`, padding: "4px 12px", borderRadius: 3, textDecoration: "none" }}>
+                      Shop Now
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          <button onClick={onClose}
+            style={{ position: "absolute", top: 12, right: 12, width: 34, height: 34, borderRadius: "50%",
+              background: "rgba(255,255,255,0.9)", border: "1px solid #e0e0e0", color: "#333",
+              cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}
+            aria-label="Close">✕</button>
+        </div>
+      )}
+    </div>,
+    document.body
+  );
+}
+
 // ─── Video Card (matches sf-video-card-wrapper from HomeVideos) ───────────────
 // 9:16 video thumbnail with play badge + creator name badge (top-left)
 // Product strip below card: thumbnail | name + price | + circle button
@@ -179,20 +287,23 @@ function VideoCard({
   item: InfluencerMediaItem;
   onQuickAdd: (p: QuickAddProduct) => void;
 }) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const hasProduct = !!(item.productName);
 
-  function buildVideoPayload(): QuickAddProduct {
+  function handleQuickAdd(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!item.productName) return;
     const handle = item.productLink
       ? item.productLink.replace(/^\/products\//, "").split("?")[0]
       : undefined;
-    return {
+    onQuickAdd({
       id: item.id,
       handle: handle || null,
-      name: item.productName ?? "",
+      name: item.productName,
       price: "",
       imageUrl: item.thumbnailUrl ?? null,
       productUrl: item.productLink ?? null,
-    };
+    });
   }
 
   // Thumbnail: use explicit thumbnailUrl, else the media url for images
@@ -208,7 +319,7 @@ function VideoCard({
           className="sf-video-card"
           style={{ aspectRatio: "9/16", cursor: "pointer", position: "relative",
             overflow: "hidden", borderRadius: 8, background: "#1a6b4a", width: "100%" }}
-          onClick={() => { if (hasProduct) onQuickAdd(buildVideoPayload()); }}
+          onClick={() => setLightboxOpen(true)}
         >
           {thumbSrc ? (
             <img loading="lazy" src={thumbSrc} alt={item.caption ?? ""}
@@ -245,7 +356,7 @@ function VideoCard({
             </div>
             {/* Quick-add circle button — matches HomeVideos product strip */}
             <button
-              onClick={(e) => { e.stopPropagation(); onQuickAdd(buildVideoPayload()); }}
+              onClick={handleQuickAdd}
               style={{ width: 30, height: 30, borderRadius: "50%", background: TEXT_PRIMARY,
                 border: "none", color: "#fff", cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
@@ -258,6 +369,7 @@ function VideoCard({
         )}
       </div>
 
+      {lightboxOpen && <MediaLightbox item={item} onClose={() => setLightboxOpen(false)} />}
     </>
   );
 }
