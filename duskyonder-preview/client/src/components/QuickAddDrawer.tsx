@@ -132,9 +132,12 @@ export function QuickAddDrawer({ product, onClose }: QuickAddDrawerProps) {
     return matched?.id ?? null;
   };
 
+  const shopifyFirstImage = shopifyProduct?.images?.length
+    ? (shopifyProduct.images[0].url ?? shopifyProduct.images[0].src ?? null)
+    : null;
   const displayImage = (selectedColor && product?.colorImages?.[selectedColor])
     ? product.colorImages[selectedColor]
-    : product?.imageUrl ?? null;
+    : product?.imageUrl || shopifyFirstImage || null;
 
   // All product images for desktop gallery
   const allImages: string[] = shopifyProduct?.images?.length
