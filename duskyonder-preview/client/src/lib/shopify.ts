@@ -260,6 +260,9 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
       })),
       variants: product.variants.nodes,
       images: product.images.nodes,
+      seo: product.seo
+        ? { title: product.seo.title ?? undefined, description: product.seo.description ?? undefined }
+        : undefined,
     };
   } catch (err) {
     console.error("Failed to fetch product:", err);
