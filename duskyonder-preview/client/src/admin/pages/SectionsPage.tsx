@@ -11,6 +11,7 @@ export default function SectionsPage() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const sections = config.sectionOrder ?? [];
+  const featuredInstances = config.featuredInstances ?? [];
 
   const save = (updated: SectionConfig[]) => {
     updateConfig({ sectionOrder: updated });
@@ -92,9 +93,13 @@ export default function SectionsPage() {
               <GripVertical className="w-5 h-5 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
                 <span className="font-medium text-sm">{getSectionLabel(section)}</span>
-                {section.instanceId && (
-                  <span className="ml-2 text-xs text-muted-foreground">#{section.instanceId.slice(-4)}</span>
-                )}
+                {section.instanceId && (() => {
+                  const inst = featuredInstances.find(f => f.id === section.instanceId);
+                  const tagLabel = inst?.tag?.trim();
+                  return tagLabel
+                    ? <span className="ml-2 text-xs text-muted-foreground">— {tagLabel}</span>
+                    : <span className="ml-2 text-xs text-muted-foreground">#{section.instanceId.slice(-4)}</span>;
+                })()}
               </div>
               <div className="flex items-center gap-2">
                 {section.visible

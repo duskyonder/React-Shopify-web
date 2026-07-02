@@ -41,11 +41,14 @@ export default function ImageUploader({
   const [allFiles, setAllFiles] = useState<ShopifyFile[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // nonce forces a new tRPC query key on every picker open, busting stale cache
+  const [nonce, setNonce] = useState(0);
+  const utils = trpc.useUtils();
   const uploadMutation = trpc.theme.uploadImage.useMutation();
 
   const { data: filesData, isLoading: filesLoading, isError: filesError, error: filesErrorObj, refetch: refetchFiles } =
     trpc.theme.listFiles.useQuery(
-      { first: 60, after: cursor, query: debouncedQuery || undefined },
+      { first: 60, after: cursor, query: debouncedQuery || undefined, _nonce: nonce } as Parameters<typeof trpc.theme.listFiles.useQuery>[0],
       { enabled: pickerOpen, retry: 1 }
     );
 
@@ -62,14 +65,15 @@ export default function ImageUploader({
     setLoadingMore(false);
   }, [filesData]);
 
-  // Reset and force-refetch when picker opens
+  // Reset and force-refetch when picker opens — invalidate cache first, then bump nonce
   useEffect(() => {
     if (pickerOpen) {
       setCursor(undefined);
       setAllFiles([]);
-      // Force a fresh network fetch even if tRPC cache is still warm
-      // (needed when the same picker query was used by a previous card instance)
-      setTimeout(() => refetchFiles(), 0);
+      // Invalidate any cached listFiles results so we always get a fresh network call
+      utils.theme.listFiles.invalidate();
+      // Bump nonce to guarantee a new query key even if cursor/query are unchanged
+      setNonce(n => n + 1);
     }
   }, [pickerOpen]);
 

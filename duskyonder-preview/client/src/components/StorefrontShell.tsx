@@ -127,9 +127,21 @@ export function SFPromoBar() {
         <ChevronLeftIcon />
       </button>
       <div className="sf-promo-text">
-        {item?.link ? (
-          <a href={item.link} style={{ color: "inherit", textDecoration: "none" }}>{item?.text}</a>
-        ) : (
+        {item?.link ? (() => {
+          // Intercept auth sentinel links: #login or #register redirect to the configured account URL
+          const isAuthLink = item.link === "#login" || item.link === "#register";
+          if (isAuthLink) {
+            return (
+              <button
+                onClick={() => { window.location.href = config.accountUrl || "/account/login"; }}
+                style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", padding: 0, font: "inherit", textDecoration: "underline" }}
+              >
+                {item?.text}
+              </button>
+            );
+          }
+          return <a href={item.link} style={{ color: "inherit", textDecoration: "none" }}>{item?.text}</a>;
+        })() : (
           <span>{item?.text}</span>
         )}
       </div>

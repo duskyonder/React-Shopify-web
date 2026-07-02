@@ -11,13 +11,14 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   LayoutDashboard, Image, Megaphone, Grid3X3, ShoppingBag, Video,
-  Layers, Shirt, PanelBottom, Navigation, LogOut, PanelLeft, Loader2, Mail, ShoppingCart, Users,
+  Layers, Shirt, PanelBottom, Navigation, LogOut, PanelLeft, Loader2, Mail, ShoppingCart, Users, ScrollText,
 } from "lucide-react";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "板块管理", path: "/admin" },
   { icon: Image, label: "Hero Banner", path: "/admin/hero" },
   { icon: Megaphone, label: "促销栏", path: "/admin/promo" },
+  { icon: ScrollText, label: "滚动字幕", path: "/admin/marquee" },
   { icon: Grid3X3, label: "分类板块", path: "/admin/categories" },
   { icon: ShoppingBag, label: "产品板块", path: "/admin/products" },
   { icon: Video, label: "视频板块", path: "/admin/videos" },
