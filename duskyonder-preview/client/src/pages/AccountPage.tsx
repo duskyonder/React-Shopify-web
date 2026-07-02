@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { SFPromoBar, SFHeader, SFFooter } from "@/components/StorefrontShell";
-import { getCustomerLoginUrlAsync, getCustomerLogoutUrl } from "@/lib/shopify";
+import { getCustomerLoginUrlAsync } from "@/lib/shopify";
 import { trpc } from "@/lib/trpc";
 import { useCart } from "@/contexts/CartContext";
 
@@ -530,6 +530,9 @@ function PreferencesTab() {
 
 // ── Login Page ─────────────────────────────────────────────────────────────────
 function LoginPage() {
+  const [location] = useLocation();
+  const isRegister = location === "/account/register";
+
   const handleLogin = async () => {
     const redirectUri = `${window.location.origin}/account`;
     const loginUrl = await getCustomerLoginUrlAsync(redirectUri);
@@ -537,38 +540,97 @@ function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#FAF9F7" }}>
+    <div style={{ minHeight: "100vh", background: "#F5F4F0", display: "flex", flexDirection: "column" }}>
       <SFPromoBar />
       <SFHeader darkMode />
-      <div style={{ maxWidth: 440, margin: "0 auto", padding: "120px 24px 80px", textAlign: "center" }}>
-        <h1 style={{ fontFamily: "'Tenor Sans', sans-serif", fontSize: "2rem", fontWeight: 400, marginBottom: 12, color: "#1a1a1a" }}>
-          Welcome Back
-        </h1>
-        <p style={{ color: "#666", fontSize: 14, marginBottom: 40 }}>
-          Sign in to your account to view orders, manage addresses, and more.
-        </p>
-        <button
-          onClick={handleLogin}
-          style={{
-            width: "100%", padding: "16px 24px", background: "#0D3D2B", color: "#fff",
-            border: "none", borderRadius: 2, fontSize: 13, fontWeight: 700,
-            letterSpacing: "0.12em", textTransform: "uppercase" as const, cursor: "pointer",
-            marginBottom: 16, transition: "background 0.2s",
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = "#2d5c42")}
-          onMouseLeave={e => (e.currentTarget.style.background = "#0D3D2B")}
-        >
-          Sign In with Shopify
-        </button>
-        <p style={{ fontSize: 13, color: "#888" }}>
-          Don't have an account?{" "}
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 24px" }}>
+        <div style={{ width: "100%", maxWidth: 480, background: "#F0EDE8", padding: "56px 48px", textAlign: "center" }}>
+          <h1 style={{
+            fontFamily: "'Tenor Sans', sans-serif",
+            fontSize: "1.9rem", fontWeight: 400, margin: "0 0 40px", color: "#1a1a1a",
+            letterSpacing: "0.02em",
+          }}>
+            {isRegister ? "Create Account" : "Login"}
+          </h1>
+
+          {/* Decorative input fields — clicking triggers Shopify PKCE redirect */}
+          <div
+            onClick={handleLogin}
+            style={{ cursor: "pointer" }}
+          >
+            <div style={{ marginBottom: 20, textAlign: "left" }}>
+              <input
+                readOnly
+                placeholder="E-mail"
+                onClick={handleLogin}
+                style={{
+                  width: "100%", background: "transparent", border: "none",
+                  borderBottom: "1px solid #b8b4ae", padding: "10px 0",
+                  fontSize: 14, color: "#1a1a1a", outline: "none",
+                  cursor: "pointer", boxSizing: "border-box" as const,
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: 12, textAlign: "left" }}>
+              <input
+                readOnly
+                placeholder="Password"
+                type="password"
+                onClick={handleLogin}
+                style={{
+                  width: "100%", background: "transparent", border: "none",
+                  borderBottom: "1px solid #b8b4ae", padding: "10px 0",
+                  fontSize: 14, color: "#1a1a1a", outline: "none",
+                  cursor: "pointer", boxSizing: "border-box" as const,
+                }}
+              />
+            </div>
+          </div>
+
+          {!isRegister && (
+            <div style={{ textAlign: "right", marginBottom: 28 }}>
+              <button
+                onClick={handleLogin}
+                style={{ background: "none", border: "none", fontSize: 12, color: "#666", cursor: "pointer", textDecoration: "underline", padding: 0 }}
+              >
+                Forgot your password?
+              </button>
+            </div>
+          )}
+          {isRegister && <div style={{ height: 28 }} />}
+
           <button
             onClick={handleLogin}
-            style={{ background: "none", border: "none", color: "#0D3D2B", fontWeight: 600, cursor: "pointer", textDecoration: "underline", fontSize: 13 }}
+            style={{
+              width: "100%", padding: "15px 24px",
+              background: "#1a1a1a", color: "#fff",
+              border: "none", borderRadius: 40,
+              fontSize: 13, fontWeight: 700,
+              letterSpacing: "0.1em", textTransform: "uppercase" as const,
+              cursor: "pointer", marginBottom: 20,
+              transition: "background 0.2s",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#333")}
+            onMouseLeave={e => (e.currentTarget.style.background = "#1a1a1a")}
           >
-            Create Account
+            {isRegister ? "Sign Up" : "Login"}
           </button>
-        </p>
+
+          <p style={{ fontSize: 13, color: "#888", margin: 0 }}>
+            {isRegister ? (
+              <>
+                Already have an account?{" "}
+                <a href="/account/login" style={{ color: "#1a1a1a", fontWeight: 600, textDecoration: "underline" }}>
+                  Sign in
+                </a>
+              </>
+            ) : (
+              <a href="/account/register" style={{ color: "#1a1a1a", fontWeight: 600, textDecoration: "underline" }}>
+                Sign up
+              </a>
+            )}
+          </p>
+        </div>
       </div>
       <SFFooter />
     </div>
@@ -737,13 +799,9 @@ function AccountDashboard() {
             </div>
             <button
               onClick={() => {
-                const idToken = localStorage.getItem(ID_TOKEN_KEY) ?? "";
                 clearStoredToken();
                 localStorage.removeItem(ID_TOKEN_KEY);
-                // Shopify Customer Account API requires id_token_hint + post_logout_redirect_uri
-                const postLogoutUri = window.location.origin;
-                const logoutUrl = getCustomerLogoutUrl(postLogoutUri, idToken);
-                window.location.href = logoutUrl;
+                window.location.href = "/";
               }}
               style={{
                 marginLeft: "auto", padding: "8px 16px", background: "transparent",
