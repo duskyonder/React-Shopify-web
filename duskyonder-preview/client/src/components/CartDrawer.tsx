@@ -507,28 +507,12 @@ export function CartDrawer() {
     if (checkoutLoading) return; // prevent double-click
     setCheckoutLoading(true);
     if (checkoutUrl) {
-      // Rewrite checkout URL to always use the .myshopify.com domain.
-      // VITE_SHOPIFY_STORE_DOMAIN may be set to the custom domain (e.g. www.duskyonder.com).
-      // We derive the .myshopify.com hostname from the Storefront API URL instead,
-      // which always points to the native Shopify domain.
-      let safeUrl = checkoutUrl;
-      try {
-        const parsed = new URL(checkoutUrl);
-        if (!parsed.hostname.endsWith(".myshopify.com")) {
-          // VITE_SHOPIFY_STORE_DOMAIN is the custom domain (e.g. www.duskyonder.com).
-          // VITE_SHOPIFY_MYSHOPIFY_DOMAIN is the native Shopify domain (e.g. duskyonder.myshopify.com).
-          // Using the .myshopify.com domain for checkout works unconditionally.
-          // Use env var if set, otherwise fall back to the known store domain.
-          const myshopifyDomain = (import.meta.env.VITE_SHOPIFY_MYSHOPIFY_DOMAIN as string | undefined) || "c81aag-cy.myshopify.com";
-          if (myshopifyDomain && myshopifyDomain.endsWith(".myshopify.com")) {
-            parsed.hostname = myshopifyDomain;
-            safeUrl = parsed.toString();
-          }
-        }
-      } catch {
-        // URL parse failed — use original
-      }
-      window.location.href = safeUrl;
+      // Use the checkout URL exactly as returned by Shopify.
+      // Shopify uses www.duskyonder.com/cart/c/TOKEN as the checkout URL
+      // (custom domain set as primary in Headless channel).
+      // Vercel proxies /cart/c/* to c81aag-cy.myshopify.com server-side,
+      // so the browser stays on www.duskyonder.com while Shopify serves checkout.
+      window.location.href = checkoutUrl;
       return;
     }
     // Fallback: if no checkout URL available

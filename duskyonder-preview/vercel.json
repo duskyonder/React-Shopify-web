@@ -9,10 +9,13 @@
   },
   "redirects": [
     { "source": "/fr/(.*)", "destination": "/", "permanent": true },
-    { "source": "/es/(.*)", "destination": "/", "permanent": true },
-    { "source": "/cart/c/:path*", "destination": "https://c81aag-cy.myshopify.com/cart/c/:path*", "permanent": false }
+    { "source": "/es/(.*)", "destination": "/", "permanent": true }
   ],
   "rewrites": [
+    {
+      "source": "/cart/c/:path*",
+      "destination": "https://c81aag-cy.myshopify.com/cart/c/:path*"
+    },
     {
       "source": "/api/(.*)",
       "destination": "/api/index"
