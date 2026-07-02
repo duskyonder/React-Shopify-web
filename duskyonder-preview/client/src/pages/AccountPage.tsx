@@ -741,7 +741,7 @@ function AccountDashboard() {
                 clearStoredToken();
                 localStorage.removeItem(ID_TOKEN_KEY);
                 // Shopify Customer Account API requires id_token_hint + post_logout_redirect_uri
-                const postLogoutUri = "https://react-shopify-web.vercel.app";
+                const postLogoutUri = window.location.origin;
                 const logoutUrl = getCustomerLogoutUrl(postLogoutUri, idToken);
                 window.location.href = logoutUrl;
               }}
