@@ -540,11 +540,11 @@ function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F5F4F0", display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100vh", background: "#ffffff", display: "flex", flexDirection: "column" }}>
       <SFPromoBar />
       <SFHeader darkMode />
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 24px" }}>
-        <div style={{ width: "100%", maxWidth: 480, background: "#F0EDE8", padding: "56px 48px", textAlign: "center" }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "96px 24px 144px" }}>
+        <div style={{ width: "100%", maxWidth: 480, background: "#ffffff", padding: "56px 48px", textAlign: "center" }}>
           <h1 style={{
             fontFamily: "'Tenor Sans', sans-serif",
             fontSize: "1.9rem", fontWeight: 400, margin: "0 0 40px", color: "#1a1a1a",
