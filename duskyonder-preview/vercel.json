@@ -9,7 +9,8 @@
   },
   "redirects": [
     { "source": "/fr/(.*)", "destination": "/", "permanent": true },
-    { "source": "/es/(.*)", "destination": "/", "permanent": true }
+    { "source": "/es/(.*)", "destination": "/", "permanent": true },
+    { "source": "/cart/c/:path*", "destination": "https://c81aag-cy.myshopify.com/cart/c/:path*", "permanent": false }
   ],
   "rewrites": [
     {

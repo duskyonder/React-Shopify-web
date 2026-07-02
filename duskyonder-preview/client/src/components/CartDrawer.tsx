@@ -518,7 +518,8 @@ export function CartDrawer() {
           // VITE_SHOPIFY_STORE_DOMAIN is the custom domain (e.g. www.duskyonder.com).
           // VITE_SHOPIFY_MYSHOPIFY_DOMAIN is the native Shopify domain (e.g. duskyonder.myshopify.com).
           // Using the .myshopify.com domain for checkout works unconditionally.
-          const myshopifyDomain = import.meta.env.VITE_SHOPIFY_MYSHOPIFY_DOMAIN as string | undefined;
+          // Use env var if set, otherwise fall back to the known store domain.
+          const myshopifyDomain = (import.meta.env.VITE_SHOPIFY_MYSHOPIFY_DOMAIN as string | undefined) || "c81aag-cy.myshopify.com";
           if (myshopifyDomain && myshopifyDomain.endsWith(".myshopify.com")) {
             parsed.hostname = myshopifyDomain;
             safeUrl = parsed.toString();
