@@ -508,16 +508,21 @@ export function CartDrawer() {
     setCheckoutLoading(true);
     if (checkoutUrl) {
       // Rewrite checkout URL to always use the .myshopify.com domain.
-      // Shopify's Storefront API may return the custom domain (duskyonder.com)
-      // in checkoutUrl, but custom-domain checkout requires a specific Shopify
-      // admin setting. Using the .myshopify.com domain works unconditionally.
+      // VITE_SHOPIFY_STORE_DOMAIN may be set to the custom domain (e.g. www.duskyonder.com).
+      // We derive the .myshopify.com hostname from the Storefront API URL instead,
+      // which always points to the native Shopify domain.
       let safeUrl = checkoutUrl;
       try {
         const parsed = new URL(checkoutUrl);
-        const shopDomain = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN as string;
-        if (shopDomain && !parsed.hostname.endsWith(".myshopify.com")) {
-          parsed.hostname = shopDomain;
-          safeUrl = parsed.toString();
+        if (!parsed.hostname.endsWith(".myshopify.com")) {
+          // VITE_SHOPIFY_STORE_DOMAIN is the custom domain (e.g. www.duskyonder.com).
+          // VITE_SHOPIFY_MYSHOPIFY_DOMAIN is the native Shopify domain (e.g. duskyonder.myshopify.com).
+          // Using the .myshopify.com domain for checkout works unconditionally.
+          const myshopifyDomain = import.meta.env.VITE_SHOPIFY_MYSHOPIFY_DOMAIN as string | undefined;
+          if (myshopifyDomain && myshopifyDomain.endsWith(".myshopify.com")) {
+            parsed.hostname = myshopifyDomain;
+            safeUrl = parsed.toString();
+          }
         }
       } catch {
         // URL parse failed — use original
