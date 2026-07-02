@@ -7,11 +7,12 @@ import { GripVertical, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import type { SectionConfig, SectionKey } from "@/contexts/ThemeConfigContext";
 
 export default function SectionsPage() {
-  const { config, updateConfig, addFeaturedSection, removeFeaturedSection } = useThemeConfig();
+  const { config, updateConfig, addFeaturedSection, removeFeaturedSection, addCategorySection, removeCategorySection } = useThemeConfig();
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const sections = config.sectionOrder ?? [];
   const featuredInstances = config.featuredInstances ?? [];
+  const categoryInstances = config.categoryInstances ?? [];
 
   const save = (updated: SectionConfig[]) => {
     updateConfig({ sectionOrder: updated });
@@ -44,6 +45,15 @@ export default function SectionsPage() {
   const handleAddFeatured = () => {
     addFeaturedSection();
   };
+  const handleAddCategory = () => {
+    if (categoryInstances.length >= 3) return; // max 3
+    addCategorySection();
+  };
+  const handleRemoveCategory = (section: SectionConfig) => {
+    if (section.instanceId) {
+      removeCategorySection(section.instanceId);
+    }
+  };
 
   const handleRemoveFeatured = (section: SectionConfig) => {
     if (section.instanceId) {
@@ -72,9 +82,14 @@ export default function SectionsPage() {
           <h1 className="text-xl font-semibold">首页板块管理</h1>
           <p className="text-muted-foreground text-sm mt-0.5">拖拽排序，控制各板块的显示与隐藏</p>
         </div>
-        <Button onClick={handleAddFeatured} size="sm" variant="outline">
-          <Plus className="w-4 h-4 mr-1" /> 添加产品板块
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleAddFeatured} size="sm" variant="outline">
+            <Plus className="w-4 h-4 mr-1" /> 添加产品板块
+          </Button>
+          <Button onClick={handleAddCategory} size="sm" variant="outline" disabled={categoryInstances.length >= 3}>
+            <Plus className="w-4 h-4 mr-1" /> 添加分类板块
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -94,7 +109,9 @@ export default function SectionsPage() {
               <div className="flex-1 min-w-0">
                 <span className="font-medium text-sm">{getSectionLabel(section)}</span>
                 {section.instanceId && (() => {
-                  const inst = featuredInstances.find(f => f.id === section.instanceId);
+                  const featInst = featuredInstances.find(f => f.id === section.instanceId);
+                  const catInst = categoryInstances.find(c => c.id === section.instanceId);
+                  const inst = featInst || catInst;
                   const tagLabel = inst?.tag?.trim();
                   return tagLabel
                     ? <span className="ml-2 text-xs text-muted-foreground">— {tagLabel}</span>
@@ -115,6 +132,16 @@ export default function SectionsPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveFeatured(section)}
+                    className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+                {section.key === "categories" && sections.filter(s => s.key === "categories").length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveCategory(section)}
                     className="text-destructive hover:text-destructive h-8 w-8 p-0"
                   >
                     <Trash2 className="w-4 h-4" />

@@ -208,7 +208,7 @@ function FeaturedInstanceEditor({ instance }: { instance: FeaturedInstance }) {
             >
               <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {[2, 3, 4, 5].map(n => (
+                {[2, 4, 6].map(n => (
                   <SelectItem key={n} value={String(n)}>{n} columns</SelectItem>
                 ))}
               </SelectContent>

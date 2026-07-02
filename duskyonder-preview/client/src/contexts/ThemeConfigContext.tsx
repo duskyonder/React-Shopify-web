@@ -283,6 +283,13 @@ export interface FeaturedInstance {
   collectionHandle?: string; // Shopify collection handle for auto mode (default: best-selling)
   tag?: string; // Shopify product tag filter (e.g. "new", "sale") - filters products by tag
 }
+export interface CategoryInstance {
+  id: string; // matches SectionConfig.instanceId
+  title: string; // section heading
+  tag?: string; // display label for admin identification
+  columnsDesktop: number; // 2 | 4 | 6
+  columnsMobile: number;  // 1 | 2
+}
 
 export interface ThemeConfig {
   showPromoBar: boolean;
@@ -396,6 +403,7 @@ export interface ThemeConfig {
   productsDataSource?: 'auto' | 'manual'; // auto=fetch Best Sellers from Shopify, manual=use manually configured products
   productsCollectionHandle?: string; // Shopify collection handle for auto mode
   featuredInstances: FeaturedInstance[]; // multi-instance Best Sellers
+  categoryInstances: CategoryInstance[]; // multi-instance category sections
 
   showSeries: boolean;
   seriesHeadline: string;
@@ -1037,7 +1045,7 @@ const defaultAboutUsConfig: AboutUsConfig = {
 
 const defaultSectionOrder: SectionConfig[] = [
   { key: "hero", label: "英雄横幅", visible: true, titleAlign: "center" },
-  { key: "categories", label: "产品分类", visible: true, titleAlign: "center" },
+  { key: "categories", label: "产品分类", visible: true, instanceId: "categories_default", titleAlign: "center" },
   { key: "marquee", label: "滚动字幕", visible: true, titleAlign: "center" },
   { key: "videos", label: "达人视频", visible: true, titleAlign: "center" },
   { key: "featured", label: "Best Sellers", visible: true, instanceId: "featured_default", titleAlign: "center" },
@@ -1193,6 +1201,9 @@ const defaultConfig: ThemeConfig = {
   productsSwatchMarginTop: 6,
   productsSwatchAlign: "flex-start",
   featuredInstances: [],
+  categoryInstances: [
+    { id: "categories_default", title: "Shop by Category", tag: "", columnsDesktop: 4, columnsMobile: 2 },
+  ],
   products: [
     { id: "prod_1", name: "EcoMove Sports Bra", price: "$68", badge: "Best Seller", colors: ["#175C40", "#2D8B6F", "#F9F9F9"], colorImages: {}, detailUrl: "/products/ecomove-sports-bra" },
     { id: "prod_2", name: "AirLight Leggings", price: "$98", badge: "New", colors: ["#0D3D2B", "#175C40", "#E8F3F0"], colorImages: {}, detailUrl: "/products/airlight-leggings" },
@@ -1502,6 +1513,9 @@ interface ThemeConfigContextType {
   addFeaturedSection: () => void;
   removeFeaturedSection: (instanceId: string) => void;
   updateFeaturedInstance: (instanceId: string, updates: Partial<FeaturedInstance>) => void;
+  addCategorySection: () => void;
+  removeCategorySection: (instanceId: string) => void;
+  updateCategoryInstance: (instanceId: string, updates: Partial<CategoryInstance>) => void;
   updateSectionAlign: (uid: string, align: "left" | "center" | "right") => void;
   addSectionByKey: (key: SectionKey) => void;
   isSaving: boolean;
@@ -1608,7 +1622,7 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
         // the website code is redeployed and defaultConfig changes.
         const arrayFields = [
           "slides", "categories", "videos", "seriesList", "fabrics",
-          "promoBarItems", "sectionOrder", "products", "featuredInstances",
+          "promoBarItems", "sectionOrder", "products", "featuredInstances", "categoryInstances",
           "newsletterPages", "pdpShippingBlocks", "pdpSizeGuide", "pdpDefaultSizes",
         ] as const;
         const mergedConfig = { ...defaultConfig, ...saved };
@@ -1941,6 +1955,46 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
     });
   }, [persistConfig]);
 
+  const addCategorySection = useCallback(() => {
+    setConfig(prev => {
+      const newId = `categories_${Date.now()}`;
+      const newInstance: CategoryInstance = {
+        id: newId, title: "Shop by Category", tag: "", columnsDesktop: 4, columnsMobile: 2,
+      };
+      const newSection: SectionConfig = { key: "categories", label: "产品分类", visible: true, instanceId: newId, titleAlign: "center" };
+      const arr = [...prev.sectionOrder];
+      const lastCatIdx = arr.map((s, i) => s.key === "categories" ? i : -1).filter(i => i >= 0).pop() ?? arr.length - 1;
+      arr.splice(lastCatIdx + 1, 0, newSection);
+      const catInsts = prev.categoryInstances ?? [];
+      const next = { ...prev, sectionOrder: arr, categoryInstances: [...catInsts, newInstance] };
+      persistConfig(next);
+      return next;
+    });
+  }, [persistConfig]);
+  const removeCategorySection = useCallback((uid: string) => {
+    setConfig(prev => {
+      const catInsts = (prev.categoryInstances ?? []).filter(c => c.id !== uid);
+      const next = {
+        ...prev,
+        sectionOrder: prev.sectionOrder.filter(s => (s.instanceId || s.key) !== uid),
+        categoryInstances: catInsts,
+      };
+      persistConfig(next);
+      return next;
+    });
+  }, [persistConfig]);
+  const updateCategoryInstance = useCallback((uid: string, updates: Partial<CategoryInstance>) => {
+    setConfig(prev => {
+      const catInsts = prev.categoryInstances ?? [];
+      const exists = catInsts.some(c => c.id === uid);
+      const newInsts = exists
+        ? catInsts.map(c => c.id === uid ? { ...c, ...updates } : c)
+        : [...catInsts, { id: uid, title: "Shop by Category", tag: "", columnsDesktop: 4, columnsMobile: 2, ...updates }];
+      const next = { ...prev, categoryInstances: newInsts };
+      persistConfig(next);
+      return next;
+    });
+  }, [persistConfig]);
   const removeFeaturedSection = useCallback((uid: string) => {
     setConfig(prev => {
       // Allow deleting any featured section including default
@@ -2432,6 +2486,7 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
       updateMarqueeItem, addMarqueeItem, removeMarqueeItem,
       moveSectionUp, moveSectionDown,
       addFeaturedSection, removeFeaturedSection, updateFeaturedInstance,
+      addCategorySection, removeCategorySection, updateCategoryInstance,
       updateSectionAlign, addSectionByKey,
       isSaving,
       isConfigReady,

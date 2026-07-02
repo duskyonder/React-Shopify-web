@@ -107,8 +107,6 @@ function Router() {
         <Route path={"/pages/fabric-guide"} component={FabricGuidePage} />
         <Route path={"/pages/size-guide"} component={SizeGuidePage} />
         <Route path={"/account"} component={AccountPage} />
-        <Route path={"/account/login"} component={AccountPage} />
-        <Route path={"/account/register"} component={AccountPage} />
         <Route path={"/account/orders"} component={OrdersPage} />
         <Route path={"/account/orders/:id"} component={OrderDetailPage} />
         <Route path={"/thank-you"} component={ThankYouPage} />

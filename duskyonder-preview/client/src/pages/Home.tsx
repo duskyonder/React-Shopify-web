@@ -302,7 +302,7 @@ function SFHero({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "
 
 
 // ==================== CATEGORIES (desktop: single-row scroll with configurable count) ====================
-function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAlign?: "left" | "center" | "right" }) {
+function SFCategories({ instanceId, titleAlign = "center" }: { instanceId?: string; titleAlign?: "left" | "center" | "right" }) {
   const { config } = useThemeConfig();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const overlayOpacity = (config.categoryOverlayOpacity ?? 60) / 100;
@@ -317,13 +317,17 @@ function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAli
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Only show first 4 categories
-  const cats = config.categories.slice(0, 4);
+  // Resolve per-instance column settings
+  const catInst = (config.categoryInstances ?? []).find(c => c.id === instanceId);
+  const columnsDesktop = catInst?.columnsDesktop ?? 4;
+  const columnsMobile = catInst?.columnsMobile ?? 2;
+  const sectionTitle = catInst?.title || config.categoriesTitle;
+  const cats = config.categories;
 
   return (
     <section className="sf-section sf-categories">
       <div style={{ width: "95%", margin: "0 auto" }}>
-        <div className="sf-section-header" style={{ textAlign: titleAlign }}><h2>{config.categoriesTitle}</h2></div>
+        <div className="sf-section-header" style={{ textAlign: titleAlign }}><h2>{sectionTitle}</h2></div>
       </div>
       <div
         className="sf-categories-wrapper"
@@ -338,7 +342,7 @@ function SFCategories({ titleAlign = "center" }: { instanceId?: string; titleAli
           className="sf-categories-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
+            gridTemplateColumns: isMobile ? `repeat(${columnsMobile}, 1fr)` : `repeat(${columnsDesktop}, 1fr)`,
             gap: isMobile ? `${config.categoriesMobileGap || 12}px` : `${config.categoriesDesktopGap || 20}px`,
           }}
           onMouseLeave={() => setHoveredId(null)}
