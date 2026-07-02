@@ -504,9 +504,25 @@ export function CartDrawer() {
     : manualRecommendedProducts;
 
   const handleCheckout = () => {
+    if (checkoutLoading) return; // prevent double-click
     setCheckoutLoading(true);
     if (checkoutUrl) {
-      window.location.href = checkoutUrl;
+      // Rewrite checkout URL to always use the .myshopify.com domain.
+      // Shopify's Storefront API may return the custom domain (duskyonder.com)
+      // in checkoutUrl, but custom-domain checkout requires a specific Shopify
+      // admin setting. Using the .myshopify.com domain works unconditionally.
+      let safeUrl = checkoutUrl;
+      try {
+        const parsed = new URL(checkoutUrl);
+        const shopDomain = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN as string;
+        if (shopDomain && !parsed.hostname.endsWith(".myshopify.com")) {
+          parsed.hostname = shopDomain;
+          safeUrl = parsed.toString();
+        }
+      } catch {
+        // URL parse failed — use original
+      }
+      window.location.href = safeUrl;
       return;
     }
     // Fallback: if no checkout URL available
