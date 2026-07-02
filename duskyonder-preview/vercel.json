@@ -13,10 +13,6 @@
   ],
   "rewrites": [
     {
-      "source": "/cart/c/:path*",
-      "destination": "https://c81aag-cy.myshopify.com/cart/c/:path*"
-    },
-    {
       "source": "/api/(.*)",
       "destination": "/api/index"
     },
