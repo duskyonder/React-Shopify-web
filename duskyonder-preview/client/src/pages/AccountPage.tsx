@@ -620,14 +620,10 @@ function LoginPage() {
             {isRegister ? (
               <>
                 Already have an account?{" "}
-                <a href="/account/login" style={{ color: "#1a1a1a", fontWeight: 600, textDecoration: "underline" }}>
-                  Sign in
-                </a>
+                <button onClick={() => getCustomerLoginUrlAsync(`${window.location.origin}/account`).then(url => { window.location.href = url; })} style={{ background: "none", border: "none", color: "#1a1a1a", fontWeight: 600, textDecoration: "underline", cursor: "pointer", padding: 0, font: "inherit" }}>Sign in</button>
               </>
             ) : (
-              <a href="/account/register" style={{ color: "#1a1a1a", fontWeight: 600, textDecoration: "underline" }}>
-                Sign up
-              </a>
+              <button onClick={() => getCustomerLoginUrlAsync(`${window.location.origin}/account`).then(url => { window.location.href = url; })} style={{ background: "none", border: "none", color: "#1a1a1a", fontWeight: 600, textDecoration: "underline", cursor: "pointer", padding: 0, font: "inherit" }}>Sign up</button>
             )}
           </p>
         </div>
@@ -715,7 +711,7 @@ function AccountDashboard() {
       const trpcErr = error as { data?: { code?: string } };
       if (trpcErr.data?.code === "UNAUTHORIZED") {
         clearStoredToken();
-        navigate("/account/login");
+        getCustomerLoginUrlAsync(`${window.location.origin}/account`).then(url => { window.location.href = url; });
       }
     }
   }, [error, navigate]);
@@ -757,7 +753,7 @@ function AccountDashboard() {
         <div style={{ maxWidth: 480, margin: "120px auto 0", padding: "0 24px", textAlign: "center" }}>
           <div style={{ background: "#fff5f5", border: "1px solid #fcc", borderRadius: 8, padding: "24px", color: "#c0392b" }}>
             <p style={{ margin: "0 0 16px" }}>{exchangeError}</p>
-            <a href="/account/login" style={{ color: "#c0392b", fontWeight: 700 }}>Sign in again</a>
+<button onClick={() => getCustomerLoginUrlAsync(`${window.location.origin}/account`).then(url => { window.location.href = url; })} style={{ background: "none", border: "none", color: "#c0392b", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: 0, font: "inherit" }}>Sign in again</button>
           </div>
         </div>
         <SFFooter />

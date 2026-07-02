@@ -305,7 +305,7 @@ export default function OrdersPage() {
       if (trpcErr.data?.code === "UNAUTHORIZED") {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(TOKEN_EXPIRY_KEY);
-        navigate("/account/login");
+        getCustomerLoginUrlAsync(`${window.location.origin}/account/orders`).then(url => { window.location.href = url; });
       }
     }
   }, [error, navigate]);
@@ -348,7 +348,7 @@ export default function OrdersPage() {
             padding: "16px 20px", color: "#c0392b", fontSize: "0.9rem", marginBottom: 24,
           }}>
             {exchangeError}{" "}
-            <a href="/account/login" style={{ color: "#c0392b", fontWeight: 600 }}>Sign in again</a>
+<button onClick={() => getCustomerLoginUrlAsync(`${window.location.origin}/account/orders`).then(url => { window.location.href = url; })} style={{ background: "none", border: "none", color: "#c0392b", fontWeight: 600, textDecoration: "underline", cursor: "pointer", padding: 0, font: "inherit" }}>Sign in again</button>
           </div>
         )}
 
@@ -367,7 +367,7 @@ export default function OrdersPage() {
               onClick={() => {
                 localStorage.removeItem(TOKEN_KEY);
                 localStorage.removeItem(TOKEN_EXPIRY_KEY);
-                navigate("/account/login");
+                getCustomerLoginUrlAsync(`${window.location.origin}/account/orders`).then(url => { window.location.href = url; });
               }}
               style={{ background: "none", border: "none", color: "#c0392b", textDecoration: "underline", cursor: "pointer", fontSize: "0.9rem", padding: 0 }}
             >

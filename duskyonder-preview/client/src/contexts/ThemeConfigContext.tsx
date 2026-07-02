@@ -1090,7 +1090,7 @@ const defaultConfig: ThemeConfig = {
     { id: "nav_3", label: "Shop All", link: "/collections/all" },
     { id: "nav_4", label: "About", link: "/pages/about-us" },
   ],
-  accountUrl: "/account/login",
+  accountUrl: "",
   wishlistUrl: "/wishlist",
   navFontSize: 14,
   navFontWeight: "500",

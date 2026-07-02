@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch, Redirect, useLocation } from "wouter";
+import { getCustomerLoginUrlAsync } from "@/lib/shopify";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ThemeConfigProvider } from "./contexts/ThemeConfigContext";
@@ -74,6 +75,16 @@ function PageSkeleton() {
   );
 }
 
+// Safety-net: redirect /account/login and /account/register to Shopify hosted auth
+function ShopifyAuthRedirect({ returnPath = "/account" }: { returnPath?: string }) {
+  useEffect(() => {
+    getCustomerLoginUrlAsync(`${window.location.origin}${returnPath}`).then(url => {
+      window.location.href = url;
+    });
+  }, [returnPath]);
+  return null;
+}
+
 function Router() {
   return (
     <Suspense fallback={<PageSkeleton />}>
@@ -107,6 +118,8 @@ function Router() {
         <Route path={"/pages/fabric-guide"} component={FabricGuidePage} />
         <Route path={"/pages/size-guide"} component={SizeGuidePage} />
         <Route path={"/account"} component={AccountPage} />
+        <Route path={"/account/login"} component={() => <ShopifyAuthRedirect returnPath="/account" />} />
+        <Route path={"/account/register"} component={() => <ShopifyAuthRedirect returnPath="/account" />} />
         <Route path={"/account/orders"} component={OrdersPage} />
         <Route path={"/account/orders/:id"} component={OrderDetailPage} />
         <Route path={"/thank-you"} component={ThankYouPage} />
